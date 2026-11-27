@@ -1,0 +1,12 @@
+# ShellCrash 自带的其他内核二进制（SingBox / Mihomo 各架构约 226MB）
+# 本项目只用 concord，通过 custcorelink 下载，不需要这些。
+ShellCrash/bin/*/*.tar.gz
+ShellCrash/bin/*/*.upx
+ShellCrash/bin/*/*.gz
+ShellCrash/bin/*/*.raw
+
+# 运行时产物
+*.log
+*.pid
+ShellCrash/configs/*.bak
+ShellCrash/.orig/

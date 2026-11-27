@@ -1,0 +1,92 @@
+diff --git a/scripts/libs/core_tools.sh b/scripts/libs/core_tools.sh
+index 684ca55..2188963 100644
+--- a/scripts/libs/core_tools.sh
++++ b/scripts/libs/core_tools.sh
+@@ -50,7 +50,14 @@ core_check(){
+     core_unzip "$1" core_new
+     sbcheck=$(echo "$crashcore" | grep 'singbox')
+     v=''
+-    if [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
++    # 按二进制的实际能力判定内核类型，不依赖配置里的 $crashcore——
++    # 配置可能与实际内核不符（例如首次安装的兜底值是 meta，而下载的却是 concord）。
++    if "$TMPDIR"/core_new run -h 2>&1 | grep -qi 'concord'; then
++        # Concord (Rust)：没有 -v，也没有 -t 的帮助输出，版本来自配置里的 concord_v。
++        # 数据目录必须独立，否则 concord 会往 $BINDIR 里写自己的 config.yaml。
++        v="${concord_v:-0.1.0}"
++        COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $CRASHDIR/concord"'
++    elif [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
+         v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
+         COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
+     elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
+index 4ce09ff..70e997c 100644
+--- a/scripts/menus/9_upgrade.sh
++++ b/scripts/menus/9_upgrade.sh
+@@ -222,26 +222,14 @@ setcoretype() {
+     while true; do
+         echo "$crashcore" | grep -q 'singbox' && core_old=singbox || core_old=clash
+         comp_box "\033[33m$UPG_CORETYPE_CONFIRM\033[0m"
+-        btm_box "1) Mihomo(Meta)" \
+-            "2) Singbox-reF1nd" \
+-            "3) Singbox" \
+-            "4) Clash" \
++        btm_box "1) Concord (Rust)" \
+             "" \
+             "0) $COMMON_BACK"
+         read -r -p "$COMMON_INPUT> " num
+         case "$num" in
+         "" | 0) ;;
+         1)
+-            crashcore=meta
+-            ;;
+-        2)
+-            crashcore=singboxr
+-            ;;
+-        3)
+-            crashcore=singbox
+-            ;;
+-        4)
+-            crashcore=clash
++            crashcore=concord
+             ;;
+         *)
+             errornum
+diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
+index dcf4cb9..3414b1d 100644
+--- a/scripts/starts/clash_modify.sh
++++ b/scripts/starts/clash_modify.sh
+@@ -2,6 +2,10 @@
+ # Copyright (C) Juewuy
+ 
+ prepare_clash_base_config() {
++    # Concord (Rust) 读取的就是 mihomo 配置格式，配置生成完全复用 meta 分支。
++    # 但内核检测（-t 参数）必须认它是 concord，所以把原始类型留在 core_kind。
++    [ -z "$core_kind" ] && core_kind="$crashcore"
++    echo "$crashcore" | grep -qi 'concord' && crashcore=meta
+     ##########需要变更的配置###########
+     [ "$ipv6_dns" != "OFF" ] && dns_v6='true' || dns_v6='false'
+     external="external-controller: 0.0.0.0:$db_port"
+@@ -283,9 +287,20 @@ merger_yaml() {
+ 
+ test_yaml() {
+     #测试自定义配置文件
+-    "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml >/dev/null
+-    if [ "$?" != 0 ]; then
+-        logger "$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml | grep -Eo 'error.*=.*')" 31
++    # 直接看二进制是不是 concord，不依赖配置里的 $crashcore（可能还没改过来）
++    if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
++        "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml >/dev/null
++        test_rc=$?
++    else
++        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml >/dev/null
++        test_rc=$?
++    fi
++    if [ "$test_rc" != 0 ]; then
++        if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
++            logger "$("$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml 2>&1 | head -c 300)" 31
++        else
++            logger "$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml | grep -Eo 'error.*=.*')" 31
++        fi
+         logger "自定义配置文件校验失败！将使用基础配置文件启动！" 33
+         logger "错误详情请参考 "$TMPDIR"/error.yaml 文件！" 33
+         mv -f "$TMPDIR"/config.yaml "$TMPDIR"/error.yaml >/dev/null 2>&1

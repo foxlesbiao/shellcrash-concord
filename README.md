@@ -1,0 +1,139 @@
+# shellcrash-concord
+
+把 [concord](https://github.com/chen08209/concord)（Rust 写的代理内核）装进 [ShellCrash](https://github.com/juewuy/ShellCrash)，用于 OpenWrt 路由器。
+
+**它解决什么问题**：ShellCrash 默认用 mihomo（Go）。concord 是照着 mihomo 行为重写的 Rust 内核，同样配置能直接跑，内存占用约为 mihomo 的 40%。
+
+---
+
+## 工作原理
+
+不自己编译，而是**从 [nikki-concord](https://github.com/user-7392/nikki-concord) 的 release 里提取静态链接的 aarch64 内核**，重新发布成本仓库的 release。
+
+```
+nikki-concord release (.ipk)
+        │  Actions 每周一自动拉取、解包
+        ▼
+  concord-aarch64.gz  ← 本仓库 release
+        │  install.sh
+        ▼
+  路由器 CrashCore.raw
+```
+
+这么做的三个理由：
+
+1. **上游已经打好 OpenWrt 补丁**：低内存 jemalloc 调优、`release_free_memory()` 主动退页、测速并发限流、Mihomo 未知字段静默忽略等。自己从上游 concord 编译**没有**这些。
+2. **免掉 BoringSSL + LTO 的 30–60 分钟编译**，以及 8GB 内存机器上的 OOM 风险。
+3. **自动跟随上游版本**，不必自己维护编译链。
+
+---
+
+## 安装
+
+在路由器上执行（需要已装好 ShellCrash）：
+
+```sh
+sh install.sh
+```
+
+脚本会：下载 → 校验 sha256 → 备份原内核 → 替换 `CrashCore.raw` → 改写 `command.env` 与 `clash_modify.sh` 的启动参数 → 重启 → 自检代理是否通。
+
+指定版本：
+
+```sh
+sh install.sh v0.1.0-r28
+```
+
+## 回滚
+
+```sh
+sh install.sh --rollback
+```
+
+恢复 `CrashCore.raw.mihomo.bak` 及相关脚本备份。首次安装时自动创建这些备份。
+
+---
+
+## 实测数据（IPQ9554，ShellCrash 1.9.5beta4）
+
+| 维度 | mihomo | concord |
+|---|---|---|
+| 单流 100MB | 6.67 MB/s | 6.67 MB/s |
+| 16/32/64 路并发 | 9.4 / 10.0 / 10.0 MB/s | 9.4 / 10.3 / 10.5 MB/s |
+| 延迟（100 并发） | 1.481s | 1.430s |
+| Loopback 极限 | 344.8 MB/s | 285.8 MB/s |
+| **内存 RSS** | 53.4 MB | **21.6 MB** |
+| **CPU（100 并发）** | 42 jiffies | **22 jiffies** |
+
+**结论：延迟、吞吐、并发三项持平，唯一确定的收益是资源占用减半。**
+
+在家宽 + 共享专线环境里，瓶颈是节点带宽（约 84 Mbps），换内核不会让网速变快。如果你的动机是"延迟更低"，这个方案帮不上；如果想让路由器省点内存/CPU，它是对的。
+
+---
+
+## 已知限制
+
+| 项 | 情况 |
+|---|---|
+| **内置面板** | ❌ concord 忽略 `external-ui`，ShellCrash 的 zashboard 走不了内置路径。解决：用 `uhttpd` 托管 `$CRASHDIR/ui`，API 仍在 `:9999` |
+| **TUN stack** | ⚠️ 只有 concord 自己的 userspace 栈，配置里的 `tun.stack` 被忽略。用 tproxy/redir 模式不受影响 |
+| **glibc 二进制** | ❌ 从 FlClash `-rs` 版提取的 `FlClashCore` 是 glibc 动态链接 + 宿主绑定（报 `session token: missing`），不能用。本仓库给的是静态链接版本 |
+| **架构** | 仅 `aarch64`（`aarch64_cortex-a53/a72/generic` 共用同一产物） |
+
+### 面板怎么救
+
+```sh
+uhttpd -p 0.0.0.0:8090 -h $CRASHDIR/ui
+# 浏览器打开 http://<路由器IP>:8090/ ，后端地址填 <路由器IP>:9999
+```
+
+写进 `/etc/rc.local` 可开机自启（注意加 `sleep` 等 USB 挂载完成）。
+
+---
+
+## 为什么不用别的方案
+
+| 方案 | 为什么不行 |
+|---|---|
+| FlClash `-rs` 版 deb 里的内核 | glibc 动态链接，OpenWrt（musl）跑不了；且需宿主 token |
+| clash-rs | 读不了 mihomo 完整配置：`proxy-groups` 的 url-test/load-balance/fallback 和整块 `dns` 都解析失败 |
+| 直接吃 nikki-concord 的 OpenWrt 包 | 要求 OpenWrt 23.05+/24.10（firewall4 + nftables），老固件装不上；本方案只取其中的内核二进制 |
+| 自己 `cargo zigbuild` | 可行，但没有上游的 OpenWrt 适配补丁，且 CI 上 7GB runner 编译 LTO 容易 OOM |
+
+---
+
+## 仓库结构
+
+```
+.github/workflows/sync.yml          # 每周一同步 concord 内核 → 发布 release
+.github/workflows/sync-upstream.yml # 每周一拉上游 ShellCrash → 应用补丁 → 提交；冲突则开 issue
+patches/shellcrash-concord.patch    # 对 ShellCrash 的全部改动（3 个文件）
+ShellCrash/                          # 全量 ShellCrash 源码（已打补丁）
+install.sh                           # 路由器端安装/回滚脚本
+```
+
+## 改动了 ShellCrash 的哪些地方
+
+只有三处，全部在 `patches/shellcrash-concord.patch` 里：
+
+| 文件 | 函数 | 改动 |
+|---|---|---|
+| `scripts/libs/core_tools.sh` | `core_check()` | 在 sing-box / mihomo 判定之前，先看二进制是不是 concord（`run -h` 输出含 `concord`），是则用 `run -c ... -d ...` 的启动命令 |
+| `scripts/starts/clash_modify.sh` | `test_yaml()` | concord 的 `-t` 只接受 `-c <file>`，不接受 mihomo 的 `-d/-f`，按二进制类型分支 |
+| `scripts/menus/9_upgrade.sh` | `setcoretype()` | 内核类型菜单只保留 Concord 一项 |
+
+**为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
+
+## 跟上上游更新
+
+ShellCrash 上游更新频繁。本仓库的做法是 **全量代码 + 补丁双轨**：
+
+- 别人 `git clone` 就能直接用（`ShellCrash/` 是全量的）
+- 每周一 `sync-upstream.yml` 自动拉上游 → 应用 `patches/shellcrash-concord.patch` → 通过则提交
+- **补丁打不上时不开 PR、不静默失败，而是自动开 issue 报警**，issue 里写了三处改动分别是什么、怎么重新生成补丁
+
+补丁过期是迟早的事（上游改了 `core_check` 之类就会冲突）。那时候按 issue 里的步骤，重新 diff 一次生成补丁即可，通常几分钟。
+
+## 许可
+
+`install.sh` 与本仓库的 workflow 为 MIT。分发的 concord 二进制采用其上游许可（GPL-3.0-or-later），见 [chen08209/concord](https://github.com/chen08209/concord)。
