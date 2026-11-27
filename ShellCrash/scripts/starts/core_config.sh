@@ -17,13 +17,8 @@ update_servers() { #更新servers_${i18n}.list
 }
 gen_ua(){  #自动生成ua
     [ -z "$user_agent" -o "$user_agent" = "auto" ] && {
-        if echo "$crashcore" | grep -q 'singbox'; then
-            user_agent="sing-box/$core_v"
-        elif [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
-            user_agent="clash.meta/mihomo"
-        else
-            user_agent="clash"
-        fi
+        # concord 对外伪装成 mihomo（订阅站按 UA 发配置）
+        user_agent="clash.meta/mihomo"
     }
     [ "$user_agent" = "none" ] && unset user_agent
 }

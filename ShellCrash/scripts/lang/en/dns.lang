@@ -39,7 +39,6 @@ DNS_FAKEIP_EDIT="Enter a number to remove an entry, or enter an address to add o
 #===== Advanced DNS =====
 DNS_ADV_SPLIT="Use '|' or ',' to separate multiple DNS addresses"
 DNS_ADV_CERT="DoH/DoT requires a local root certificate file"
-DNS_ADV_SINGBOX_LIMIT="Note: SingBox core only loads the first DNS entry"
 
 DNS_ADV_EDIT_DIRECT="Edit DIRECT-DNS"
 DNS_ADV_EDIT_PROXY="Edit PROXY-DNS (queries go through the proxy)"
@@ -52,7 +51,7 @@ DNS_INPUT_NEW="Enter new DNS address>"
 DNS_IPV6_NOT_SUPPORT="This option does not support IPv6 encrypted DNS!"
 
 DNS_ENCRYPT_OK="Encrypted DNS has been configured. If DNS issues occur, please reset DNS settings."
-DNS_CORE_REQUIRE="Please use the Mihomo or SingBox core"
+DNS_CORE_REQUIRE="This feature requires the concord core"
 DNS_SET_TO="Set to"
 DNS_REMOVE_OK="Removed successfully"
 DNS_REMOVE_FAIL="Remove failed"
@@ -88,4 +87,4 @@ DNS_DIRECT_TEST_NOT_IN_LIST="✗ This domain is not in the direct DNS list"
 
 #===== DNS Failover =====
 DNS_ADV_FAILOVER="PROXY-DNS Failover"
-DNS_ADV_FAILOVER_TIP="Fallback to DIRECT-DNS when proxy DNS fails or returns no IP (Mihomo Route mode + Leak Protect ON only)"
+DNS_ADV_FAILOVER_TIP="Fallback to DIRECT-DNS when proxy DNS fails or returns no IP (Route mode + Leak Protect ON only)"

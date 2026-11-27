@@ -14,10 +14,8 @@ override() {
         [ -z "$server_link" ] && server_link=1
         comp_box "\033[30;47m $OVR_TITLE\033[0m"
         content_line "$OVR_MENU_2"
-        echo "$crashcore" | grep -q 'singbox' || {
-            content_line "$OVR_MENU_3"
-            content_line "$OVR_MENU_4"
-        }
+        content_line "$OVR_MENU_3"
+        content_line "$OVR_MENU_4"
         content_line "$OVR_MENU_5"
         [ "$disoverride" != 1 ] && content_line "$OVR_MENU_9"
         content_line ""
@@ -38,11 +36,7 @@ override() {
             setgroups
             ;;
         5)
-            if echo "$crashcore" | grep -q 'singbox'; then
-                set_singbox_adv
-            else
-                set_clash_adv
-            fi
+            set_clash_adv
             sleep 3
             ;;
         9)
@@ -177,7 +171,7 @@ setrules() {
         content_line "$OVR_RULES_ADD"
         content_line "$OVR_RULES_DEL"
         content_line "$OVR_RULES_CLEAR"
-        echo "$crashcore" | grep -q 'singbox' || content_line "$OVR_RULES_BYPASS	\033[36m$proxies_bypass\033[0m"
+        content_line "$OVR_RULES_BYPASS	\033[36m$proxies_bypass\033[0m"
         content_line ""
         content_line "$OVR_BACK"
         separator_line "="
@@ -535,15 +529,4 @@ EOF
     btm_box "\033[33m$OVR_ADV_WIN\033[0m" \
         "\033[33m$OVR_ADV_MAC\033[0m" \
         "\033[33m$OVR_ADV_LIN\033[0m"
-}
-
-# s自定义singbox配置文件
-set_singbox_adv() {
-    comp_box "\033[33m$OVR_SING_TITLE1\033[0m" \
-        "\033[36mlog dns ntp certificate http_clients experimental\033[0m" \
-        "\033[33m$OVR_SING_TITLE2\033[0m" \
-        "\033[36mendpoints inbounds outbounds providers route services\033[0m" \
-        "$OVR_SING_TITLE3" \
-        "" \
-        "$OVR_SING_TITLE4"
 }

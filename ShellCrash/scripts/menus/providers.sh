@@ -6,11 +6,7 @@ __IS_MODULE_PROVIDERS=1
 
 load_lang providers
 
-if [ "$crashcore" = singboxr ]; then
-    CORE_TYPE=singbox
-else
-    CORE_TYPE=clash
-fi
+CORE_TYPE=clash
 
 providers() {
     while true; do

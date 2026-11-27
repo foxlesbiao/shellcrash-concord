@@ -84,11 +84,12 @@ core_check "$SANDBOX/test-bin"
 has "mihomo 识别 -> COMMAND 用 -d/-f" "$COMMAND" '\-d .* -f '
 hasnt "mihomo 不会被当成 concord" "$COMMAND" 'run -c'
 
-# singbox（回归：原有分支不能坏）
+# singbox（已不支持：识别不出来就该拒绝，不能悄悄当成 mihomo 启动）
 reset; fake_core singbox
 cp "$SANDBOX/core_new" "$SANDBOX/test-bin"; crashcore=singboxr; rm -f "$BINDIR"/CrashCore.*
 core_check "$SANDBOX/test-bin"
-has "singbox 识别 -> COMMAND 用 run -D" "$COMMAND" 'run -D'
+hasnt "singbox 二进制不会生成 run -D 命令" "$COMMAND" 'run -D'
+hasnt "singbox 二进制不会生成 run -c 命令" "$COMMAND" 'run -c'
 
 # ---------- 2. core_find：选对内核文件 ----------
 sec "2. core_find() 选文件"
@@ -189,9 +190,7 @@ sec "6. init.sh command.env"
 
 gen_command() {
     CFG_PATH="$1"
-    if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
-        COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
-    elif [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
+    if [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
         COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
     else
         COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
@@ -200,7 +199,7 @@ gen_command() {
 }
 eq "concord -> run -c"       "$(gen_command "$CFG")"  '"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
 printf 'crashcore=singboxr\n' > "$SANDBOX/cfg2"
-eq "singbox -> run -D"       "$(gen_command "$SANDBOX/cfg2")" '"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
+eq "singbox -> 回落"         "$(gen_command "$SANDBOX/cfg2")" '"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
 printf 'crashcore=meta\n' > "$SANDBOX/cfg3"
 eq "meta -> -d/-f"           "$(gen_command "$SANDBOX/cfg3")" '"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
 
@@ -253,7 +252,7 @@ sec "9. 菜单裁剪"
 
 hasnt "7_gateway 无 VMess 入站"  "$(cat "$SRC/menus/7_gateway.sh")" 'set_vmess'
 hasnt "7_gateway 无 SS 入站"     "$(cat "$SRC/menus/7_gateway.sh")" 'set_shadowsocks'
-has  "7_gateway 保留 Tailscale"  "$(cat "$SRC/menus/7_gateway.sh")" 'set_tailscale'
+hasnt "7_gateway 无 Tailscale（concord 不支持）" "$(cat "$SRC/menus/7_gateway.sh")" 'set_tailscale'
 has  "7_gateway 保留 WireGuard"  "$(cat "$SRC/menus/7_gateway.sh")" 'set_wireguard'
 
 has  "内核菜单只留 Concord"      "$(cat "$SRC/menus/9_upgrade.sh")" '更新 Concord 内核'

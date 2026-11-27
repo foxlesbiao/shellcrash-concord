@@ -11,10 +11,7 @@ settings() {
     while true; do
         # 获取设置默认显示
         [ -z "$skip_cert" ] && skip_cert=ON
-        [ -z "$sniffer" ] && {
-            sniffer=OFF
-            echo "$crashcore" | grep -q 'singbox' && sniffer=ON
-        }
+        [ -z "$sniffer" ] && sniffer=OFF
         [ -z "$dns_mod" ] && dns_mod='redir_host'
         [ -z "$udp_buffer" ] && udp_buffer=OFF
 

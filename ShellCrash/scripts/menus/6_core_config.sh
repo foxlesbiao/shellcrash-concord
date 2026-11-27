@@ -6,13 +6,8 @@ __IS_MODULE_6_CORECONFIG_LOADED=1
 
 load_lang 6_core_config
 
-if echo "$crashcore" | grep -q 'singbox'; then
-    CONFIG_PATH="$CRASHDIR"/jsons/config.json
-    CORE_TYPE=singbox
-else
-    CONFIG_PATH="$CRASHDIR"/yamls/config.yaml
-    CORE_TYPE=clash
-fi
+CONFIG_PATH="$CRASHDIR"/yamls/config.yaml
+CORE_TYPE=clash
 URI_EXP='ss|vmess|vless|trojan|tuic|anytls|shadowtls|hysteria(2)?'
 
 # 按变量名字面值删除订阅配置
@@ -70,7 +65,7 @@ set_core_config() {
             ;;
         b)
             if [ -s "$CRASHDIR"/configs/providers.cfg ] || [ -s "$CRASHDIR"/configs/providers_uri.cfg ]; then
-                if [ "$crashcore" = meta ] || [ "$crashcore" = singboxr ] || echo "$crashcore" | grep -qi 'concord'; then
+                if [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
                     . "$CRASHDIR"/menus/providers.sh
                     providers
                 else

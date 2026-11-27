@@ -24,18 +24,10 @@ startover() {
 
 # ===== 启动核心 =====
 start_core() {
-    if echo "$crashcore" | grep -q 'singbox'; then
-        core_config="$CRASHDIR/jsons/config.json"
-    else
-        core_config="$CRASHDIR/yamls/config.yaml"
-    fi
+    core_config="$CRASHDIR/yamls/config.yaml"
 
     if [ ! -s "$core_config" ] && [ -s "$CRASHDIR/configs/providers.cfg" ]; then
-        if [ "$crashcore" = singboxr ]; then
-            CORE_TYPE=singbox
-        else
-            CORE_TYPE=clash
-        fi
+        CORE_TYPE=clash
         . "$CRASHDIR/menus/providers_$CORE_TYPE.sh" && gen_providers
 
         comp_box "\033[33m$START_NO_CORE_CFG_TRY_GEN\033[0m"

@@ -59,7 +59,7 @@ send_menu(){
     else
         run="$BOT_TG_RUN_OFF"
     fi
-    corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/')
+    corename=Concord
     TEXT=$(cat <<EOF
 *$BOT_TG_WELCOME*_${versionsh_l}_
 $corename$BOT_TG_SERVICE$run
@@ -89,11 +89,7 @@ web_json_post "$API/sendMessage" "{\"chat_id\":\"$TG_CHATID\",\"text\":\"$TEXT\"
 ### --- 文件传输 --- ###
 send_transport_menu(){ 
     TEXT="$BOT_TG_SELECT_FILE"
-    if echo "$crashcore" | grep -q 'singbox';then
-        config_type=json
-    else
-        config_type=yaml
-    fi
+    config_type=yaml
 
     if curl -h >/dev/null 2>&1;then
         CURL_KB=$(cat <<EOF

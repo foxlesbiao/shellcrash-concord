@@ -660,7 +660,7 @@ testcommand() {
             fi
             ;;
         5)
-            echo "$crashcore" | grep -q 'singbox' && config_path="$CRASHDIR"/jsons/config.json || config_path="$CRASHDIR"/yamls/config.yaml
+            config_path="$CRASHDIR"/yamls/config.yaml
             line_break
             sed -n '1,40p' "$config_path"
             ;;
@@ -692,7 +692,7 @@ testcommand() {
 
 debug() {
 	rm -f "$CRASHDIR"/\.start_error #移除自启失败标记
-    echo "$crashcore" | grep -q 'singbox' && config_tmp="$TMPDIR"/jsons || config_tmp="$TMPDIR"/config.yaml
+    config_tmp="$TMPDIR"/config.yaml
     comp_box "\033[36m$TOOLS_DEBUG_WARN1\033[0m" \
         "${TOOLS_DEBUG_WARN2_PREFIX}\033[32m$TMPDIR/debug.log\033[0m${TOOLS_DEBUG_WARN2_SUFFIX}" \
         "$TOOLS_DEBUG_WARN3" \
@@ -714,16 +714,7 @@ debug() {
     1)
         "$CRASHDIR"/start.sh stop
         "$CRASHDIR"/starts/bfstart.sh
-        if echo "$crashcore" | grep -q 'singbox'; then
-            "$TMPDIR"/CrashCore run -D "$BINDIR" -C "$TMPDIR"/jsons &
-            {
-                sleep 4
-                kill $! >/dev/null 2>&1 &
-            }
-            wait
-        else
-            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
-        fi
+        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
         rm -rf "$TMPDIR"/CrashCore
         line_break
         exit

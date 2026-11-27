@@ -36,7 +36,7 @@ set_dns_mod() {
             break
             ;;
         1 | 2)
-            if echo "$crashcore" | grep -q 'singbox' || [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
+            if [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
                 [ "$num" = 1 ] && dns_mod=mix || dns_mod=route
                 setconfig dns_mod "$dns_mod"
                 msg_alert "\033[36m$DNS_SET_OK：$dns_mod\033[0m"
@@ -275,8 +275,7 @@ dns_direct_domains() {
 set_dns_adv() {
     [ -z "$dns_failover" ] && dns_failover=OFF
     while true; do
-        comp_box "\033[31m$DNS_ADV_SINGBOX_LIMIT\033[0m" \
-            "$DNS_ADV_SPLIT" \
+        comp_box "$DNS_ADV_SPLIT" \
             "\033[33m$DNS_ADV_CERT\033[0m" \
             "" \
             "DIRECT-DNS：" \
@@ -414,7 +413,7 @@ set_dns_adv() {
 		5)
             line_break
             separator_line "="
-            if echo "$crashcore" | grep -qE 'meta|singbox'; then
+            if echo "$crashcore" | grep -qE 'meta|concord'; then
                 dns_nameserver='https://dns.alidns.com/dns-query, https://doh.pub/dns-query'
                 dns_fallback='https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.opendns.com/dns-query'
                 dns_resolver='https://223.5.5.5/dns-query, 2400:3200::1'

@@ -50,7 +50,6 @@ core_find(){
 core_check(){
     [ -n "$(pidof CrashCore)" ] && "$CRASHDIR"/start.sh stop #停止内核服务防止内存不足
     core_unzip "$1" core_new
-    sbcheck=$(echo "$crashcore" | grep 'singbox')
     v=''
     # 按二进制的实际能力判定内核类型，不依赖配置里的 $crashcore——
     # 配置可能与实际内核不符（例如首次安装的兜底值是 meta，而下载的却是 concord）。
@@ -59,10 +58,7 @@ core_check(){
         # 数据目录必须独立，否则 concord 会往 $BINDIR 里写自己的 config.yaml。
         v="${concord_v:-0.1.0}"
         COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
-    elif [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
-        v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
-        COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
-    elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+    elif "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
         v=$("$TMPDIR"/core_new -v 2>/dev/null | head -n 1 | sed 's/ linux.*//;s/.* //')
         COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
     fi

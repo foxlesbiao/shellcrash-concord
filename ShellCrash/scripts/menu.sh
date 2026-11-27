@@ -131,7 +131,8 @@ ckstatus() {
         # 检测系统端口占用
         checkport
     fi
-    corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/' | sed 's/concord/Concord/')
+    # 本版只有 concord 一个内核
+    corename=Concord
     # [ "$firewall_area" = 5 ] && corename='转发'
     [ -f "$TMPDIR"/debug.log -o -f "$CRASHDIR"/debug.log -a -n "$PID" ] && auto="\033[33m$MENU_AUTOSTART_DEBUG\033[0m"
 
@@ -160,7 +161,6 @@ ckstatus() {
             . "$CRASHDIR"/libs/core_tools.sh && core_check "$tmp_file"
             if [ "$?" = 0 ] && [ -n "$crashcore" ]; then
                 msg_alert "\033[32m$MENU_CORE_LOADED_OK\033[0m"
-                switch_core
             else
                 rm -rf "$tmp_file"
                 msg_alert "\033[33m$MENU_CORE_LOADED_BAD\033[0m" \

@@ -17,8 +17,7 @@ gateway() {
         content_line "2) $GW_MENU_TG_BOT		\033[32m$bot_tg_service\033[0m"
         content_line "3) $GW_MENU_DDNS"
         [ "$disoverride" != "1" ] && {
-            content_line "4) $GW_MENU_TS		\033[32m$ts_service\033[0m"
-            content_line "5) $GW_MENU_WG	\033[32m$wg_service\033[0m"
+            content_line "4) $GW_MENU_WG\t\033[32m$wg_service\033[0m"
         }
         btm_box "" \
             "0) $COMMON_BACK"
@@ -50,21 +49,7 @@ gateway() {
             . "$CRASHDIR"/menus/ddns.sh && ddns_menu
             ;;
         4)
-            if echo "$crashcore" | grep -q 'sing'; then
-                set_tailscale
-            else
-                msg_alert "\033[33m$crashcore$GW_CORE_UNSUPPORTED\033[0m"
-            fi
-            ;;
-        5)
-            if echo "$crashcore" | grep -q 'sing'; then
-                set_wireguard
-            else
-                msg_alert "\033[33m$crashcore$GW_CORE_UNSUPPORTED\033[0m"
-            fi
-            ;;
-        *)
-            errornum
+            set_wireguard
             ;;
         esac
     done
@@ -265,68 +250,6 @@ set_bot_tg() {
         esac
     done
 }
-
-set_tailscale() {
-    while true; do
-        [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
-        comp_box "\033[31m$GW_WARN\033[0m$GW_TS_WARN" \
-            "$GW_TS_KEY_URL" \
-            "$GW_TS_ALLOW_URL" \
-            "$GW_TS_SUBNET_EXIT_HINT"
-        btm_box "1) \033[32m$GW_TS_TOGGLE\033[0m  \033[32m$ts_service\033[0m" \
-            "2) $GW_TS_SET_AUTHKEY  $ts_auth_key_info" \
-            "3) $GW_TS_SUBNET  \033[36m$ts_subnet\033[0m" \
-            "4) $GW_TS_EXIT_NODE  \033[36m$ts_exit_node\033[0m" \
-            "5) $GW_TS_HOSTNAME  $ts_hostname" \
-            "" \
-            "0) $COMMON_BACK"
-        read -r -p "$COMMON_INPUT> " num
-        case "$num" in
-        "" | 0)
-            break
-            ;;
-        1)
-            if [ -n "$ts_auth_key" ]; then
-                [ "$ts_service" = ON ] && ts_service=OFF || ts_service=ON
-                setconfig ts_service "$ts_service"
-            else
-                msg_alert "\033[31m$GW_TS_SET_KEY_FIRST\033[0m"
-            fi
-            ;;
-        2)
-            line_break
-            read -r -p "$GW_TS_INPUT_KEY> " text
-            [ "$text" = 0 ] && unset ts_auth_key ts_auth_key_info || ts_auth_key="$text"
-            setconfig ts_auth_key "$ts_auth_key" "$GT_CFG_PATH"
-            ;;
-        3)
-            [ "$ts_subnet" = true ] && ts_subnet=false || ts_subnet=true
-            setconfig ts_subnet "$ts_subnet" "$GT_CFG_PATH"
-            ;;
-        4)
-            if [ "$ts_exit_node" = true ]; then
-                ts_exit_node=false
-            else
-                ts_exit_node=true
-                msg_alert -t 3 "\033[31m$GW_WARN\033[0m$GW_TS_EXITNODE_WARN"
-            fi
-            setconfig ts_exit_node "$ts_exit_node" "$GT_CFG_PATH"
-            ;;
-        5)
-            comp_box "\033[36m$GW_TS_INPUT_NAME\033[0m" \
-                "$GW_INPUT_0_BACK"
-            read -r -p "$GW_INPUT_PLAIN> " ts_hostname
-            if [ "$ts_hostname" != 0 ]; then
-                setconfig ts_hostname "$ts_hostname" "$GT_CFG_PATH"
-            fi
-            ;;
-        *)
-            errornum
-            ;;
-        esac
-    done
-}
-
 set_wireguard() {
     while true; do
 

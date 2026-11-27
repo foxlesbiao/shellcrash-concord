@@ -38,7 +38,6 @@ DNS_FAKEIP_EDIT="输入序号移除，输入地址添加"
 #=====DNS高级=====
 DNS_ADV_SPLIT="多个DNS地址请使用“|”或“,”分隔输入"
 DNS_ADV_CERT="使用DoH/DoT需具备本地根证书文件"
-DNS_ADV_SINGBOX_LIMIT="注意：SingBox内核仅加载第一个DNS"
 
 DNS_ADV_EDIT_DIRECT="修改DIRECT-DNS"
 DNS_ADV_EDIT_PROXY="修改PROXY-DNS（该DNS查询会经过节点）"
@@ -86,4 +85,4 @@ DNS_DIRECT_TEST_NOT_IN_LIST="✗ 该域名未在直连列表中"
 
 #=====DNS故障回退=====
 DNS_ADV_FAILOVER="PROXY-DNS故障回退"
-DNS_ADV_FAILOVER_TIP="代理DNS查询失败或无可用IP时，回退到DIRECT-DNS解析（仅Mihomo Route模式且开启DNS防泄漏时生效）"
+DNS_ADV_FAILOVER_TIP="代理DNS查询失败或无可用IP时，回退到DIRECT-DNS解析（仅 Route 模式且开启DNS防泄漏时生效）"

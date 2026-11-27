@@ -75,8 +75,6 @@ upgrade() {
             comp_box "$UPG_THANKS_TITLE"
             btm_box "\033[32m$UPG_THANKS_ITEM_CLASH\033[0m" \
                 "" \
-                "\033[32m$UPG_THANKS_ITEM_SINGBOX\033[0m" \
-                "$UPG_THANKS_ITEM_SINGBOX_URL" \
                 "" \
                 "\033[32m$UPG_THANKS_ITEM_METACUBE\033[0m" \
                 "$UPG_THANKS_ITEM_METACUBE_URL" \
@@ -222,37 +220,6 @@ setcoretype() {
     core_new=clash
 }
 
-# clash与singbox内核切换
-switch_core() {
-    # singbox和clash内核切换时提示是否保留文件
-    [ "$core_new" != "$core_old" ] && {
-        [ "$dns_mod" = "redir_host" ] && [ "$core_old" = "clash" ] && setconfig dns_mod mix                               #singbox自动切换dns
-        [ "$dns_mod" = "mix" ] && [ "$crashcore" = 'clash' -o "$crashcore" = 'clashpre' ] && setconfig dns_mod redir_host #singbox自动切换dns
-        comp_box "\033[33m$UPG_CORE_SWITCH_PREFIX$core_old$UPG_CORE_SWITCH_MID$core_new$UPG_CORE_SWITCH_SUFFIX\033[0m" \
-            "\033[33m$UPG_CORE_SWITCH_WARN\033[0m" \
-            "$UPG_CORE_SWITCH_KEEP"
-        btm_box "1) $UPG_KEEP" \
-            "0) $UPG_NOT_KEEP"
-        read -r -p "$COMMON_INPUT> " res
-        [ "$res" = '0' ] && {
-            [ "$core_old" = "clash" ] && {
-                geodate='Country.mmdb GeoSite.dat ruleset/*.mrs ruleset/*.yaml ruleset/*.yml'
-                geodate_v='Country_v cn_mini_v geosite_v mrs_geosite_cn_v'
-            }
-            [ "$core_old" = "singbox" ] && {
-                geodate='geoip.db geosite.db ruleset/*.srs ruleset/*.json'
-                geodate_v='geoip_cn_v geosite_cn_v srs_geoip_cn_v srs_geosite_cn_v'
-            }
-            for text in ${geodate}; do
-                rm -rf "$CRASHDIR"/${text}
-            done
-            for text in ${geodate_v}; do
-                setconfig "$text"
-            done
-        }
-    }
-}
-
 # 下载内核文件
 getcore() {
     # 调用下载工具
@@ -261,11 +228,7 @@ getcore() {
     [ -z "$crashcore" ] && crashcore=meta
     [ -z "$cpucore" ] && check_cpucore
     [ "$crashcore" = unknow ] && setcoretype
-    if echo "$crashcore" | grep -q 'singbox'; then
-        core_new=singbox
-    else
-        core_new=clash
-    fi
+    core_new=clash
     # 获取在线内核文件
     line_break
     separator_line "="
@@ -276,7 +239,6 @@ getcore() {
         content_line "\033[32m${UPG_CORE_DOWNLOAD_OK_TEXT_PREFIX}${crashcore}${UPG_CORE_DOWNLOAD_OK_TEXT_SUFFIX}\033[0m"
         separator_line "="
         sleep 1
-        switch_core
         ;;
     1)
         content_line "\033[31m$UPG_CORE_DOWNLOAD_FAIL_TEXT\033[0m"
@@ -299,7 +261,7 @@ setcore() {
         # 获取核心及版本信息
         [ -z "$crashcore" ] && crashcore="unknow"
         [ -z "$zip_type" ] && zip_type="tar.gz"
-        echo "$crashcore" | grep -q 'singbox' && core_old=singbox || core_old=clash
+        core_old=clash
 
         [ -z "$cpucore" ] && check_cpucore
 
@@ -480,7 +442,6 @@ setcustgeo() {
             sub_content_line "$UPG_GEO_LOCAL_ONLY1"
 
             content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-            sub_content_line "$UPG_GEO_LOCAL_ONLY2"
 
             content_line "5) \033[36;4mhttps://github.com/Loyalsoldier/geoip\033[0m"
             sub_content_line "$UPG_GEO_LOCAL_ONLY4"
@@ -545,17 +506,12 @@ setgeo() {
             "" \
             "$UPG_GEO_CHOOSE"
 
-        btm_box "$UPG_GEO_ITEM1	\033[33m$china_ip_list_v\033[0m" \
-            "$UPG_GEO_ITEM2	\033[33m$china_ipv6_list_v\033[0m" \
+        # concord 只吃 CIDR 文本 / mmdb / mrs；GeoSite.dat 和 srs 已移除
+        btm_box "$UPG_GEO_ITEM1\t\033[33m$china_ip_list_v\033[0m" \
+            "$UPG_GEO_ITEM2\t\033[33m$china_ipv6_list_v\033[0m" \
             "" \
-            "$UPG_GEO_ITEM3	\033[33m$cn_mini_v\033[0m" \
-            "$UPG_GEO_ITEM4	\033[33m$geosite_v\033[0m" \
-            "" \
+            "$UPG_GEO_ITEM3\t\033[33m$cn_mini_v\033[0m" \
             "$UPG_GEO_ITEM5" \
-            "$UPG_GEO_ITEM6" \
-            "" \
-            "$UPG_GEO_ITEM8" \
-            "$UPG_GEO_ITEM9" \
             "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " num
@@ -579,24 +535,11 @@ setgeo() {
             getgeo
             ;;
         4)
-            geotype=geosite.dat
-            geoname=GeoSite.dat
-            getgeo
-            ;;
-        5)
             geotype=mrs.tar.gz
             geoname=mrs.tar.gz
             getgeo
             ;;
-        6)
-            geotype=srs.tar.gz
-            geoname=srs.tar.gz
-            getgeo
-            ;;
-        8)
-            setcustgeo
-            ;;
-        9)
+        5)
             while true; do
                 comp_box "\033[33m${UPG_GEO_CLEAN_HINT1_PREFIX}${CRASHDIR}${UPG_GEO_CLEAN_HINT1_SUFFIX}\033[0m" \
                     "$UPG_GEO_CLEAN_HINT2"
@@ -608,10 +551,10 @@ setgeo() {
                     break
                     ;;
                 1)
-                    for file in cn_ip.txt cn_ipv6.txt *.mmdb *.metadb *.dat geoip.db geosite.db; do
+                    for file in cn_ip.txt cn_ipv6.txt *.mmdb *.metadb *.dat; do
                         rm -rf "$CRASHDIR"/$file
                     done
-                    for var in Country_v cn_mini_v china_ip_list_v china_ipv6_list_v geosite_v geoip_cn_v geosite_cn_v mrs_geosite_cn_v srs_geoip_cn_v srs_geosite_cn_v mrs_v srs_v; do
+                    for var in Country_v cn_mini_v china_ip_list_v china_ipv6_list_v mrs_geosite_cn_v mrs_v; do
                         setconfig $var
                     done
                     rm -rf "$CRASHDIR"/ruleset/*

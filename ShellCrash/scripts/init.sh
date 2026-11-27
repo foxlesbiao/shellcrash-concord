@@ -98,9 +98,7 @@ else
     . "$DIRECTORIES_FILE"
 fi
 [ -f "$COMMAND_FILE" ] || : > "$COMMAND_FILE"
-if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
-    COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
-elif [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
+if [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
     # concord 用 run -c <config> -d <datahome>，与 mihomo 的 -d/-f 完全不同
     COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
 else
@@ -204,7 +202,7 @@ for file in config.yaml.bak user.yaml proxies.yaml proxy-groups.yaml rules.yaml 
     mv -f "$CRASHDIR"/"$file" "$CRASHDIR"/yamls/"$file" 2>/dev/null
 done
 [ ! -L "$CRASHDIR"/config.yaml ] && mv -f "$CRASHDIR"/config.yaml "$CRASHDIR"/yamls/config.yaml 2>/dev/null
-for file in fake_ip_filter mac web_save servers_chs.list servers_en.list fake_ip_filter.list singbox_providers.list clash_providers.list; do
+for file in fake_ip_filter mac web_save servers_chs.list servers_en.list fake_ip_filter.list clash_providers.list; do
     mv -f "$CRASHDIR"/"$file" "$CRASHDIR"/configs/"$file" 2>/dev/null
 done
 #迁移任务状态文件到新目录

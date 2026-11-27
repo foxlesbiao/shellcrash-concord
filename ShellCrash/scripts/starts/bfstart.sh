@@ -124,9 +124,9 @@ catpac                                       #生成pac文件
     mkdir -p "$BINDIR"/providers
     ln -sf "$CRASHDIR"/providers/* "$BINDIR"/providers/
 }
-if echo "$crashcore" | grep -q 'singbox'; then
-    # 本版只支持 concord；sing-box 相关脚本已移除
-    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 sing-box，请执行 sh install.sh 修复" 31
+# 本版只支持 concord；配置里写着别的内核说明装错了
+if [ -n "$crashcore" ] && ! echo "$crashcore" | grep -qi 'concord'; then
+    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 $crashcore，请执行 sh install.sh 修复" 31
     exit 1
 else
     . "$CRASHDIR"/starts/clash_check.sh && clash_check

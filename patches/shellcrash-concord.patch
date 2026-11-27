@@ -1,17 +1,28 @@
 diff --git a/scripts/init.sh b/scripts/init.sh
-index 338aed1..a4ea4a4 100644
+index 338aed1..b0885ae 100644
 --- a/scripts/init.sh
 +++ b/scripts/init.sh
-@@ -100,6 +100,9 @@ fi
+@@ -98,8 +98,9 @@ else
+     . "$DIRECTORIES_FILE"
+ fi
  [ -f "$COMMAND_FILE" ] || : > "$COMMAND_FILE"
- if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
-     COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
-+elif [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
+-if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
+-    COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
++if [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
 +    # concord 用 run -c <config> -d <datahome>，与 mihomo 的 -d/-f 完全不同
 +    COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
  else
      COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
  fi
+@@ -201,7 +202,7 @@ for file in config.yaml.bak user.yaml proxies.yaml proxy-groups.yaml rules.yaml
+     mv -f "$CRASHDIR"/"$file" "$CRASHDIR"/yamls/"$file" 2>/dev/null
+ done
+ [ ! -L "$CRASHDIR"/config.yaml ] && mv -f "$CRASHDIR"/config.yaml "$CRASHDIR"/yamls/config.yaml 2>/dev/null
+-for file in fake_ip_filter mac web_save servers_chs.list servers_en.list fake_ip_filter.list singbox_providers.list clash_providers.list; do
++for file in fake_ip_filter mac web_save servers_chs.list servers_en.list fake_ip_filter.list clash_providers.list; do
+     mv -f "$CRASHDIR"/"$file" "$CRASHDIR"/configs/"$file" 2>/dev/null
+ done
+ #迁移任务状态文件到新目录
 diff --git a/scripts/lang/chs/6_core_config.lang b/scripts/lang/chs/6_core_config.lang
 index 119c515..5a61afa 100644
 --- a/scripts/lang/chs/6_core_config.lang
@@ -25,23 +36,92 @@ index 119c515..5a61afa 100644
  CORECFG_ADD_PROVIDER_FIRST="请先添加提供者！"
  CORECFG_CLEAR_WARN="警告：这将删除所有提供者且无法还原！"
  CORECFG_CLEAR_CONFIRM="是否确认清空提供者列表："
+diff --git a/scripts/lang/chs/7_gateway.lang b/scripts/lang/chs/7_gateway.lang
+index 128508c..0145294 100644
+--- a/scripts/lang/chs/7_gateway.lang
++++ b/scripts/lang/chs/7_gateway.lang
+@@ -19,8 +19,7 @@ GW_MENU_TG_BOT="配置Telegram专属控制机器人"
+ GW_MENU_DDNS="配置DDNS自动域名"
+ GW_MENU_VMESS="自定义公网Vmess入站节点"
+ GW_MENU_SHADOWSOCKS="自定义公网ShadowSocks入站节点"
+-GW_MENU_TS="配置Tailscale内网穿透（限Singbox）"
+-GW_MENU_WG="配置Wireguard客户端（限Singbox）"
++GW_MENU_WG="配置 Wireguard 客户端"
+ GW_FW_STOP_WARN="公网访问防火墙需要先停止服务"
+ GW_CONFIRM_CONTINUE="是否确认继续？"
+ GW_YES="是"
+@@ -70,19 +69,6 @@ GW_SS_SET_PWD="设置password："
+ GW_SS_2022_NOTE_HEADER="   - - - - - - -\033[31m注意\033[0m- - - - - - -"
+ GW_SS_2022_REQUIRE="   2022系列加密必须使用随机生成的password！"
+ GW_SS_2022_PASSWORD_ONLY="2022系列加密必须使用脚本随机生成的password！"
+-GW_TS_WARN="脚本默认内核为了节约内存没有编译Tailscale模块\n如需使用请先前往自定义内核更新完整版内核文件！"
+-GW_TS_KEY_URL="创建密钥:\033[32;4mhttps://login.tailscale.com/admin/settings/keys\033[0m"
+-GW_TS_ALLOW_URL="访问非本机目标需允许通告:\033[32;4mhttps://login.tailscale.com\033[0m"
+-GW_TS_SUBNET_EXIT_HINT="访问非本机目标需在终端设置使用Subnet或EXIT-NODE模式"
+-GW_TS_TOGGLE="启用/关闭Tailscale服务"
+-GW_TS_SET_AUTHKEY="设置密钥（Auth Key）"
+-GW_TS_SUBNET="通告路由内网地址（Subnet）"
+-GW_TS_EXIT_NODE="通告路由全部流量（EXIT-NODE）"
+-GW_TS_HOSTNAME="设置设备名称（可选）"
+-GW_TS_SET_KEY_FIRST="请先设置密钥！"
+-GW_TS_INPUT_KEY="请输入密钥（输入0删除）"
+-GW_TS_EXITNODE_WARN="目前exitnode的官方DNS有bug，要么启用域名嗅探并禁用TailscaleDNS，\n要么必须在网页设置Globalname servers为分配的本设备子网IP且启用override"
+-GW_TS_INPUT_NAME="请直接输入希望在Tailscale显示的设备名称"
+ GW_WG_WARN="脚本默认内核为了节约内存没有编译WireGuard模块\n如需使用请先前往自定义内核更新完整版内核文件！"
+ GW_WG_TOGGLE="启用/关闭Wireguard服务"
+ GW_WG_SET_ENDPOINT="设置Endpoint地址："
 diff --git a/scripts/lang/chs/9_upgrade.lang b/scripts/lang/chs/9_upgrade.lang
-index de986d3..05da09e 100644
+index de986d3..c7fab90 100644
 --- a/scripts/lang/chs/9_upgrade.lang
 +++ b/scripts/lang/chs/9_upgrade.lang
-@@ -127,9 +127,9 @@ UPG_GEO_CUSTOM_HINT2="请点击或复制链接前往项目页面查看具体说
+@@ -101,11 +101,8 @@ UPG_CORE_MENU_CURRENT="当前内核："
+ UPG_CORE_MENU_SYS="当前系统处理器架构："
+ UPG_CORE_MENU_LOCAL_HINT="如需本地上传，请将.upx .gz .tar.gz文件上传至 /tmp 目录后重新运行crash命令"
+ UPG_CORE_MENU_SELECT="请选择需要使用的核心版本："
+-UPG_CORE_MENU_1_PREFIX="1) \033[43;30mMihomo\033[0m：\033[32m"
+ UPG_CORE_MENU_1_SUFFIX=" \033[32m（原meta内核）支持全面\033[0m \033[33m占用略高\033[0m"
+-UPG_CORE_MENU_2_PREFIX="2) \033[43;30mSingBoxR\033[0m：\033[32m"
+ UPG_CORE_MENU_2_SUFFIX=" \033[32m支持全面\033[0m \033[33m使用reF1nd增强分支\033[0m"
+-UPG_CORE_MENU_3_PREFIX="3) \033[43;30mSingBox\033[0m：\033[32m"
+ UPG_CORE_MENU_3_SUFFIX=" \033[32m占用较低\033[0m \033[33m不支持providers\033[0m"
+ UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
+ UPG_CORE_MENU_4_SUFFIX=" \033[32m占用低\033[0m \033[33m不安全,已停止维护\033[0m"
+@@ -127,9 +124,8 @@ UPG_GEO_CUSTOM_HINT2="请点击或复制链接前往项目页面查看具体说
  UPG_GEO_CUSTOM_HINT3="自定义数据库不支持定时任务及小闪存模式！"
  UPG_GEO_CUSTOM_HINT4="如遇到网络错误请先启动ShellCrash服务！"
  UPG_GEO_SOURCE_SELECT="请选择需要更新的数据库项目来源："
 -UPG_GEO_LOCAL_ONLY1="（仅限Clash/Mihomo）"
-+UPG_GEO_LOCAL_ONLY1="（mmdb 格式）"
- UPG_GEO_LOCAL_ONLY2="（仅限SingBox-srs）"
+-UPG_GEO_LOCAL_ONLY2="（仅限SingBox-srs）"
 -UPG_GEO_LOCAL_ONLY3="（仅限Mihomo-mrs）"
++UPG_GEO_LOCAL_ONLY1="（mmdb 格式）"
 +UPG_GEO_LOCAL_ONLY3="（mrs 格式）"
  UPG_GEO_LOCAL_ONLY4="（仅限Clash-GeoIP）"
  UPG_GEO_CUSTOM_LINK="自定义数据库链接"
  UPG_GEO_CLEAN_HINT1_PREFIX="这将清理"
-@@ -227,7 +227,7 @@ UPG_CORE_ASUS_WARN="Meta内核使用的GeoSite.dat数据库在华硕设备存在
+@@ -195,8 +191,6 @@ UPG_SOURCE_ROLLBACK_FAIL="版本回退信息获取失败，请尝试更换其他
+ UPG_SOURCE_ROLLBACK_NOTSUP="当前源不支持版本回退"
+ UPG_SOURCE_ROLLBACK_HINT="请尝试更换其他安装源！"
+ UPG_THANKS_ITEM_CLASH="Clash              开发：Dreamacro"
+-UPG_THANKS_ITEM_SINGBOX="sing-box           开发：SagerNet"
+-UPG_THANKS_ITEM_SINGBOX_URL="项目地址：https://github.com/SagerNet/sing-box"
+ UPG_THANKS_ITEM_METACUBE="MetaCubeX          开发：MetaCubeX"
+ UPG_THANKS_ITEM_METACUBE_URL="项目地址：https://github.com/MetaCubeX"
+ UPG_THANKS_ITEM_YACD="YACD面板           开发：haishanh"
+@@ -211,13 +205,10 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          开发：DustinWin"
+ UPG_THANKS_ITEM_DUSTIN_URL="开发者地址：https://github.com/DustinWin"
+ UPG_CORE_GET_LINK_TITLE="正在获取内核文件链接......"
+ UPG_CUSTOM_CORE_NOTE1="不支持Gvisor、Tailscale、Wireguard、NaiveProxy"
+-UPG_CORE_V1_PREFIX="1) \033[43;30mMihomo\033[0m：\033[32m"
+ UPG_CORE_V1_SUFFIX=" \033[32m（原meta内核）支持全面\033[0m \033[33m占用略高\033[0m"
+ UPG_CORE_V1_DOC="说明文档：\033[36;4mhttps://wiki.metacubex.one\033[0m"
+-UPG_CORE_V2_PREFIX="2) \033[43;30mSingBoxR\033[0m：\033[32m"
+ UPG_CORE_V2_SUFFIX=" \033[32m支持全面\033[0m \033[33m使用reF1nd增强分支\033[0m"
+ UPG_CORE_V2_DOC="说明文档：\033[36;4mhttps://sing-boxr.dustinwin.cc.cd\033[0m"
+-UPG_CORE_V3_PREFIX="3) \033[43;30mSingBox\033[0m：\033[32m"
+ UPG_CORE_V3_SUFFIX=" \033[32m占用较低\033[0m \033[33m不支持providers\033[0m"
+ UPG_CORE_V3_DOC="说明文档：\033[36;4mhttps://sing-box.sagernet.org\033[0m"
+ UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
+@@ -227,15 +218,14 @@ UPG_CORE_ASUS_WARN="Meta内核使用的GeoSite.dat数据库在华硕设备存在
  UPG_GEO_FIND_TITLE="正在查找可更新的数据库文件......"
  UPG_GEO_SOURCE_TITLE="请选择需要更新的数据库项目来源："
  UPG_GEO_LINK_HINT="请输入自定义数据库的链接地址> "
@@ -50,11 +130,30 @@ index de986d3..05da09e 100644
  UPG_GEO_LATEST="在线数据库最新版本（每日同步上游）："
  UPG_GEO_CHOOSE="请选择需要更新的Geo数据库文件："
  UPG_GEO_ITEM1="1) CN-IP绕过文件（约0.1mb）"
+ UPG_GEO_ITEM2="2) CN-IPV6绕过文件（约30kb）"
+-UPG_GEO_ITEM3="3) Mihomo精简版GeoIP_cn数据库（约0.1mb）"
+-UPG_GEO_ITEM4="4) Mihomo完整版GeoSite数据库（约5mb）"
+-UPG_GEO_ITEM5="5) Mihomo-mrs数据库常用包（约1mb,非必要勿用）"
+-UPG_GEO_ITEM6="6) Singbox-srs数据库常用包（约0.8mb,非必要勿用）"
++UPG_GEO_ITEM3="3) 精简版 GeoIP_cn 数据库 mmdb（约0.1mb）"
++UPG_GEO_ITEM4="4) 完整版 GeoSite 数据库（约5mb）"
++UPG_GEO_ITEM5="5) mrs 规则集常用包（约1mb）"
+ UPG_GEO_ITEM8="8) \033[36m自定义数据库文件\033[0m"
+ UPG_GEO_ITEM9="9) \033[31m清理数据库文件\033[0m"
+ UPG_GEO_CLEAN_PROMPT="确认清理"
 diff --git a/scripts/lang/chs/dns.lang b/scripts/lang/chs/dns.lang
-index d735c34..87bb6ea 100644
+index d735c34..801775d 100644
 --- a/scripts/lang/chs/dns.lang
 +++ b/scripts/lang/chs/dns.lang
-@@ -50,7 +50,7 @@ DNS_ADV_RESET="重置默认DNS配置"
+@@ -38,7 +38,6 @@ DNS_FAKEIP_EDIT="输入序号移除，输入地址添加"
+ #=====DNS高级=====
+ DNS_ADV_SPLIT="多个DNS地址请使用“|”或“,”分隔输入"
+ DNS_ADV_CERT="使用DoH/DoT需具备本地根证书文件"
+-DNS_ADV_SINGBOX_LIMIT="注意：SingBox内核仅加载第一个DNS"
+ 
+ DNS_ADV_EDIT_DIRECT="修改DIRECT-DNS"
+ DNS_ADV_EDIT_PROXY="修改PROXY-DNS（该DNS查询会经过节点）"
+@@ -50,7 +49,7 @@ DNS_ADV_RESET="重置默认DNS配置"
  DNS_IPV6_NOT_SUPPORT="该选项暂不支持IPv6加密DNS！"
  
  DNS_ENCRYPT_OK="已设置加密DNS，如遇DNS解析问题，请重置DNS配置！"
@@ -63,6 +162,12 @@ index d735c34..87bb6ea 100644
  DNS_SET_TO="设为"
  DNS_REMOVE_OK="移除成功"
  DNS_REMOVE_FAIL="移除失败"
+@@ -86,4 +85,4 @@ DNS_DIRECT_TEST_NOT_IN_LIST="✗ 该域名未在直连列表中"
+ 
+ #=====DNS故障回退=====
+ DNS_ADV_FAILOVER="PROXY-DNS故障回退"
+-DNS_ADV_FAILOVER_TIP="代理DNS查询失败或无可用IP时，回退到DIRECT-DNS解析（仅Mihomo Route模式且开启DNS防泄漏时生效）"
++DNS_ADV_FAILOVER_TIP="代理DNS查询失败或无可用IP时，回退到DIRECT-DNS解析（仅 Route 模式且开启DNS防泄漏时生效）"
 diff --git a/scripts/lang/chs/override.lang b/scripts/lang/chs/override.lang
 index a5a0171..d78e1a9 100644
 --- a/scripts/lang/chs/override.lang
@@ -76,6 +181,18 @@ index a5a0171..d78e1a9 100644
  OVR_RULES_WARN="大量规则请尽量使用rule-set功能添加，\n\033[31m此处过量添加可能导致启动卡顿！\033[0m"
  OVR_RULES_ADD="1) 新增自定义规则"
  OVR_RULES_DEL="2) 移除自定义规则"
+diff --git a/scripts/lang/chs/providers.lang b/scripts/lang/chs/providers.lang
+index f92e2ce..22de880 100644
+--- a/scripts/lang/chs/providers.lang
++++ b/scripts/lang/chs/providers.lang
+@@ -17,7 +17,6 @@ PROVIDERS_CLEAN_CONFIRM="是否继续？"
+ PROVIDERS_FETCHING_TEMPLATE="正在获取在线模版......"
+ PROVIDERS_DOWNLOAD_FAILED="下载失败，请尝试更换安装源！"
+ PROVIDERS_GEN_OK="配置文件生成成功！"
+-PROVIDERS_GEN_OK_SINGBOX="配置文件生成成功！如果启动超时建议更新里手动安装Singbox-srs数据库常用包！"
+ PROVIDERS_GEN_FAILED="生成配置文件出错，请仔细检查输入！"
+ PROVIDERS_RESTART_ASK="是否立即启动/重启服务？"
+ PROVIDERS_YES="是"
 diff --git a/scripts/lang/en/6_core_config.lang b/scripts/lang/en/6_core_config.lang
 index ddb83eb..9415431 100644
 --- a/scripts/lang/en/6_core_config.lang
@@ -89,11 +206,172 @@ index ddb83eb..9415431 100644
  CORECFG_ADD_PROVIDER_FIRST="Please add provider first!"
  CORECFG_CLEAR_WARN="Warning: this will delete all providers and cannot be undone!"
  CORECFG_CLEAR_CONFIRM="Confirm clearing provider list:"
+diff --git a/scripts/lang/en/7_gateway.lang b/scripts/lang/en/7_gateway.lang
+index f74107c..be12960 100644
+--- a/scripts/lang/en/7_gateway.lang
++++ b/scripts/lang/en/7_gateway.lang
+@@ -19,8 +19,7 @@ GW_MENU_TG_BOT="Configure Telegram Control Bot"
+ GW_MENU_DDNS="Configure DDNS Domain"
+ GW_MENU_VMESS="Custom Public Vmess Inbound"
+ GW_MENU_SHADOWSOCKS="Custom Public ShadowSocks Inbound"
+-GW_MENU_TS="Configure Tailscale Intranet (Singbox only)"
+-GW_MENU_WG="Configure Wireguard Client (Singbox only)"
++GW_MENU_WG="Configure WireGuard client"
+ GW_FW_STOP_WARN="WAN firewall requires stopping the service first"
+ GW_CONFIRM_CONTINUE="Continue?"
+ GW_YES="Yes"
+@@ -70,19 +69,6 @@ GW_SS_SET_PWD="Set password:"
+ GW_SS_2022_NOTE_HEADER="   - - - - - - -\033[31mNotice\033[0m- - - - - - -"
+ GW_SS_2022_REQUIRE="   2022 ciphers require a randomly generated password!"
+ GW_SS_2022_PASSWORD_ONLY="2022 ciphers require a script-generated password!"
+-GW_TS_WARN="The default core is built without the Tailscale module to save memory.\nPlease switch to a full custom core if you need it!"
+-GW_TS_KEY_URL="Create key:\033[32;4mhttps://login.tailscale.com/admin/settings/keys\033[0m"
+-GW_TS_ALLOW_URL="Allow advertised routes for non-local targets:\033[32;4mhttps://login.tailscale.com\033[0m"
+-GW_TS_SUBNET_EXIT_HINT="For non-local targets, use Subnet or EXIT-NODE mode in the client"
+-GW_TS_TOGGLE="Enable/Disable Tailscale service"
+-GW_TS_SET_AUTHKEY="Set Auth Key"
+-GW_TS_SUBNET="Advertise subnet routes"
+-GW_TS_EXIT_NODE="Advertise all traffic (EXIT-NODE)"
+-GW_TS_HOSTNAME="Set device name (optional)"
+-GW_TS_SET_KEY_FIRST="Please set the Auth Key first!"
+-GW_TS_INPUT_KEY="Enter Auth Key (0 to delete)"
+-GW_TS_EXITNODE_WARN="The official exitnode DNS has a bug. Either enable domain sniffing and disable Tailscale DNS,\nor set Globalname servers to this device subnet IP in the web UI and enable override."
+-GW_TS_INPUT_NAME="Enter the device name to show in Tailscale"
+ GW_WG_WARN="The default core is built without the WireGuard module to save memory.\nPlease switch to a full custom core if you need it!"
+ GW_WG_TOGGLE="Enable/Disable Wireguard service"
+ GW_WG_SET_ENDPOINT="Set Endpoint address:"
+diff --git a/scripts/lang/en/9_upgrade.lang b/scripts/lang/en/9_upgrade.lang
+index 5e91c1e..96c5741 100644
+--- a/scripts/lang/en/9_upgrade.lang
++++ b/scripts/lang/en/9_upgrade.lang
+@@ -101,11 +101,8 @@ UPG_CORE_MENU_CURRENT="Current core: "
+ UPG_CORE_MENU_SYS="Current CPU architecture: "
+ UPG_CORE_MENU_LOCAL_HINT="If uploading locally, place .upx, .gz, or .tar.gz files in /tmp and rerun the crash command"
+ UPG_CORE_MENU_SELECT="Please choose the core version to use:"
+-UPG_CORE_MENU_1_PREFIX="1) \033[43;30mMihomo\033[0m: \033[32m"
+ UPG_CORE_MENU_1_SUFFIX=" \033[32m(full meta core) highly compatible\033[0m \033[33mmore resource usage\033[0m"
+-UPG_CORE_MENU_2_PREFIX="2) \033[43;30mSingBoxR\033[0m: \033[32m"
+ UPG_CORE_MENU_2_SUFFIX=" \033[32mfully featured\033[0m \033[33mreF1nd enhanced branch\033[0m"
+-UPG_CORE_MENU_3_PREFIX="3) \033[43;30mSingBox\033[0m: \033[32m"
+ UPG_CORE_MENU_3_SUFFIX=" \033[32mlower resource usage\033[0m \033[33mproviders are not supported\033[0m"
+ UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
+ UPG_CORE_MENU_4_SUFFIX=" \033[32mlow resource usage\033[0m \033[33munsafe, maintenance stopped\033[0m"
+@@ -127,9 +124,8 @@ UPG_GEO_CUSTOM_HINT2="Please click or copy the link to visit the project page fo
+ UPG_GEO_CUSTOM_HINT3="Custom databases do not support scheduled tasks or low-flash mode!"
+ UPG_GEO_CUSTOM_HINT4="If you encounter network errors, start the ShellCrash service first!"
+ UPG_GEO_SOURCE_SELECT="Please choose the database source:"
+-UPG_GEO_LOCAL_ONLY1="(Clash/Mihomo only)"
+-UPG_GEO_LOCAL_ONLY2="(SingBox-srs only)"
+-UPG_GEO_LOCAL_ONLY3="(Mihomo-mrs only)"
++UPG_GEO_LOCAL_ONLY1="(mmdb format)"
++UPG_GEO_LOCAL_ONLY3="(mrs format)"
+ UPG_GEO_LOCAL_ONLY4="(Clash-GeoIP only)"
+ UPG_GEO_CUSTOM_LINK="Custom database link"
+ UPG_GEO_CLEAN_HINT1_PREFIX="This will clean all database files under "
+@@ -195,8 +191,6 @@ UPG_SOURCE_ROLLBACK_FAIL="Failed to fetch rollback information. Please try anoth
+ UPG_SOURCE_ROLLBACK_NOTSUP="Current source does not support version rollback"
+ UPG_SOURCE_ROLLBACK_HINT="Please try another installation source!"
+ UPG_THANKS_ITEM_CLASH="Clash              Developer: Dreamacro"
+-UPG_THANKS_ITEM_SINGBOX="sing-box           Developer: SagerNet"
+-UPG_THANKS_ITEM_SINGBOX_URL="Project: https://github.com/SagerNet/sing-box"
+ UPG_THANKS_ITEM_METACUBE="MetaCubeX          Developer: MetaCubeX"
+ UPG_THANKS_ITEM_METACUBE_URL="Project: https://github.com/MetaCubeX"
+ UPG_THANKS_ITEM_YACD="YACD panel         Developer: haishanh"
+@@ -211,13 +205,10 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          Developer: DustinWin"
+ UPG_THANKS_ITEM_DUSTIN_URL="Developer: https://github.com/DustinWin"
+ UPG_CORE_GET_LINK_TITLE="Fetching core file links..."
+ UPG_CUSTOM_CORE_NOTE1="Gvisor, Tailscale, Wireguard, and NaiveProxy are not supported"
+-UPG_CORE_V1_PREFIX="1) \033[43;30mMihomo\033[0m: \033[32m"
+ UPG_CORE_V1_SUFFIX=" \033[32m(full meta core) highly compatible\033[0m \033[33mmore resource usage\033[0m"
+ UPG_CORE_V1_DOC="Docs: \033[36;4mhttps://wiki.metacubex.one\033[0m"
+-UPG_CORE_V2_PREFIX="2) \033[43;30mSingBoxR\033[0m: \033[32m"
+ UPG_CORE_V2_SUFFIX=" \033[32mfully featured\033[0m \033[33mreF1nd enhanced branch\033[0m"
+ UPG_CORE_V2_DOC="Docs: \033[36;4mhttps://sing-boxr.dustinwin.cc.cd\033[0m"
+-UPG_CORE_V3_PREFIX="3) \033[43;30mSingBox\033[0m: \033[32m"
+ UPG_CORE_V3_SUFFIX=" \033[32mlower resource usage\033[0m \033[33mproviders are not supported\033[0m"
+ UPG_CORE_V3_DOC="Docs: \033[36;4mhttps://sing-box.sagernet.org\033[0m"
+ UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
+@@ -227,15 +218,14 @@ UPG_CORE_ASUS_WARN="The GeoSite.dat database used by Meta core may be deleted by
+ UPG_GEO_FIND_TITLE="Searching for updatable database files..."
+ UPG_GEO_SOURCE_TITLE="Please choose the database source:"
+ UPG_GEO_LINK_HINT="Please enter the custom database URL> "
+-UPG_GEO_CHOOSE_HINT="Note: Mihomo and SingBox database files are not interchangeable"
++UPG_GEO_CHOOSE_HINT="Note: concord reads only mmdb and mrs formats"
+ UPG_GEO_LATEST="Latest online database version (synced daily): "
+ UPG_GEO_CHOOSE="Please choose the Geo database file to update:"
+ UPG_GEO_ITEM1="1) CN-IP bypass file (about 0.1mb)"
+ UPG_GEO_ITEM2="2) CN-IPV6 bypass file (about 30kb)"
+-UPG_GEO_ITEM3="3) Mihomo lite GeoIP_cn database (about 0.1mb)"
+-UPG_GEO_ITEM4="4) Mihomo full GeoSite database (about 5mb)"
+-UPG_GEO_ITEM5="5) Mihomo-mrs common package (about 1mb, use only if needed)"
+-UPG_GEO_ITEM6="6) SingBox-srs common package (about 0.8mb, use only if needed)"
++UPG_GEO_ITEM3="3) Lite GeoIP_cn mmdb database (about 0.1mb)"
++UPG_GEO_ITEM4="4) Full GeoSite database (about 5mb)"
++UPG_GEO_ITEM5="5) mrs ruleset common package (about 1mb)"
+ UPG_GEO_ITEM8="8) \033[36mCustom database file\033[0m"
+ UPG_GEO_ITEM9="9) \033[31mClean database files\033[0m"
+ UPG_GEO_CLEAN_PROMPT="Confirm cleanup"
+diff --git a/scripts/lang/en/dns.lang b/scripts/lang/en/dns.lang
+index 6e13071..53759bd 100644
+--- a/scripts/lang/en/dns.lang
++++ b/scripts/lang/en/dns.lang
+@@ -39,7 +39,6 @@ DNS_FAKEIP_EDIT="Enter a number to remove an entry, or enter an address to add o
+ #===== Advanced DNS =====
+ DNS_ADV_SPLIT="Use '|' or ',' to separate multiple DNS addresses"
+ DNS_ADV_CERT="DoH/DoT requires a local root certificate file"
+-DNS_ADV_SINGBOX_LIMIT="Note: SingBox core only loads the first DNS entry"
+ 
+ DNS_ADV_EDIT_DIRECT="Edit DIRECT-DNS"
+ DNS_ADV_EDIT_PROXY="Edit PROXY-DNS (queries go through the proxy)"
+@@ -52,7 +51,7 @@ DNS_INPUT_NEW="Enter new DNS address>"
+ DNS_IPV6_NOT_SUPPORT="This option does not support IPv6 encrypted DNS!"
+ 
+ DNS_ENCRYPT_OK="Encrypted DNS has been configured. If DNS issues occur, please reset DNS settings."
+-DNS_CORE_REQUIRE="Please use the Mihomo or SingBox core"
++DNS_CORE_REQUIRE="This feature requires the concord core"
+ DNS_SET_TO="Set to"
+ DNS_REMOVE_OK="Removed successfully"
+ DNS_REMOVE_FAIL="Remove failed"
+@@ -88,4 +87,4 @@ DNS_DIRECT_TEST_NOT_IN_LIST="✗ This domain is not in the direct DNS list"
+ 
+ #===== DNS Failover =====
+ DNS_ADV_FAILOVER="PROXY-DNS Failover"
+-DNS_ADV_FAILOVER_TIP="Fallback to DIRECT-DNS when proxy DNS fails or returns no IP (Mihomo Route mode + Leak Protect ON only)"
++DNS_ADV_FAILOVER_TIP="Fallback to DIRECT-DNS when proxy DNS fails or returns no IP (Route mode + Leak Protect ON only)"
+diff --git a/scripts/lang/en/override.lang b/scripts/lang/en/override.lang
+index 60ea88a..406cec8 100644
+--- a/scripts/lang/en/override.lang
++++ b/scripts/lang/en/override.lang
+@@ -19,7 +19,7 @@ OVR_CONFIRM_NO="0) No, return to previous menu"
+ OVR_RULES_TITLE="Custom Rules"
+ OVR_RULES_MENU_HINT="You can quickly manage custom rules here"
+ OVR_RULES_MANUAL="For batch operations, edit manually: \033[36m $YAMLSDIR/rules.yaml\033[0m"
+-OVR_RULES_SHARED="singbox and clash share these rules, so switching is seamless!"
++OVR_RULES_SHARED="These rules are loaded by the concord core"
+ OVR_RULES_WARN="For many rules, use the rule-set feature as much as possible.\n\033[31mToo many rules here may cause startup lag!\033[0m"
+ OVR_RULES_ADD="1) Add custom rule"
+ OVR_RULES_DEL="2) Remove custom rule"
+diff --git a/scripts/libs/check_target.sh b/scripts/libs/check_target.sh
+index 81a45e8..20a1d40 100644
+--- a/scripts/libs/check_target.sh
++++ b/scripts/libs/check_target.sh
+@@ -1,8 +1,4 @@
+-if echo "$crashcore" | grep -q 'singbox'; then
+-    target=singbox
+-    format=json
+-else
+-    target=clash
+-    format=yaml
+-fi
++# concord 只读 mihomo 的 yaml 配置格式，不存在 sing-box 的 json 分支
++target=clash
++format=yaml
+ core_config="$CRASHDIR/${format}s/config.$format"
 diff --git a/scripts/libs/core_tools.sh b/scripts/libs/core_tools.sh
-index 684ca55..cce27e0 100644
+index 684ca55..039e786 100644
 --- a/scripts/libs/core_tools.sh
 +++ b/scripts/libs/core_tools.sh
-@@ -41,7 +41,9 @@ core_find(){
+@@ -41,19 +41,24 @@ core_find(){
      if [ ! -f "$TMPDIR"/CrashCore ];then
          [ -n "$(find "$CRASHDIR"/CrashCore.* $find_para 2>/dev/null)" ] && [ "$CRASHDIR" != "$BINDIR" ] &&
              mv -f "$CRASHDIR"/CrashCore.* "$BINDIR"/
@@ -104,11 +382,15 @@ index 684ca55..cce27e0 100644
          [ -n "$core_dir" ] && core_unzip "$core_dir" CrashCore
      fi
  }
-@@ -50,7 +52,14 @@ core_check(){
+ core_check(){
+     [ -n "$(pidof CrashCore)" ] && "$CRASHDIR"/start.sh stop #停止内核服务防止内存不足
      core_unzip "$1" core_new
-     sbcheck=$(echo "$crashcore" | grep 'singbox')
+-    sbcheck=$(echo "$crashcore" | grep 'singbox')
      v=''
 -    if [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
+-        v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
+-        COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
+-    elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
 +    # 按二进制的实际能力判定内核类型，不依赖配置里的 $crashcore——
 +    # 配置可能与实际内核不符（例如首次安装的兜底值是 meta，而下载的却是 concord）。
 +    if "$TMPDIR"/core_new run -h 2>&1 | grep -qi 'concord'; then
@@ -116,10 +398,10 @@ index 684ca55..cce27e0 100644
 +        # 数据目录必须独立，否则 concord 会往 $BINDIR 里写自己的 config.yaml。
 +        v="${concord_v:-0.1.0}"
 +        COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
-+    elif [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
-         v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
-         COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
-     elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
++    elif "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+         v=$("$TMPDIR"/core_new -v 2>/dev/null | head -n 1 | sed 's/ linux.*//;s/.* //')
+         COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
+     fi
 diff --git a/scripts/libs/meta_listeners.sh b/a/scripts/libs/meta_listeners.sh
 deleted file mode 100644
 index cf9d5b6..0000000
@@ -187,7 +469,7 @@ index d434b67..e5a6900 100644
          bin_url="$update_url/$2"
      fi
 diff --git a/scripts/menu.sh b/scripts/menu.sh
-index a685d35..a6d83ce 100644
+index a685d35..7eb7e1e 100644
 --- a/scripts/menu.sh
 +++ b/scripts/menu.sh
 @@ -105,6 +105,10 @@ ckstatus() {
@@ -201,17 +483,26 @@ index a685d35..a6d83ce 100644
      else
          dbdir="$CRASHDIR"/ui
          hostdir=":$db_port/ui"
-@@ -127,7 +131,7 @@ ckstatus() {
+@@ -127,7 +131,8 @@ ckstatus() {
          # 检测系统端口占用
          checkport
      fi
 -    corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/')
-+    corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/' | sed 's/concord/Concord/')
++    # 本版只有 concord 一个内核
++    corename=Concord
      # [ "$firewall_area" = 5 ] && corename='转发'
      [ -f "$TMPDIR"/debug.log -o -f "$CRASHDIR"/debug.log -a -n "$PID" ] && auto="\033[33m$MENU_AUTOSTART_DEBUG\033[0m"
  
+@@ -156,7 +161,6 @@ ckstatus() {
+             . "$CRASHDIR"/libs/core_tools.sh && core_check "$tmp_file"
+             if [ "$?" = 0 ] && [ -n "$crashcore" ]; then
+                 msg_alert "\033[32m$MENU_CORE_LOADED_OK\033[0m"
+-                switch_core
+             else
+                 rm -rf "$tmp_file"
+                 msg_alert "\033[33m$MENU_CORE_LOADED_BAD\033[0m" \
 diff --git a/scripts/menus/1_start.sh b/scripts/menus/1_start.sh
-index 9516133..2c616e0 100644
+index 9516133..c1d4c7d 100644
 --- a/scripts/menus/1_start.sh
 +++ b/scripts/menus/1_start.sh
 @@ -11,7 +11,9 @@ startover() {
@@ -225,24 +516,77 @@ index 9516133..2c616e0 100644
          content_line "$START_PROXY_HINT IP{\033[36m$host\033[0m} Port{\033[36m$mix_port\033[0m}"
      fi
      separator_line "="
+@@ -22,18 +24,10 @@ startover() {
+ 
+ # ===== 启动核心 =====
+ start_core() {
+-    if echo "$crashcore" | grep -q 'singbox'; then
+-        core_config="$CRASHDIR/jsons/config.json"
+-    else
+-        core_config="$CRASHDIR/yamls/config.yaml"
+-    fi
++    core_config="$CRASHDIR/yamls/config.yaml"
+ 
+     if [ ! -s "$core_config" ] && [ -s "$CRASHDIR/configs/providers.cfg" ]; then
+-        if [ "$crashcore" = singboxr ]; then
+-            CORE_TYPE=singbox
+-        else
+-            CORE_TYPE=clash
+-        fi
++        CORE_TYPE=clash
+         . "$CRASHDIR/menus/providers_$CORE_TYPE.sh" && gen_providers
+ 
+         comp_box "\033[33m$START_NO_CORE_CFG_TRY_GEN\033[0m"
+diff --git a/scripts/menus/2_settings.sh b/scripts/menus/2_settings.sh
+index e73f45f..f836e21 100644
+--- a/scripts/menus/2_settings.sh
++++ b/scripts/menus/2_settings.sh
+@@ -11,10 +11,7 @@ settings() {
+     while true; do
+         # 获取设置默认显示
+         [ -z "$skip_cert" ] && skip_cert=ON
+-        [ -z "$sniffer" ] && {
+-            sniffer=OFF
+-            echo "$crashcore" | grep -q 'singbox' && sniffer=ON
+-        }
++        [ -z "$sniffer" ] && sniffer=OFF
+         [ -z "$dns_mod" ] && dns_mod='redir_host'
+         [ -z "$udp_buffer" ] && udp_buffer=OFF
+ 
 diff --git a/scripts/menus/6_core_config.sh b/scripts/menus/6_core_config.sh
-index e91e98c..443a4cd 100644
+index e91e98c..626ea37 100644
 --- a/scripts/menus/6_core_config.sh
 +++ b/scripts/menus/6_core_config.sh
-@@ -70,7 +70,7 @@ set_core_config() {
+@@ -6,13 +6,8 @@ __IS_MODULE_6_CORECONFIG_LOADED=1
+ 
+ load_lang 6_core_config
+ 
+-if echo "$crashcore" | grep -q 'singbox'; then
+-    CONFIG_PATH="$CRASHDIR"/jsons/config.json
+-    CORE_TYPE=singbox
+-else
+-    CONFIG_PATH="$CRASHDIR"/yamls/config.yaml
+-    CORE_TYPE=clash
+-fi
++CONFIG_PATH="$CRASHDIR"/yamls/config.yaml
++CORE_TYPE=clash
+ URI_EXP='ss|vmess|vless|trojan|tuic|anytls|shadowtls|hysteria(2)?'
+ 
+ # 按变量名字面值删除订阅配置
+@@ -70,7 +65,7 @@ set_core_config() {
              ;;
          b)
              if [ -s "$CRASHDIR"/configs/providers.cfg ] || [ -s "$CRASHDIR"/configs/providers_uri.cfg ]; then
 -                if [ "$crashcore" = meta ] || [ "$crashcore" = singboxr ]; then
-+                if [ "$crashcore" = meta ] || [ "$crashcore" = singboxr ] || echo "$crashcore" | grep -qi 'concord'; then
++                if [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
                      . "$CRASHDIR"/menus/providers.sh
                      providers
                  else
 diff --git a/scripts/menus/7_gateway.sh b/scripts/menus/7_gateway.sh
-index 7338b9f..2d7b765 100644
+index 7338b9f..78823d1 100644
 --- a/scripts/menus/7_gateway.sh
 +++ b/scripts/menus/7_gateway.sh
-@@ -17,10 +17,8 @@ gateway() {
+@@ -17,10 +17,7 @@ gateway() {
          content_line "2) $GW_MENU_TG_BOT		\033[32m$bot_tg_service\033[0m"
          content_line "3) $GW_MENU_DDNS"
          [ "$disoverride" != "1" ] && {
@@ -250,12 +594,11 @@ index 7338b9f..2d7b765 100644
 -            content_line "5) $GW_MENU_SHADOWSOCKS	\033[32m$sss_service\033[0m"
 -            content_line "6) $GW_MENU_TS	\033[32m$ts_service\033[0m"
 -            content_line "7) $GW_MENU_WG	\033[32m$wg_service\033[0m"
-+            content_line "4) $GW_MENU_TS		\033[32m$ts_service\033[0m"
-+            content_line "5) $GW_MENU_WG	\033[32m$wg_service\033[0m"
++            content_line "4) $GW_MENU_WG\t\033[32m$wg_service\033[0m"
          }
          btm_box "" \
              "0) $COMMON_BACK"
-@@ -52,19 +50,13 @@ gateway() {
+@@ -52,27 +49,7 @@ gateway() {
              . "$CRASHDIR"/menus/ddns.sh && ddns_menu
              ;;
          4)
@@ -265,21 +608,30 @@ index 7338b9f..2d7b765 100644
 -            set_shadowsocks
 -            ;;
 -        6)
-             if echo "$crashcore" | grep -q 'sing'; then
-                 set_tailscale
-             else
-                 msg_alert "\033[33m$crashcore$GW_CORE_UNSUPPORTED\033[0m"
-             fi
-             ;;
+-            if echo "$crashcore" | grep -q 'sing'; then
+-                set_tailscale
+-            else
+-                msg_alert "\033[33m$crashcore$GW_CORE_UNSUPPORTED\033[0m"
+-            fi
+-            ;;
 -        7)
-+        5)
-             if echo "$crashcore" | grep -q 'sing'; then
-                 set_wireguard
-             else
-@@ -274,271 +266,6 @@ set_bot_tg() {
+-            if echo "$crashcore" | grep -q 'sing'; then
+-                set_wireguard
+-            else
+-                msg_alert "\033[33m$crashcore$GW_CORE_UNSUPPORTED\033[0m"
+-            fi
+-            ;;
+-        *)
+-            errornum
++            set_wireguard
+             ;;
+         esac
+     done
+@@ -273,333 +250,6 @@ set_bot_tg() {
+         esac
      done
  }
- 
+-
 -# 自定义入站
 -set_vmess() {
 -    while true; do
@@ -545,11 +897,112 @@ index 7338b9f..2d7b765 100644
 -}
 -
 -# 自定义端点
- set_tailscale() {
+-set_tailscale() {
+-    while true; do
+-        [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
+-        comp_box "\033[31m$GW_WARN\033[0m$GW_TS_WARN" \
+-            "$GW_TS_KEY_URL" \
+-            "$GW_TS_ALLOW_URL" \
+-            "$GW_TS_SUBNET_EXIT_HINT"
+-        btm_box "1) \033[32m$GW_TS_TOGGLE\033[0m  \033[32m$ts_service\033[0m" \
+-            "2) $GW_TS_SET_AUTHKEY  $ts_auth_key_info" \
+-            "3) $GW_TS_SUBNET  \033[36m$ts_subnet\033[0m" \
+-            "4) $GW_TS_EXIT_NODE  \033[36m$ts_exit_node\033[0m" \
+-            "5) $GW_TS_HOSTNAME  $ts_hostname" \
+-            "" \
+-            "0) $COMMON_BACK"
+-        read -r -p "$COMMON_INPUT> " num
+-        case "$num" in
+-        "" | 0)
+-            break
+-            ;;
+-        1)
+-            if [ -n "$ts_auth_key" ]; then
+-                [ "$ts_service" = ON ] && ts_service=OFF || ts_service=ON
+-                setconfig ts_service "$ts_service"
+-            else
+-                msg_alert "\033[31m$GW_TS_SET_KEY_FIRST\033[0m"
+-            fi
+-            ;;
+-        2)
+-            line_break
+-            read -r -p "$GW_TS_INPUT_KEY> " text
+-            [ "$text" = 0 ] && unset ts_auth_key ts_auth_key_info || ts_auth_key="$text"
+-            setconfig ts_auth_key "$ts_auth_key" "$GT_CFG_PATH"
+-            ;;
+-        3)
+-            [ "$ts_subnet" = true ] && ts_subnet=false || ts_subnet=true
+-            setconfig ts_subnet "$ts_subnet" "$GT_CFG_PATH"
+-            ;;
+-        4)
+-            if [ "$ts_exit_node" = true ]; then
+-                ts_exit_node=false
+-            else
+-                ts_exit_node=true
+-                msg_alert -t 3 "\033[31m$GW_WARN\033[0m$GW_TS_EXITNODE_WARN"
+-            fi
+-            setconfig ts_exit_node "$ts_exit_node" "$GT_CFG_PATH"
+-            ;;
+-        5)
+-            comp_box "\033[36m$GW_TS_INPUT_NAME\033[0m" \
+-                "$GW_INPUT_0_BACK"
+-            read -r -p "$GW_INPUT_PLAIN> " ts_hostname
+-            if [ "$ts_hostname" != 0 ]; then
+-                setconfig ts_hostname "$ts_hostname" "$GT_CFG_PATH"
+-            fi
+-            ;;
+-        *)
+-            errornum
+-            ;;
+-        esac
+-    done
+-}
+-
+ set_wireguard() {
      while true; do
-         [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
+ 
+diff --git a/scripts/menus/8_tools.sh b/scripts/menus/8_tools.sh
+index 95f2e3e..3ba3a9c 100644
+--- a/scripts/menus/8_tools.sh
++++ b/scripts/menus/8_tools.sh
+@@ -660,7 +660,7 @@ testcommand() {
+             fi
+             ;;
+         5)
+-            echo "$crashcore" | grep -q 'singbox' && config_path="$CRASHDIR"/jsons/config.json || config_path="$CRASHDIR"/yamls/config.yaml
++            config_path="$CRASHDIR"/yamls/config.yaml
+             line_break
+             sed -n '1,40p' "$config_path"
+             ;;
+@@ -692,7 +692,7 @@ testcommand() {
+ 
+ debug() {
+ 	rm -f "$CRASHDIR"/\.start_error #移除自启失败标记
+-    echo "$crashcore" | grep -q 'singbox' && config_tmp="$TMPDIR"/jsons || config_tmp="$TMPDIR"/config.yaml
++    config_tmp="$TMPDIR"/config.yaml
+     comp_box "\033[36m$TOOLS_DEBUG_WARN1\033[0m" \
+         "${TOOLS_DEBUG_WARN2_PREFIX}\033[32m$TMPDIR/debug.log\033[0m${TOOLS_DEBUG_WARN2_SUFFIX}" \
+         "$TOOLS_DEBUG_WARN3" \
+@@ -714,16 +714,7 @@ debug() {
+     1)
+         "$CRASHDIR"/start.sh stop
+         "$CRASHDIR"/starts/bfstart.sh
+-        if echo "$crashcore" | grep -q 'singbox'; then
+-            "$TMPDIR"/CrashCore run -D "$BINDIR" -C "$TMPDIR"/jsons &
+-            {
+-                sleep 4
+-                kill $! >/dev/null 2>&1 &
+-            }
+-            wait
+-        else
+-            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+-        fi
++        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+         rm -rf "$TMPDIR"/CrashCore
+         line_break
+         exit
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..010ed58 100644
+index 4ce09ff..9bc1aa3 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -31,14 +31,13 @@ upgrade() {
@@ -570,7 +1023,7 @@ index 4ce09ff..010ed58 100644
              "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -62,16 +61,17 @@ upgrade() {
+@@ -62,21 +61,20 @@ upgrade() {
              setcrt
              ;;
          6)
@@ -594,7 +1047,12 @@ index 4ce09ff..010ed58 100644
              comp_box "$UPG_THANKS_TITLE"
              btm_box "\033[32m$UPG_THANKS_ITEM_CLASH\033[0m" \
                  "" \
-@@ -123,10 +123,8 @@ checkupdate() {
+-                "\033[32m$UPG_THANKS_ITEM_SINGBOX\033[0m" \
+-                "$UPG_THANKS_ITEM_SINGBOX_URL" \
+                 "" \
+                 "\033[32m$UPG_THANKS_ITEM_METACUBE\033[0m" \
+                 "$UPG_THANKS_ITEM_METACUBE_URL" \
+@@ -123,10 +121,8 @@ checkupdate() {
      else
          content_line "\033[31m$UPG_CHECK_FAIL\033[0m"
          separator_line "="
@@ -607,7 +1065,7 @@ index 4ce09ff..010ed58 100644
      fi
      rm -rf "$TMPDIR"/version_new
  }
-@@ -219,38 +217,9 @@ setcpucore() {
+@@ -219,69 +215,9 @@ setcpucore() {
  
  # 手动指定内核类型
  setcoretype() {
@@ -643,13 +1101,65 @@ index 4ce09ff..010ed58 100644
 -        echo "$crashcore" | grep -q 'singbox' && core_new=singbox || core_new=clash
 -        break
 -    done
+-}
+-
+-# clash与singbox内核切换
+-switch_core() {
+-    # singbox和clash内核切换时提示是否保留文件
+-    [ "$core_new" != "$core_old" ] && {
+-        [ "$dns_mod" = "redir_host" ] && [ "$core_old" = "clash" ] && setconfig dns_mod mix                               #singbox自动切换dns
+-        [ "$dns_mod" = "mix" ] && [ "$crashcore" = 'clash' -o "$crashcore" = 'clashpre' ] && setconfig dns_mod redir_host #singbox自动切换dns
+-        comp_box "\033[33m$UPG_CORE_SWITCH_PREFIX$core_old$UPG_CORE_SWITCH_MID$core_new$UPG_CORE_SWITCH_SUFFIX\033[0m" \
+-            "\033[33m$UPG_CORE_SWITCH_WARN\033[0m" \
+-            "$UPG_CORE_SWITCH_KEEP"
+-        btm_box "1) $UPG_KEEP" \
+-            "0) $UPG_NOT_KEEP"
+-        read -r -p "$COMMON_INPUT> " res
+-        [ "$res" = '0' ] && {
+-            [ "$core_old" = "clash" ] && {
+-                geodate='Country.mmdb GeoSite.dat ruleset/*.mrs ruleset/*.yaml ruleset/*.yml'
+-                geodate_v='Country_v cn_mini_v geosite_v mrs_geosite_cn_v'
+-            }
+-            [ "$core_old" = "singbox" ] && {
+-                geodate='geoip.db geosite.db ruleset/*.srs ruleset/*.json'
+-                geodate_v='geoip_cn_v geosite_cn_v srs_geoip_cn_v srs_geosite_cn_v'
+-            }
+-            for text in ${geodate}; do
+-                rm -rf "$CRASHDIR"/${text}
+-            done
+-            for text in ${geodate_v}; do
+-                setconfig "$text"
+-            done
+-        }
+-    }
 +    # 只支持 concord，无需选择（本仓库专用版）
 +    crashcore=concord
 +    core_new=clash
  }
  
- # clash与singbox内核切换
-@@ -325,185 +294,6 @@ getcore() {
+ # 下载内核文件
+@@ -292,11 +228,7 @@ getcore() {
+     [ -z "$crashcore" ] && crashcore=meta
+     [ -z "$cpucore" ] && check_cpucore
+     [ "$crashcore" = unknow ] && setcoretype
+-    if echo "$crashcore" | grep -q 'singbox'; then
+-        core_new=singbox
+-    else
+-        core_new=clash
+-    fi
++    core_new=clash
+     # 获取在线内核文件
+     line_break
+     separator_line "="
+@@ -307,7 +239,6 @@ getcore() {
+         content_line "\033[32m${UPG_CORE_DOWNLOAD_OK_TEXT_PREFIX}${crashcore}${UPG_CORE_DOWNLOAD_OK_TEXT_SUFFIX}\033[0m"
+         separator_line "="
+         sleep 1
+-        switch_core
+         ;;
+     1)
+         content_line "\033[31m$UPG_CORE_DOWNLOAD_FAIL_TEXT\033[0m"
+@@ -325,191 +256,12 @@ getcore() {
          ;;
      esac
  }
@@ -835,7 +1345,14 @@ index 4ce09ff..010ed58 100644
  setcore() {
      while true; do
          # 获取核心及版本信息
-@@ -519,24 +309,9 @@ setcore() {
+         [ -z "$crashcore" ] && crashcore="unknow"
+         [ -z "$zip_type" ] && zip_type="tar.gz"
+-        echo "$crashcore" | grep -q 'singbox' && core_old=singbox || core_old=clash
++        core_old=clash
+ 
+         [ -z "$cpucore" ] && check_cpucore
+ 
+@@ -519,24 +271,9 @@ setcore() {
              "" \
              "\033[33m$UPG_CORE_MENU_SELECT\033[0m"
  
@@ -863,7 +1380,7 @@ index 4ce09ff..010ed58 100644
              "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -545,46 +320,30 @@ setcore() {
+@@ -545,46 +282,30 @@ setcore() {
              break
              ;;
          1)
@@ -898,9 +1415,9 @@ index 4ce09ff..010ed58 100644
          3)
 -            crashcore=singbox
 -            custcorelink=''
--            getcore
--            break
--            ;;
+             getcore
+             break
+             ;;
 -        4)
 -            crashcore=clash
 -            custcorelink=''
@@ -914,9 +1431,9 @@ index 4ce09ff..010ed58 100644
 -            setcustcore
 -            ;;
 -        7)
-             getcore
-             break
-             ;;
+-            getcore
+-            break
+-            ;;
 -        9)
 -            setcpucore
 -            break
@@ -924,7 +1441,7 @@ index 4ce09ff..010ed58 100644
          *)
              errornum
              ;;
-@@ -656,7 +415,13 @@ checkcustgeo() {
+@@ -656,7 +377,13 @@ checkcustgeo() {
              comp_box "\033[32m$UPG_GEO_FIND_TITLE\033[0m"
              webget "$TMPDIR"/github_api https://api.github.com/repos/${project}/releases/${api_url}
              release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
@@ -939,7 +1456,7 @@ index 4ce09ff..010ed58 100644
              rm -rf "$TMPDIR"/github_api
          }
          if [ -s "$TMPDIR"/geo.list ]; then
-@@ -710,18 +475,20 @@ setcustgeo() {
+@@ -710,18 +437,19 @@ setcustgeo() {
          content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
          sub_content_line "$UPG_GEO_LOCAL_ONLY1"
  
@@ -950,7 +1467,6 @@ index 4ce09ff..010ed58 100644
 +            sub_content_line "$UPG_GEO_LOCAL_ONLY1"
 +
 +            content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-+            sub_content_line "$UPG_GEO_LOCAL_ONLY2"
  
 -        content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
 -        sub_content_line "$UPG_GEO_LOCAL_ONLY2"
@@ -967,7 +1483,68 @@ index 4ce09ff..010ed58 100644
          content_line "$UPG_GEO_CUSTOM_LINK"
          content_line ""
          content_line "0) $COMMON_BACK"
-@@ -866,6 +633,8 @@ setgeo() {
+@@ -778,17 +506,12 @@ setgeo() {
+             "" \
+             "$UPG_GEO_CHOOSE"
+ 
+-        btm_box "$UPG_GEO_ITEM1	\033[33m$china_ip_list_v\033[0m" \
+-            "$UPG_GEO_ITEM2	\033[33m$china_ipv6_list_v\033[0m" \
+-            "" \
+-            "$UPG_GEO_ITEM3	\033[33m$cn_mini_v\033[0m" \
+-            "$UPG_GEO_ITEM4	\033[33m$geosite_v\033[0m" \
++        # concord 只吃 CIDR 文本 / mmdb / mrs；GeoSite.dat 和 srs 已移除
++        btm_box "$UPG_GEO_ITEM1\t\033[33m$china_ip_list_v\033[0m" \
++            "$UPG_GEO_ITEM2\t\033[33m$china_ipv6_list_v\033[0m" \
+             "" \
++            "$UPG_GEO_ITEM3\t\033[33m$cn_mini_v\033[0m" \
+             "$UPG_GEO_ITEM5" \
+-            "$UPG_GEO_ITEM6" \
+-            "" \
+-            "$UPG_GEO_ITEM8" \
+-            "$UPG_GEO_ITEM9" \
+             "" \
+             "0) $COMMON_BACK"
+         read -r -p "$COMMON_INPUT> " num
+@@ -812,24 +535,11 @@ setgeo() {
+             getgeo
+             ;;
+         4)
+-            geotype=geosite.dat
+-            geoname=GeoSite.dat
+-            getgeo
+-            ;;
+-        5)
+             geotype=mrs.tar.gz
+             geoname=mrs.tar.gz
+             getgeo
+             ;;
+-        6)
+-            geotype=srs.tar.gz
+-            geoname=srs.tar.gz
+-            getgeo
+-            ;;
+-        8)
+-            setcustgeo
+-            ;;
+-        9)
++        5)
+             while true; do
+                 comp_box "\033[33m${UPG_GEO_CLEAN_HINT1_PREFIX}${CRASHDIR}${UPG_GEO_CLEAN_HINT1_SUFFIX}\033[0m" \
+                     "$UPG_GEO_CLEAN_HINT2"
+@@ -841,10 +551,10 @@ setgeo() {
+                     break
+                     ;;
+                 1)
+-                    for file in cn_ip.txt cn_ipv6.txt *.mmdb *.metadb *.dat geoip.db geosite.db; do
++                    for file in cn_ip.txt cn_ipv6.txt *.mmdb *.metadb *.dat; do
+                         rm -rf "$CRASHDIR"/$file
+                     done
+-                    for var in Country_v cn_mini_v china_ip_list_v china_ipv6_list_v geosite_v geoip_cn_v geosite_cn_v mrs_geosite_cn_v srs_geoip_cn_v srs_geosite_cn_v mrs_v srs_v; do
++                    for var in Country_v cn_mini_v china_ip_list_v china_ipv6_list_v mrs_geosite_cn_v mrs_v; do
+                         setconfig $var
+                     done
+                     rm -rf "$CRASHDIR"/ruleset/*
+@@ -866,6 +576,8 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -976,7 +1553,7 @@ index 4ce09ff..010ed58 100644
      dblink="${update_url}/"
      line_break
      separator_line "="
-@@ -936,7 +705,7 @@ dbdir() {
+@@ -936,7 +648,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui
@@ -985,7 +1562,7 @@ index 4ce09ff..010ed58 100644
              getdb
              ;;
          2)
-@@ -962,14 +731,8 @@ setdb() {
+@@ -962,14 +674,8 @@ setdb() {
              "\033[32m$UPG_DB_TITLE2\033[0m" \
              "" \
              "$UPG_DB_SELECT"
@@ -1002,7 +1579,7 @@ index 4ce09ff..010ed58 100644
              "$UPG_DB_UNINSTALL" \
              "" \
              "0) $COMMON_BACK"
-@@ -979,32 +742,11 @@ setdb() {
+@@ -979,32 +685,11 @@ setdb() {
              break
              ;;
          1)
@@ -1036,8 +1613,34 @@ index 4ce09ff..010ed58 100644
              while true; do
                  comp_box "$UPG_DB_UNINSTALL_CONFIRM"
                  btm_box "$UPG_DB_UNINSTALL_YES" \
+diff --git a/scripts/menus/bot_tg.sh b/scripts/menus/bot_tg.sh
+index 6ea88ad..9d4760b 100644
+--- a/scripts/menus/bot_tg.sh
++++ b/scripts/menus/bot_tg.sh
+@@ -59,7 +59,7 @@ send_menu(){
+     else
+         run="$BOT_TG_RUN_OFF"
+     fi
+-    corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/')
++    corename=Concord
+     TEXT=$(cat <<EOF
+ *$BOT_TG_WELCOME*_${versionsh_l}_
+ $corename$BOT_TG_SERVICE$run
+@@ -89,11 +89,7 @@ web_json_post "$API/sendMessage" "{\"chat_id\":\"$TG_CHATID\",\"text\":\"$TEXT\"
+ ### --- 文件传输 --- ###
+ send_transport_menu(){ 
+     TEXT="$BOT_TG_SELECT_FILE"
+-    if echo "$crashcore" | grep -q 'singbox';then
+-        config_type=json
+-    else
+-        config_type=yaml
+-    fi
++    config_type=yaml
+ 
+     if curl -h >/dev/null 2>&1;then
+         CURL_KB=$(cat <<EOF
 diff --git a/scripts/menus/dns.sh b/scripts/menus/dns.sh
-index 0a2dc71..cd4094b 100644
+index 0a2dc71..cf0df71 100644
 --- a/scripts/menus/dns.sh
 +++ b/scripts/menus/dns.sh
 @@ -36,7 +36,7 @@ set_dns_mod() {
@@ -1045,10 +1648,103 @@ index 0a2dc71..cd4094b 100644
              ;;
          1 | 2)
 -            if echo "$crashcore" | grep -q 'singbox' || [ "$crashcore" = meta ]; then
-+            if echo "$crashcore" | grep -q 'singbox' || [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
++            if [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
                  [ "$num" = 1 ] && dns_mod=mix || dns_mod=route
                  setconfig dns_mod "$dns_mod"
                  msg_alert "\033[36m$DNS_SET_OK：$dns_mod\033[0m"
+@@ -275,8 +275,7 @@ dns_direct_domains() {
+ set_dns_adv() {
+     [ -z "$dns_failover" ] && dns_failover=OFF
+     while true; do
+-        comp_box "\033[31m$DNS_ADV_SINGBOX_LIMIT\033[0m" \
+-            "$DNS_ADV_SPLIT" \
++        comp_box "$DNS_ADV_SPLIT" \
+             "\033[33m$DNS_ADV_CERT\033[0m" \
+             "" \
+             "DIRECT-DNS：" \
+@@ -414,7 +413,7 @@ set_dns_adv() {
+ 		5)
+             line_break
+             separator_line "="
+-            if echo "$crashcore" | grep -qE 'meta|singbox'; then
++            if echo "$crashcore" | grep -qE 'meta|concord'; then
+                 dns_nameserver='https://dns.alidns.com/dns-query, https://doh.pub/dns-query'
+                 dns_fallback='https://cloudflare-dns.com/dns-query, https://dns.google/dns-query, https://doh.opendns.com/dns-query'
+                 dns_resolver='https://223.5.5.5/dns-query, 2400:3200::1'
+diff --git a/scripts/menus/override.sh b/scripts/menus/override.sh
+index a4e2275..567b400 100644
+--- a/scripts/menus/override.sh
++++ b/scripts/menus/override.sh
+@@ -14,10 +14,8 @@ override() {
+         [ -z "$server_link" ] && server_link=1
+         comp_box "\033[30;47m $OVR_TITLE\033[0m"
+         content_line "$OVR_MENU_2"
+-        echo "$crashcore" | grep -q 'singbox' || {
+-            content_line "$OVR_MENU_3"
+-            content_line "$OVR_MENU_4"
+-        }
++        content_line "$OVR_MENU_3"
++        content_line "$OVR_MENU_4"
+         content_line "$OVR_MENU_5"
+         [ "$disoverride" != 1 ] && content_line "$OVR_MENU_9"
+         content_line ""
+@@ -38,11 +36,7 @@ override() {
+             setgroups
+             ;;
+         5)
+-            if echo "$crashcore" | grep -q 'singbox'; then
+-                set_singbox_adv
+-            else
+-                set_clash_adv
+-            fi
++            set_clash_adv
+             sleep 3
+             ;;
+         9)
+@@ -177,7 +171,7 @@ setrules() {
+         content_line "$OVR_RULES_ADD"
+         content_line "$OVR_RULES_DEL"
+         content_line "$OVR_RULES_CLEAR"
+-        echo "$crashcore" | grep -q 'singbox' || content_line "$OVR_RULES_BYPASS	\033[36m$proxies_bypass\033[0m"
++        content_line "$OVR_RULES_BYPASS	\033[36m$proxies_bypass\033[0m"
+         content_line ""
+         content_line "$OVR_BACK"
+         separator_line "="
+@@ -535,15 +529,4 @@ EOF
+     btm_box "\033[33m$OVR_ADV_WIN\033[0m" \
+         "\033[33m$OVR_ADV_MAC\033[0m" \
+         "\033[33m$OVR_ADV_LIN\033[0m"
+-}
+-
+-# s自定义singbox配置文件
+-set_singbox_adv() {
+-    comp_box "\033[33m$OVR_SING_TITLE1\033[0m" \
+-        "\033[36mlog dns ntp certificate http_clients experimental\033[0m" \
+-        "\033[33m$OVR_SING_TITLE2\033[0m" \
+-        "\033[36mendpoints inbounds outbounds providers route services\033[0m" \
+-        "$OVR_SING_TITLE3" \
+-        "" \
+-        "$OVR_SING_TITLE4"
+-}
++}
+\ No newline at end of file
+diff --git a/scripts/menus/providers.sh b/scripts/menus/providers.sh
+index 50e0fe2..67e712a 100644
+--- a/scripts/menus/providers.sh
++++ b/scripts/menus/providers.sh
+@@ -6,11 +6,7 @@ __IS_MODULE_PROVIDERS=1
+ 
+ load_lang providers
+ 
+-if [ "$crashcore" = singboxr ]; then
+-    CORE_TYPE=singbox
+-else
+-    CORE_TYPE=clash
+-fi
++CORE_TYPE=clash
+ 
+ providers() {
+     while true; do
 diff --git a/scripts/menus/providers_clash.sh b/scripts/menus/providers_clash.sh
 index f8bc313..ebeb374 100644
 --- a/scripts/menus/providers_clash.sh
@@ -1208,13 +1904,14 @@ index 26aa5b9..0000000
 -    echo '{ "tag": "'"$tag"'", "type": "urltest", "tolerance": 100, "providers": ["'"$tag"'"], "include": ".*" },' >>"$TMPDIR"/providers/outbounds_add.json
 -}
 diff --git a/scripts/starts/bfstart.sh b/scripts/starts/bfstart.sh
-index ebd5a8d..7f55f77 100644
+index ebd5a8d..39f022e 100644
 --- a/scripts/starts/bfstart.sh
 +++ b/scripts/starts/bfstart.sh
-@@ -125,13 +125,9 @@ catpac                                       #生成pac文件
+@@ -124,14 +124,10 @@ catpac                                       #生成pac文件
+     mkdir -p "$BINDIR"/providers
      ln -sf "$CRASHDIR"/providers/* "$BINDIR"/providers/
  }
- if echo "$crashcore" | grep -q 'singbox'; then
+-if echo "$crashcore" | grep -q 'singbox'; then
 -    . "$CRASHDIR"/starts/singbox_check.sh && singbox_check
 -    [ -d "$TMPDIR"/jsons ] && rm -rf "$TMPDIR"/jsons/* || mkdir -p "$TMPDIR"/jsons #准备目录
 -    if [ "$disoverride" != "1" ]; then
@@ -1222,8 +1919,9 @@ index ebd5a8d..7f55f77 100644
 -    else
 -        ln -sf "$core_config" "$TMPDIR"/jsons/config.json
 -    fi
-+    # 本版只支持 concord；sing-box 相关脚本已移除
-+    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 sing-box，请执行 sh install.sh 修复" 31
++# 本版只支持 concord；配置里写着别的内核说明装错了
++if [ -n "$crashcore" ] && ! echo "$crashcore" | grep -qi 'concord'; then
++    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 $crashcore，请执行 sh install.sh 修复" 31
 +    exit 1
  else
      . "$CRASHDIR"/starts/clash_check.sh && clash_check
@@ -1312,19 +2010,26 @@ index dcf4cb9..4176123 100644
          logger "错误详情请参考 "$TMPDIR"/error.yaml 文件！" 33
          mv -f "$TMPDIR"/config.yaml "$TMPDIR"/error.yaml >/dev/null 2>&1
 diff --git a/scripts/starts/core_config.sh b/scripts/starts/core_config.sh
-index 256b3a6..9752744 100644
+index 256b3a6..81505fc 100644
 --- a/scripts/starts/core_config.sh
 +++ b/scripts/starts/core_config.sh
-@@ -19,7 +19,7 @@ gen_ua(){  #自动生成ua
+@@ -17,13 +17,8 @@ update_servers() { #更新servers_${i18n}.list
+ }
+ gen_ua(){  #自动生成ua
      [ -z "$user_agent" -o "$user_agent" = "auto" ] && {
-         if echo "$crashcore" | grep -q 'singbox'; then
-             user_agent="sing-box/$core_v"
+-        if echo "$crashcore" | grep -q 'singbox'; then
+-            user_agent="sing-box/$core_v"
 -        elif [ "$crashcore" = meta ]; then
-+        elif [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
-             user_agent="clash.meta/mihomo"
-         else
-             user_agent="clash"
-@@ -90,11 +90,8 @@ get_core_config() { #下载内核配置文件
+-            user_agent="clash.meta/mihomo"
+-        else
+-            user_agent="clash"
+-        fi
++        # concord 对外伪装成 mihomo（订阅站按 UA 发配置）
++        user_agent="clash.meta/mihomo"
+     }
+     [ "$user_agent" = "none" ] && unset user_agent
+ }
+@@ -90,11 +85,8 @@ get_core_config() { #下载内核配置文件
          fi
      else
          Https=""
@@ -1917,3 +2622,16 @@ index ba24d9b..0000000
 -    rm -rf "$TMPDIR"/jsons_base
 -    return 0
 -}
+diff --git a/tools/tg_bot.sh b/tools/tg_bot.sh
+index 07d9aa0..76f625b 100644
+--- a/tools/tg_bot.sh
++++ b/tools/tg_bot.sh
+@@ -70,7 +70,7 @@ send_menu() {
+ 			[ "$day" = "0" ] && day='' || day="$day天"
+ 			time=$(date -u -d @${time} +%H小时%M分%S秒)
+ 		fi
+-	corename=$(echo $crashcore | sed 's/singboxr/SingBoxR/' | sed 's/singbox/SingBox/' | sed 's/clash/Clash/' | sed 's/meta/Mihomo/')
++	corename=Concord
+ 	else
+ 		run=未运行
+ 	fi
