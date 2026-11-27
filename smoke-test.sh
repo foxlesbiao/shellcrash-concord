@@ -40,8 +40,13 @@ check_patch menus/7_gateway.sh        'set_tailscale'          '入站已删(TS�
 grep -q 'set_vmess' "$CD/menus/7_gateway.sh" 2>/dev/null \
     && no "7_gateway 里 set_vmess 还在" || ok "自定义入站已删"
 
-# 备份齐全
-[ -f "$CD/CrashCore.raw.mihomo.bak" ] && ok "mihomo 内核备份存在" || warn "mihomo 内核备份缺失（回滚会失败）"
+# 纯 concord：不应该有任何 mihomo 备份
+[ -f "$CD/CrashCore.raw.mihomo.bak" ] && no "仍有 mihomo 内核备份（不是纯 concord）" || ok "无 mihomo 内核备份（纯 concord）"
+[ -d "$CD/.orig" ] && no "仍有 .orig 备份目录" || ok "无 .orig 备份目录"
+
+# 不该有 sing-box 专用脚本
+SB=$(ls "$CD/starts" "$CD/menus" "$CD/libs" 2>/dev/null | grep -ci 'singbox\|core_exchange')
+[ "${SB:-0}" -eq 0 ] && ok "无 sing-box 专用脚本" || no "还有 $SB 个 sing-box 脚本"
 
 # ---------- 2. 启动命令 ----------
 sec "2. 启动命令"
