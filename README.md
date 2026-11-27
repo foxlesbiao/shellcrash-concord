@@ -137,8 +137,33 @@ sh smoke-test.sh
 
 改的是 `ShellCrash/` 全量源码，改动汇总在 `patches/shellcrash-concord.patch`。
 
+---
+
+## 来源
+
+这个项目没有一行代码是从零写的，全部建立在别人的工作之上：
+
+| 部分 | 来源 | 说明 |
+|---|---|---|
+| 管理框架 | [juewuy/ShellCrash](https://github.com/juewuy/ShellCrash) | 菜单、启停、订阅、分流、定时任务都是它的 |
+| 代理内核 | [chen08209/concord](https://github.com/chen08209/concord) | Rust 重写的 mihomo 兼容内核 |
+| 内核二进制 | [user-7392/nikki-concord](https://github.com/user-7392/nikki-concord) | 已针对 OpenWrt + 低内存设备打好补丁（jemalloc 调优、主动退页、测速限流），本仓库只是从中提取并转发 |
+| 网页面板 | [Zephyruso/zashboard](https://github.com/Zephyruso/zashboard) | ShellCrash 自带下载的那份 |
+| 节点订阅模板 | ShellCrash 上游 | 本项目未改动 |
+
+**性能数据怎么看**：上表所有数字都是本机实测，不是官方宣称值。
+
+- 硬件：小米 BE7000（IPQ9554，四核 A73）
+- 系统：OpenWrt 18.06，ShellCrash 1.9.5beta4
+- 网络：家庭宽带 + 共享专线，节点侧带宽上限约 84 Mbps
+- 方法：两个内核交替测、手动锁同一节点、测前先比对出口 IP 一致，避免比的是不同节点
+- 局限：延迟和吞吐受节点波动影响大，这两项"持平"的结论比内存/CPU 那两项弱；内存和 CPU 是进程自身读数，不受网络影响
+
+没测的部分：TUN 模式的完整转发（当前跑 tproxy）、IPv6 的极限吞吐、长期（>24h）内存泄漏。
+
 ## 许可
 
 安装与自动化脚本为 MIT。
 
-concord 二进制提取自 [nikki-concord](https://github.com/user-7392/nikki-concord)（已针对 OpenWrt 和低内存设备打补丁），遵循上游 [concord](https://github.com/chen08209/concord) 的 GPL-3.0-or-later。
+concord 二进制遵循上游的 GPL-3.0-or-later。
+
