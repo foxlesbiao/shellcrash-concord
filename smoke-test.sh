@@ -36,7 +36,7 @@ check_patch init.sh                   'crashcore=concord'      'command.env 分�
 check_patch libs/web_get_bin.sh       'shellcrash-concord'     '更新源'
 check_patch menu.sh                   '8090'                   '面板地址'
 check_patch starts/clash_check.sh     'concord'                'vless 不换内核'
-check_patch menus/7_gateway.sh        'set_tailscale'          '入站已删(TS还在)'
+check_patch menus/7_gateway.sh        'set_wireguard'          'WireGuard 保留'
 grep -q 'set_vmess' "$CD/menus/7_gateway.sh" 2>/dev/null \
     && no "7_gateway 里 set_vmess 还在" || ok "自定义入站已删"
 
