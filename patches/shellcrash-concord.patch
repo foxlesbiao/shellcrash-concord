@@ -351,6 +351,18 @@ index 60ea88a..406cec8 100644
  OVR_RULES_WARN="For many rules, use the rule-set feature as much as possible.\n\033[31mToo many rules here may cause startup lag!\033[0m"
  OVR_RULES_ADD="1) Add custom rule"
  OVR_RULES_DEL="2) Remove custom rule"
+diff --git a/scripts/lang/en/providers.lang b/scripts/lang/en/providers.lang
+index ab2d2f1..a2602f7 100644
+--- a/scripts/lang/en/providers.lang
++++ b/scripts/lang/en/providers.lang
+@@ -17,7 +17,6 @@ PROVIDERS_CLEAN_CONFIRM="Continue?"
+ PROVIDERS_FETCHING_TEMPLATE="Fetching online template..."
+ PROVIDERS_DOWNLOAD_FAILED="Download failed. Please try switching install source!"
+ PROVIDERS_GEN_OK="Configuration file generated successfully!"
+-PROVIDERS_GEN_OK_SINGBOX="Configuration generated successfully! If startup times out, install the Singbox-srs common database package from Update menu."
+ PROVIDERS_GEN_FAILED="Failed to generate configuration file. Please check your input carefully!"
+ PROVIDERS_RESTART_ASK="Start/Restart service now?"
+ PROVIDERS_YES="Yes"
 diff --git a/scripts/libs/check_target.sh b/scripts/libs/check_target.sh
 index 81a45e8..20a1d40 100644
 --- a/scripts/libs/check_target.sh
@@ -1903,6 +1915,23 @@ index 26aa5b9..0000000
 -    # 写入提供者
 -    echo '{ "tag": "'"$tag"'", "type": "urltest", "tolerance": 100, "providers": ["'"$tag"'"], "include": ".*" },' >>"$TMPDIR"/providers/outbounds_add.json
 -}
+diff --git a/scripts/start.sh b/scripts/start.sh
+index f404de7..02f8a70 100644
+--- a/scripts/start.sh
++++ b/scripts/start.sh
+@@ -116,11 +116,7 @@ debug)
+     stop_firewall >/dev/null                          #清理路由策略
+     bfstart
+     if [ -n "$2" ]; then
+-        if echo "$crashcore" | grep -q 'singbox'; then
+-            sed -i "s/\"level\": \"info\"/\"level\": \"$2\"/" "$TMPDIR"/jsons/log.json 2>/dev/null
+-        else
+-            sed -i "s/log-level: info/log-level: $2/" "$TMPDIR"/config.yaml
+-        fi
++        sed -i "s/log-level: info/log-level: $2/" "$TMPDIR"/config.yaml
+         [ "$3" = flash ] && dir="$CRASHDIR" || dir="$TMPDIR"
+         $COMMAND >"$dir"/debug.log 2>&1 &
+         sleep 2
 diff --git a/scripts/starts/bfstart.sh b/scripts/starts/bfstart.sh
 index ebd5a8d..39f022e 100644
 --- a/scripts/starts/bfstart.sh

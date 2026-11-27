@@ -285,7 +285,7 @@ sec "10. 补丁文件"
 PATCH="$(dirname "$0")/patches/shellcrash-concord.patch"
 [ -f "$PATCH" ] && ok "补丁文件存在" || no "补丁文件缺失"
 N=$(grep -c '^diff --git' "$PATCH" 2>/dev/null)
-[ "${N:-0}" -ge 25 ] && ok "补丁覆盖 $N 个文件（含删除）" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=25）"
+[ "${N:-0}" -ge 40 ] && ok "补丁覆盖 $N 个文件（含删除）" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=40）"
 
 # 三个关键补丁标记
 for f in init.sh libs/core_tools.sh libs/web_get_bin.sh; do

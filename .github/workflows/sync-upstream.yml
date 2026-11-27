@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           cd /tmp/upstream
-          if patch -p1 --dry-run < "$GITHUB_WORKSPACE/patches/shellcrash-concord.patch"; then
+          if patch -p1 --batch --forward --dry-run < "$GITHUB_WORKSPACE/patches/shellcrash-concord.patch"; then
             echo "applied=true" >> "$GITHUB_OUTPUT"
           else
             echo "applied=false" >> "$GITHUB_OUTPUT"
@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           cd /tmp/upstream
-          patch -p1 < "$GITHUB_WORKSPACE/patches/shellcrash-concord.patch"
+          patch -p1 --batch --forward < "$GITHUB_WORKSPACE/patches/shellcrash-concord.patch"
           sh -n scripts/libs/core_tools.sh
           sh -n scripts/starts/clash_modify.sh
           sh -n scripts/menus/9_upgrade.sh
@@ -53,7 +53,10 @@ jobs:
         if: steps.probe.outputs.applied == 'true'
         run: |
           set -euo pipefail
+          # scripts/ 和 tools/ 都要同步：补丁改过 tools/tg_bot.sh（内核显示名），
+          # 只 rsync scripts/ 会让那处改动永远进不了仓库，下次 CI 又算一遍 diff。
           rsync -a --delete "/tmp/upstream/scripts/" "ShellCrash/scripts/"
+          rsync -a --delete "/tmp/upstream/tools/" "ShellCrash/tools/"
           # 记录上游版本，便于排查
           git -C /tmp/upstream rev-parse HEAD > ShellCrash/.upstream-revision
           git -C /tmp/upstream log -1 --format='%h %s' > ShellCrash/.upstream-summary
