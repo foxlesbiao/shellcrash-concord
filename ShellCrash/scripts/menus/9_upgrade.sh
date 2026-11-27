@@ -392,11 +392,7 @@ setcustcore() {
         separator_line "="
         content_line "$UPG_CUSTOM_CORE_SELECT"
         separator_line "-"
-        btm_box "1) \033[36mMetaCubeX/mihomo\033[32m@release\033[0m$UPG_CUSTOM_CORE_MENU_OFFICIAL" \
-            "2) \033[36mvernesong/mihomo\033[32m@alpha\033[0m$UPG_CUSTOM_CORE_MENU_ALPHA" \
-            "3) \033[36mSagerNet/sing-box\033[32m@release\033[0m$UPG_CUSTOM_CORE_MENU_OFFICIAL" \
-            "4) \033[36mDustinWin/mihomo\033[0m$UPG_CUSTOM_CORE_MENU_MULTI" \
-            "5) \033[36mDustinWin/sing-boxr\033[0m$UPG_CUSTOM_CORE_MENU_MULTI" \
+        btm_box "1) \033[36mfoxlesbiao/shellcrash-concord\033[32m@release\033[0m" \
             "9) $UPG_CUSTOM_CORE_LINK_MENU" \
             "" \
             "0) $COMMON_BACK"
@@ -406,40 +402,9 @@ setcustcore() {
             break
             ;;
         1)
-            project=MetaCubeX/mihomo
-            api_tag=latest
-            crashcore=meta
-            checkcustcore
-            ;;
-        2)
-            project=vernesong/mihomo
-            api_tag=Prerelease-Alpha
-            crashcore=meta
-            checkcustcore
-            ;;
-        3)
-            project=SagerNet/sing-box
-            api_tag=latest
-            crashcore=singbox
-            checkcustcore
-            ;;
-        4)
-            project=DustinWin/proxy-tools
-            api_tag=mihomo
-            crashcore=meta
-            checkcustcore
-            ;;
-        5)
-            project=DustinWin/proxy-tools
-            api_tag=sing-box
-            crashcore=singboxr
-            checkcustcore
-            ;;
-        6)
-            project=vernesong/mihomo-oix
-            api_tag=Pre-Alpha
-            crashcore=meta
-            checkcustcore
+            crashcore=concord
+            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
+            getcore
             ;;
         9)
             comp_box "$UPG_CUSTOM_CORE_LINK_HINT" \
@@ -507,24 +472,10 @@ setcore() {
             "" \
             "\033[33m$UPG_CORE_MENU_SELECT\033[0m"
 
-        content_line "${UPG_CORE_V1_PREFIX}${meta_v}${UPG_CORE_V1_SUFFIX}"
-        sub_content_line "$UPG_CORE_V1_DOC"
-
-        content_line "${UPG_CORE_V2_PREFIX}${singboxr_v}${UPG_CORE_V2_SUFFIX}"
-        sub_content_line "$UPG_CORE_V2_DOC"
-
-        [ "$zip_type" = 'upx' ] && {
-            content_line "${UPG_CORE_V3_PREFIX}${singbox_v}${UPG_CORE_V3_SUFFIX}"
-            sub_content_line "$UPG_CORE_V3_DOC"
-        }
-        [ "$zip_type" = 'upx' ] && {
-            content_line "${UPG_CORE_V4_PREFIX}${clash_v}${UPG_CORE_V4_SUFFIX}"
-            sub_content_line "$UPG_CORE_V4_DOC"
-        }
-        btm_box "${UPG_CORE_MENU_5_PREFIX}${zip_type}${UPG_CORE_MENU_5_SUFFIX}" \
-            "${UPG_CORE_MENU_6_PREFIX}${UPG_CORE_MENU_6_SUFFIX}" \
-            "$UPG_CORE_MENU_7" \
-            "$UPG_CORE_MENU_9" \
+        btm_box "1) \033[36m更新 Concord 内核\033[0m（从 shellcrash-concord 自动下载）" \
+            "2) 自定义内核链接" \
+            "3) CPU架构 $cpucore" \
+            "4) 重新下载当前配置的内核" \
             "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " num
@@ -533,44 +484,20 @@ setcore() {
             break
             ;;
         1)
-            [ -d "/jffs" ] && {
-                msg_alert -t 2 "\033[31m$UPG_CORE_ASUS_WARN\033[0m"
-            }
-            crashcore=meta
-            custcorelink=''
+            crashcore=concord
+            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
             getcore
             break
             ;;
         2)
-            crashcore=singboxr
-            custcorelink=''
-            getcore
-            break
+            setcustcore
             ;;
         3)
-            crashcore=singbox
-            custcorelink=''
-            getcore
+            setcpucore
             break
             ;;
         4)
-            crashcore=clash
-            custcorelink=''
             getcore
-            break
-            ;;
-        5)
-            setziptype
-            ;;
-        6)
-            setcustcore
-            ;;
-        7)
-            getcore
-            break
-            ;;
-        9)
-            setcpucore
             break
             ;;
         *)
@@ -644,7 +571,13 @@ checkcustgeo() {
             comp_box "\033[32m$UPG_GEO_FIND_TITLE\033[0m"
             webget "$TMPDIR"/github_api https://api.github.com/repos/${project}/releases/${api_url}
             release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
-            cat "$TMPDIR"/github_api | grep "browser_download_url" | grep -oE 'releases/download.*' | grep -oiE 'geosite.*\.dat"$|country.*\.mmdb"$|.*.mrs|.*.srs' | sed 's|.*/||' | sed 's/"//' >"$TMPDIR"/geo.list
+            # concord 只读 mmdb 和 mrs（不支持 GeoIP.dat / GeoSite.dat / srs）
+            if echo "$crashcore" | grep -qi 'concord'; then
+                geo_pat='country.*\.mmdb"$|.*\.mrs'
+            else
+                geo_pat='geosite.*\.dat"$|country.*\.mmdb"$|.*.mrs|.*.srs'
+            fi
+            cat "$TMPDIR"/github_api | grep "browser_download_url" | grep -oE 'releases/download.*' | grep -oiE "$geo_pat" | sed 's|.*/||' | sed 's/"//' >"$TMPDIR"/geo.list
             rm -rf "$TMPDIR"/github_api
         }
         if [ -s "$TMPDIR"/geo.list ]; then
@@ -698,17 +631,19 @@ setcustgeo() {
         content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
         sub_content_line "$UPG_GEO_LOCAL_ONLY1"
 
-        content_line "2) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-        sub_content_line "$UPG_GEO_LOCAL_ONLY1"
+        if ! echo "$crashcore" | grep -qi 'concord'; then
+            content_line "2) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
+            sub_content_line "$UPG_GEO_LOCAL_ONLY1"
 
-        content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-        sub_content_line "$UPG_GEO_LOCAL_ONLY2"
+            content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
+            sub_content_line "$UPG_GEO_LOCAL_ONLY2"
+
+            content_line "5) \033[36;4mhttps://github.com/Loyalsoldier/geoip\033[0m"
+            sub_content_line "$UPG_GEO_LOCAL_ONLY4"
+        fi
 
         content_line "4) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
         sub_content_line "$UPG_GEO_LOCAL_ONLY3"
-
-        content_line "5) \033[36;4mhttps://github.com/Loyalsoldier/geoip\033[0m"
-        sub_content_line "$UPG_GEO_LOCAL_ONLY4"
 
         content_line "$UPG_GEO_CUSTOM_LINK"
         content_line ""

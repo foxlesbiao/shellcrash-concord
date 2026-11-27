@@ -153,6 +153,10 @@ install.sh                           # 路由器端安装/回滚脚本
 |---|---|
 | `scripts/menus/7_gateway.sh` | 删掉「VMess 入站」「Shadowsocks 入站」两个菜单项及其子菜单（共 265 行）。这两项靠 `listeners`，concord 不打开。Tailscale/WireGuard 编号上移为 4/5 |
 | `scripts/starts/clash_modify.sh` | `add_custom_inbounds_and_rules()` 里跳过 `listeners` 生成——即使配置里残留 `vms_service=ON`，也不会往配置里写无用的 `listeners:` 段 |
+| `scripts/menus/9_upgrade.sh` `setcore()` | 「更新内核」从 mihomo/sing-box 四个版本列表改成：1) 更新 Concord（自动下本仓库 release）、2) 自定义链接、3) CPU 架构、4) 重下当前内核 |
+| `scripts/menus/9_upgrade.sh` `setcustcore()` | 自定义内核源从 6 个（mihomo/sing-box 各系）砍到 2 个：本仓库 release + 自定义链接 |
+| `scripts/menus/9_upgrade.sh` `checkcustgeo()` | geo 数据源按内核过滤：concord 只列 `Country.mmdb` 和 `.mrs`，不列 `GeoIP.dat`/`GeoSite.dat`/`.srs`（它读不了） |
+| `scripts/menus/9_upgrade.sh` `setcustgeo()` | concord 下隐藏 dat/srs 三个数据源，只留 meta-rules-dat(mmdb) 和 ruleset_geodata(mrs) |
 
 **为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
 
@@ -161,7 +165,9 @@ install.sh                           # 路由器端安装/回滚脚本
 | 功能 | 处理 |
 |---|---|
 | **自定义入站**（`listeners`：vmess-in / ss-in） | **已从菜单删除**，配置生成也不再写 `listeners:` |
+| **Tailscale / WireGuard** | 是 sing-box 内核的 `endpoints` 功能（`sb_endpoints.sh` + `singbox_modify.sh`），不是独立进程，concord 彻底用不了。菜单保留原限制提示 |
 | **PAC** | 菜单里那行地址已隐藏，concord 无 PAC 服务 |
+| **GeoIP.dat / GeoSite.dat / .srs** | concord 只读 `mmdb` 和 `mrs`。geo 更新菜单已按内核过滤数据源 |
 | **`tun.stack`** | 只有自己的 userspace 栈，配置里写什么都没用，但不影响运行 |
 
 ## 跟上上游更新

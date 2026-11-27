@@ -56,7 +56,7 @@ core_check(){
         # Concord (Rust)：没有 -v，也没有 -t 的帮助输出，版本来自配置里的 concord_v。
         # 数据目录必须独立，否则 concord 会往 $BINDIR 里写自己的 config.yaml。
         v="${concord_v:-0.1.0}"
-        COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $CRASHDIR/concord"'
+        COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
     elif [ -n "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q 'sing-box'; then
         v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
         COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'

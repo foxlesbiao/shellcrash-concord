@@ -17,6 +17,14 @@ REPO="${REPO:-foxlesbiao/shellcrash-concord}"
 BRANCH="${BRANCH:-main}"
 CONCORD_RELEASE="${CONCORD_RELEASE:-https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz}"
 
+# concord 要改的 ShellCrash 脚本（10 个）
+FILES="libs/core_tools.sh starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh
+menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh
+menus/dns.sh menu.sh"
+
+# ShellCrash 的运行时目录（配置/软链都在这里）
+TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
+
 die()  { echo "[错误] $*" >&2; exit 1; }
 info() { echo "[信息] $*"; }
 
@@ -48,12 +56,17 @@ if [ "${1:-}" = "--rollback" ]; then
     [ -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ] || die "没有备份，无法回滚"
     info "恢复 mihomo"
     cp -f "$CRASHDIR/CrashCore.raw.mihomo.bak" "$CRASHDIR/CrashCore.raw"
-    for f in core_tools.sh clash_modify.sh 9_upgrade.sh; do
+    for f in core_tools.sh clash_modify.sh clash_check.sh core_config.sh 1_start.sh 6_core_config.sh 7_gateway.sh 9_upgrade.sh dns.sh menu.sh; do
         [ -f "$CRASHDIR/.orig/$f.orig" ] && cp -f "$CRASHDIR/.orig/$f.orig" \
             "$(find "$CRASHDIR" -name "$f" -not -path "*/.orig/*" | head -1)"
     done
     set_cfg crashcore    meta
     set_cfg custcorelink ""
+    [ -f "$CRASHDIR/configs/command.env.mihomo.bak" ] && \
+        cp -f "$CRASHDIR/configs/command.env.mihomo.bak" "$CRASHDIR/configs/command.env"
+    cat > "$CRASHDIR/configs/command.env" <<ENVEOF
+COMMAND="\$TMPDIR/CrashCore -d \$BINDIR -f \$TMPDIR/config.yaml"
+ENVEOF
     sh "$CRASHDIR/start.sh" restart
     exit 0
 fi
@@ -63,7 +76,7 @@ if [ ! -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ]; then
     info "备份原始脚本与内核"
     { [ -f "$CRASHDIR/CrashCore.raw" ] && cp -f "$CRASHDIR/CrashCore.raw" "$CRASHDIR/CrashCore.raw.mihomo.bak"; } || true
     mkdir -p "$CRASHDIR/.orig"
-    for f in libs/core_tools.sh starts/clash_modify.sh menus/9_upgrade.sh; do
+    for f in $FILES; do
         [ -f "$CRASHDIR/$f" ] && cp -f "$CRASHDIR/$f" "$CRASHDIR/.orig/$(basename "$f").orig"
     done
 fi
@@ -71,7 +84,7 @@ fi
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"
 info "下载 shellcrash-concord 补丁文件"
-for f in libs/core_tools.sh starts/clash_modify.sh menus/9_upgrade.sh; do
+for f in $FILES; do
     url="https://raw.githubusercontent.com/$REPO/$BRANCH/ShellCrash/scripts/$f"
     curl -fsSL --retry 3 --max-time 60 -o "$WORK/$(basename "$f")" "$url" || die "下载 $f 失败"
     sh -n "$WORK/$(basename "$f")" || die "$f 语法检查失败，中止"
@@ -87,8 +100,16 @@ set_cfg concord_v    "$VER"
 set_cfg custcorelink "$CONCORD_RELEASE"
 info "配置: crashcore=concord custcorelink=$CONCORD_RELEASE"
 
+# 启动命令：concord 用 run -c <config> -d <datahome>，与 mihomo 的 -d/-f 完全不同。
+# 直接 cp 二进制时 core_check() 不会跑，所以这里必须显式写。
+mkdir -p "$CRASHDIR/configs"
+cat > "$CRASHDIR/configs/command.env" <<ENVEOF
+COMMAND="\$TMPDIR/CrashCore run -c \$TMPDIR/config.yaml -d /tmp/concord-home"
+ENVEOF
+info "command.env: concord run -c -d /tmp/concord-home"
+
 # ---------- 内核 ----------
-mkdir -p "$CRASHDIR/concord"
+mkdir -p "$TMPDIR/concord-home" 2>/dev/null || true
 if ! "$CRASHDIR/CrashCore" run -h 2>&1 | grep -qi concord; then
     info "下载 concord 内核"
     curl -fsSL --retry 3 --max-time 300 -o "$WORK/concord.gz" "$CONCORD_RELEASE" || die "下载内核失败"
