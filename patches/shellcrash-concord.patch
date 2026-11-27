@@ -12,6 +12,83 @@ index 338aed1..a4ea4a4 100644
  else
      COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
  fi
+diff --git a/scripts/lang/chs/6_core_config.lang b/scripts/lang/chs/6_core_config.lang
+index 119c515..5a61afa 100644
+--- a/scripts/lang/chs/6_core_config.lang
++++ b/scripts/lang/chs/6_core_config.lang
+@@ -5,7 +5,7 @@ CORECFG_MENU_B="\033[36m本地生成配置文件\033[0m"
+ CORECFG_MENU_C="\033[33m在线生成配置文件\033[0m"
+ CORECFG_MENU_D="\033[31m清空提供者列表\033[0m"
+ CORECFG_MENU_E="\033[36m自定义配置文件\033[0m"
+-CORECFG_CORE_ONLY="仅限Mihomo／singboxr内核使用，请更换内核！"
++CORECFG_CORE_ONLY="该功能需要 concord 内核"
+ CORECFG_ADD_PROVIDER_FIRST="请先添加提供者！"
+ CORECFG_CLEAR_WARN="警告：这将删除所有提供者且无法还原！"
+ CORECFG_CLEAR_CONFIRM="是否确认清空提供者列表："
+diff --git a/scripts/lang/chs/9_upgrade.lang b/scripts/lang/chs/9_upgrade.lang
+index de986d3..05da09e 100644
+--- a/scripts/lang/chs/9_upgrade.lang
++++ b/scripts/lang/chs/9_upgrade.lang
+@@ -127,9 +127,9 @@ UPG_GEO_CUSTOM_HINT2="请点击或复制链接前往项目页面查看具体说
+ UPG_GEO_CUSTOM_HINT3="自定义数据库不支持定时任务及小闪存模式！"
+ UPG_GEO_CUSTOM_HINT4="如遇到网络错误请先启动ShellCrash服务！"
+ UPG_GEO_SOURCE_SELECT="请选择需要更新的数据库项目来源："
+-UPG_GEO_LOCAL_ONLY1="（仅限Clash/Mihomo）"
++UPG_GEO_LOCAL_ONLY1="（mmdb 格式）"
+ UPG_GEO_LOCAL_ONLY2="（仅限SingBox-srs）"
+-UPG_GEO_LOCAL_ONLY3="（仅限Mihomo-mrs）"
++UPG_GEO_LOCAL_ONLY3="（mrs 格式）"
+ UPG_GEO_LOCAL_ONLY4="（仅限Clash-GeoIP）"
+ UPG_GEO_CUSTOM_LINK="自定义数据库链接"
+ UPG_GEO_CLEAN_HINT1_PREFIX="这将清理"
+@@ -227,7 +227,7 @@ UPG_CORE_ASUS_WARN="Meta内核使用的GeoSite.dat数据库在华硕设备存在
+ UPG_GEO_FIND_TITLE="正在查找可更新的数据库文件......"
+ UPG_GEO_SOURCE_TITLE="请选择需要更新的数据库项目来源："
+ UPG_GEO_LINK_HINT="请输入自定义数据库的链接地址> "
+-UPG_GEO_CHOOSE_HINT="注意：Mihomo内核和SingBox内核的数据库文件不通用"
++UPG_GEO_CHOOSE_HINT="注意：concord 只读 mmdb 和 mrs 两种格式"
+ UPG_GEO_LATEST="在线数据库最新版本（每日同步上游）："
+ UPG_GEO_CHOOSE="请选择需要更新的Geo数据库文件："
+ UPG_GEO_ITEM1="1) CN-IP绕过文件（约0.1mb）"
+diff --git a/scripts/lang/chs/dns.lang b/scripts/lang/chs/dns.lang
+index d735c34..87bb6ea 100644
+--- a/scripts/lang/chs/dns.lang
++++ b/scripts/lang/chs/dns.lang
+@@ -50,7 +50,7 @@ DNS_ADV_RESET="重置默认DNS配置"
+ DNS_IPV6_NOT_SUPPORT="该选项暂不支持IPv6加密DNS！"
+ 
+ DNS_ENCRYPT_OK="已设置加密DNS，如遇DNS解析问题，请重置DNS配置！"
+-DNS_CORE_REQUIRE="请使用Mihomo或SingBox内核"
++DNS_CORE_REQUIRE="请使用 concord 内核"
+ DNS_SET_TO="设为"
+ DNS_REMOVE_OK="移除成功"
+ DNS_REMOVE_FAIL="移除失败"
+diff --git a/scripts/lang/chs/override.lang b/scripts/lang/chs/override.lang
+index a5a0171..d78e1a9 100644
+--- a/scripts/lang/chs/override.lang
++++ b/scripts/lang/chs/override.lang
+@@ -19,7 +19,7 @@ OVR_CONFIRM_NO="0) 否，返回上级菜单"
+ OVR_RULES_TITLE="自定义规则"
+ OVR_RULES_MENU_HINT="你可以在这里快捷管理自定义规则"
+ OVR_RULES_MANUAL="如需批量操作，请手动编辑：\033[36m $YAMLSDIR/rules.yaml\033[0m"
+-OVR_RULES_SHARED="singbox和clash共用此处规则，可无缝切换！"
++OVR_RULES_SHARED="此处规则由 concord 内核加载"
+ OVR_RULES_WARN="大量规则请尽量使用rule-set功能添加，\n\033[31m此处过量添加可能导致启动卡顿！\033[0m"
+ OVR_RULES_ADD="1) 新增自定义规则"
+ OVR_RULES_DEL="2) 移除自定义规则"
+diff --git a/scripts/lang/en/6_core_config.lang b/scripts/lang/en/6_core_config.lang
+index ddb83eb..9415431 100644
+--- a/scripts/lang/en/6_core_config.lang
++++ b/scripts/lang/en/6_core_config.lang
+@@ -5,7 +5,7 @@ CORECFG_MENU_B="\033[36mGenerate local config\033[0m"
+ CORECFG_MENU_C="\033[33mGenerate online config\033[0m"
+ CORECFG_MENU_D="\033[31mClear provider list\033[0m"
+ CORECFG_MENU_E="\033[36mCustom config file\033[0m"
+-CORECFG_CORE_ONLY="Only for Mihomo/singboxr core, please switch core!"
++CORECFG_CORE_ONLY="This feature requires the concord core"
+ CORECFG_ADD_PROVIDER_FIRST="Please add provider first!"
+ CORECFG_CLEAR_WARN="Warning: this will delete all providers and cannot be undone!"
+ CORECFG_CLEAR_CONFIRM="Confirm clearing provider list:"
 diff --git a/scripts/libs/core_tools.sh b/scripts/libs/core_tools.sh
 index 684ca55..cce27e0 100644
 --- a/scripts/libs/core_tools.sh
@@ -472,7 +549,7 @@ index 7338b9f..2d7b765 100644
      while true; do
          [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..41808f0 100644
+index 4ce09ff..010ed58 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -31,14 +31,13 @@ upgrade() {
@@ -821,9 +898,9 @@ index 4ce09ff..41808f0 100644
          3)
 -            crashcore=singbox
 -            custcorelink=''
-             getcore
-             break
-             ;;
+-            getcore
+-            break
+-            ;;
 -        4)
 -            crashcore=clash
 -            custcorelink=''
@@ -837,9 +914,9 @@ index 4ce09ff..41808f0 100644
 -            setcustcore
 -            ;;
 -        7)
--            getcore
--            break
--            ;;
+             getcore
+             break
+             ;;
 -        9)
 -            setcpucore
 -            break
@@ -908,6 +985,57 @@ index 4ce09ff..41808f0 100644
              getdb
              ;;
          2)
+@@ -962,14 +731,8 @@ setdb() {
+             "\033[32m$UPG_DB_TITLE2\033[0m" \
+             "" \
+             "$UPG_DB_SELECT"
+-        btm_box "$UPG_DB_WIP" \
+-            "$UPG_DB_INSTALL_1" \
+-            "$UPG_DB_INSTALL_2" \
+-            "$UPG_DB_INSTALL_3" \
+-            "$UPG_DB_OLD" \
+-            "$UPG_DB_INSTALL_4" \
+-            "$UPG_DB_INSTALL_5" \
+-            "$UPG_DB_INSTALL_6" \
++        # 只保留 zashboard（concord 唯一可用的面板），其余是 mihomo/clash 专属
++        btm_box "$UPG_DB_INSTALL_1" \
+             "$UPG_DB_UNINSTALL" \
+             "" \
+             "0) $COMMON_BACK"
+@@ -979,32 +742,11 @@ setdb() {
+             break
+             ;;
+         1)
++            # concord 不支持 external-ui，面板由 uhttpd 在 :8090 托管
+             db_type=zashboard
+-            setconfig external_ui_url "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip"
+             dbdir
+             ;;
+         2)
+-            db_type=meta_xd
+-            setconfig external_ui_url "https://raw.githubusercontent.com/juewuy/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
+-            dbdir
+-            ;;
+-        3)
+-            db_type=meta_yacd
+-            dbdir
+-            ;;
+-        4)
+-            db_type=clashdb
+-            dbdir
+-            ;;
+-        5)
+-            db_type=meta_db
+-            dbdir
+-            ;;
+-        6)
+-            db_type=yacd
+-            dbdir
+-            ;;
+-        9)
+             while true; do
+                 comp_box "$UPG_DB_UNINSTALL_CONFIRM"
+                 btm_box "$UPG_DB_UNINSTALL_YES" \
 diff --git a/scripts/menus/dns.sh b/scripts/menus/dns.sh
 index 0a2dc71..cd4094b 100644
 --- a/scripts/menus/dns.sh
@@ -1101,21 +1229,27 @@ index ebd5a8d..7f55f77 100644
      . "$CRASHDIR"/starts/clash_check.sh && clash_check
      if [ "$disoverride" != "1" ]; then
 diff --git a/scripts/starts/clash_check.sh b/scripts/starts/clash_check.sh
-index 9346053..13d3a6f 100644
+index 9346053..ba17934 100644
 --- a/scripts/starts/clash_check.sh
 +++ b/scripts/starts/clash_check.sh
-@@ -1,7 +1,10 @@
+@@ -1,15 +1,6 @@
  
- clash_check() { #clash启动前检查
-     #检测vless/hysteria协议
+-clash_check() { #clash启动前检查
+-    #检测vless/hysteria协议
 -    [ "$crashcore" != "meta" ] && [ -n "$(cat $core_config | grep -oE 'type: vless|type: hysteria')" ] && core_exchange meta 'vless/hy协议'
-+    #concord 原生支持 vless/hysteria，不能因为协议类型就把内核换回 mihomo
-+    if ! echo "$crashcore" | grep -qi 'concord'; then
-+        [ "$crashcore" != "meta" ] && [ -n "$(cat $core_config | grep -oE 'type: vless|type: hysteria')" ] && core_exchange meta 'vless/hy协议'
-+    fi
-     #检测是否存在高级版规则或者tun模式
-     if [ "$crashcore" = "clash" ]; then
-         [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||
+-    #检测是否存在高级版规则或者tun模式
+-    if [ "$crashcore" = "clash" ]; then
+-        [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||
+-            [ "$redir_mod" = "Mix" ] ||
+-            [ "$redir_mod" = "Tun" ] && core_exchange meta '当前内核不支持的配置'
+-    fi
+-    [ "$crashcore" = "clash" ] && [ "$firewall_area" = 2 -o "$firewall_area" = 3 ] && [ -z "$(grep '0:7890' /etc/passwd)" ] &&
+-        core_exchange meta '当前内核不支持非root用户启用本机代理'
++clash_check() { #启动前检查
++    # 本版只有 concord 一个内核，不再有"换内核"的逻辑（core_exchange 已移除）
+     check_core
+     #预下载GeoIP数据库
+     grep -qEi 'GEOIP,CN' "$CRASHDIR"/yamls/config.yaml && ! grep -Eq '^[[:space:]]*geodata-mode:' "$CRASHDIR"/yamls/*.yaml && check_geo Country.mmdb cn_mini.mmdb
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
 index dcf4cb9..4176123 100644
 --- a/scripts/starts/clash_modify.sh
@@ -1204,6 +1338,23 @@ index 256b3a6..9752744 100644
          check_config
          #如果不同则备份并替换文件
          if [ -s "$core_config" ]; then
+diff --git a/scripts/starts/core_exchange.sh b/a/scripts/starts/core_exchange.sh
+deleted file mode 100644
+index c52ee5b..0000000
+--- a/scripts/starts/core_exchange.sh
++++ /dev/null
+@@ -1,11 +0,0 @@
+-
+-core_exchange() { #升级为高级内核
+-    #$1：目标内核  $2：提示语句
+-    logger "检测到${2}！将改为使用${1}核心启动！" 33
+-    rm -rf "$TMPDIR"/CrashCore
+-    rm -rf "$BINDIR"/CrashCore
+-    rm -rf "$BINDIR"/CrashCore.tar.gz
+-    crashcore="$1"
+-    setconfig crashcore "$1"
+-    echo "-----------------------------------------------"
+-}
 diff --git a/scripts/starts/singbox_check.sh b/a/scripts/starts/singbox_check.sh
 deleted file mode 100644
 index 10bbf6f..0000000

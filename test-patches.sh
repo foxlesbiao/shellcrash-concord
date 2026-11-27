@@ -221,14 +221,12 @@ fi
 grep -E '^[[:space:]]*tun=' "$SRC/starts/clash_modify.sh" | grep -q 'stack: mips' \
     && no "代码里还残留 stack: mips" || ok "无 mips 残留（注释除外）"
 
-# install.sh 回滚时要兜底修 stack
+# 回滚功能已移除（纯 concord 不留 mihomo 退路）
 I="$(dirname "$0")/install.sh"
-grep -q "s/stack: mips/stack: system/" "$I" 2>/dev/null \
-    && ok "install.sh 回滚时兜底修 stack" || no "install.sh 回滚没修 stack"
-
-# 回滚用 BusyBox 兼容写法（-not 是 GNU find 的）
-grep -q 'find "$CRASHDIR" -name "$f" -not' "$I" 2>/dev/null \
-    && no "install.sh 用了 BusyBox 不支持的 -not" || ok "install.sh 回滚用 BusyBox 兼容写法"
+grep -q 'rollback' "$I" 2>/dev/null && no "install.sh 仍含回滚逻辑" || ok "install.sh 无回滚逻辑"
+# 只看实际命令（注释里提到 mihomo.bak 是解释性的）
+grep -E '^[[:space:]]*[^#].*mihomo\.bak' "$I" 2>/dev/null | grep -q . \
+    && no "install.sh 仍备份 mihomo" || ok "install.sh 不备份 mihomo"
 
 # ---------- 7. test_yaml：校验命令 ----------
 sec "7. test_yaml() 校验命令"
@@ -288,7 +286,7 @@ sec "10. 补丁文件"
 PATCH="$(dirname "$0")/patches/shellcrash-concord.patch"
 [ -f "$PATCH" ] && ok "补丁文件存在" || no "补丁文件缺失"
 N=$(grep -c '^diff --git' "$PATCH" 2>/dev/null)
-[ "${N:-0}" -ge 19 ] && ok "补丁覆盖 $N 个文件（含删除）" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=19）"
+[ "${N:-0}" -ge 25 ] && ok "补丁覆盖 $N 个文件（含删除）" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=25）"
 
 # 三个关键补丁标记
 for f in init.sh libs/core_tools.sh libs/web_get_bin.sh; do
@@ -300,9 +298,13 @@ sec "11. 纯 concord 完整性"
 
 SDIR="$(dirname "$0")/ShellCrash/scripts"
 for f in starts/singbox_modify.sh starts/singbox_check.sh starts/singbox_config_check.sh \
-         menus/providers_singbox.sh libs/meta_listeners.sh; do
+         menus/providers_singbox.sh libs/meta_listeners.sh starts/core_exchange.sh; do
     [ -f "$SDIR/$f" ] && no "仍存在 $f" || ok "已删除 $f"
 done
+
+# core_exchange 是"换内核"的核心，删了才叫纯 concord
+DANG=$(grep -rn 'core_exchange' "$SDIR" 2>/dev/null | grep -v '^.*#' | wc -l)
+[ "$DANG" -eq 0 ] && ok "无 core_exchange 调用（不换内核）" || no "$DANG 处仍在调 core_exchange"
 
 # 补丁里应体现为删除
 grep -q 'deleted file mode' "$PATCH" && ok "补丁含文件删除记录" || no "补丁没有删除记录"
@@ -310,6 +312,13 @@ grep -q 'deleted file mode' "$PATCH" && ok "补丁含文件删除记录" || no "
 # 不能有指向已删文件的 source
 DANGLING=$(grep -rn 'singbox_modify\|singbox_check\|singbox_config_check\|providers_singbox\|meta_listeners' "$SDIR" 2>/dev/null | wc -l)
 [ "$DANGLING" -eq 0 ] && ok "无指向已删文件的引用" || no "$DANGLING 处 dangling 引用"
+
+# 面板包只留 zashboard
+DBDIR="$(dirname "$0")/ShellCrash/bin/dashboard"
+[ -f "$DBDIR/zashboard.tar.gz" ] && ok "保留 zashboard" || no "zashboard 丢了"
+# 注意：grep -vc 无匹配时 exit=1，别用 || echo 0（会输出两行把 -eq 搞崩）
+DB_OTHER=$(ls "$DBDIR" 2>/dev/null | grep -v zashboard | wc -l | tr -d ' ')
+[ "${DB_OTHER:-0}" -eq 0 ] && ok "无其他面板包" || no "还有 ${DB_OTHER} 个非 zashboard 面板"
 
 # bin 里不该再有 mihomo/sing-box
 [ -d "$(dirname "$0")/ShellCrash/bin/meta" ] && no "bin/meta 仍在" || ok "bin/meta 已删"

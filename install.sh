@@ -2,14 +2,13 @@
 # shellcrash-concord 安装脚本
 #
 # 用法（在路由器上执行）：
-#   sh install.sh               # 安装/更新
-#   sh install.sh --rollback    # 回滚到 mihomo 内核
+#   sh install.sh               # 安装/更新（纯 concord，无回滚）
 #
 # 做的事：
-#   1. 备份原始脚本与内核
-#   2. 用本仓库改过的 3 个 scripts 覆盖（core_tools / clash_modify / 9_upgrade）
+#   1. 下载本仓库改过的脚本覆盖（见 FILES）
+#   2. 删掉上游残留的 sing-box 专用脚本（见 DROP）
 #   3. 写入 concord 专用配置（crashcore / custcorelink / concord_v）
-#   4. 下载 concord 内核并重启，自检
+#   4. 按 uname -m 下载对应架构的内核并重启，自检
 
 set -eu
 
@@ -64,61 +63,19 @@ set_cfg() {
     fi
 }
 
-# ---------- 回滚 ----------
-if [ "${1:-}" = "--rollback" ]; then
-    [ -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ] || die "没有备份，无法回滚"
-    info "恢复 mihomo"
-    cp -f "$CRASHDIR/CrashCore.raw.mihomo.bak" "$CRASHDIR/CrashCore.raw"
-    # 用 BusyBox 兼容的写法：-not 是 GNU find 的，路由器上是 BusyBox
-    for f in init.sh core_tools.sh web_get_bin.sh clash_modify.sh clash_check.sh core_config.sh \
-             1_start.sh 6_core_config.sh 7_gateway.sh 9_upgrade.sh dns.sh menu.sh; do
-        [ -f "$CRASHDIR/.orig/$f.orig" ] || continue
-        tgt=$(find "$CRASHDIR" -name "$f" 2>/dev/null | grep -v '/\.orig/' | head -1)
-        [ -n "$tgt" ] && cp -f "$CRASHDIR/.orig/$f.orig" "$tgt"
-    done
-    # 上游 master 把 tun stack 改成了 mips（mihomo 新版 IP stack），但 v1.19.x 报
-    # "invalid tun stack" 直接起不来。回滚到 mihomo 时强制写回 system（全版本兼容）。
-    for f in "$CRASHDIR/starts/clash_modify.sh" "$CRASHDIR/starts/clash_modify.sh.orig"; do
-        [ -f "$f" ] && sed -i 's/stack: mips/stack: system/' "$f" 2>/dev/null
-    done
-    set_cfg crashcore    meta
-    set_cfg custcorelink ""
-    [ -f "$CRASHDIR/configs/command.env.mihomo.bak" ] && \
-        cp -f "$CRASHDIR/configs/command.env.mihomo.bak" "$CRASHDIR/configs/command.env"
-    cat > "$CRASHDIR/configs/command.env" <<ENVEOF
-COMMAND="\$TMPDIR/CrashCore -d \$BINDIR -f \$TMPDIR/config.yaml"
-ENVEOF
-    sh "$CRASHDIR/start.sh" restart
-    exit 0
-fi
-
-# ---------- 备份 ----------
-# 内核和每个脚本分别判断：新增的补丁文件（如 init.sh）在上一次安装时不存在，
-# 不能因为"内核备份已存在"就跳过它们的备份，否则回滚时恢复不了。
-if [ ! -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ] && [ -f "$CRASHDIR/CrashCore.raw" ]; then
-    info "备份 mihomo 内核"
-    cp -f "$CRASHDIR/CrashCore.raw" "$CRASHDIR/CrashCore.raw.mihomo.bak"
-fi
-mkdir -p "$CRASHDIR/.orig"
-_bk=0
-for f in $FILES; do
-    o="$CRASHDIR/.orig/$(basename "$f").orig"
-    if [ -f "$CRASHDIR/$f" ] && [ ! -f "$o" ]; then
-        cp -f "$CRASHDIR/$f" "$o" && _bk=$((_bk+1))
-    fi
-done
-# 备份文件里的 tun stack 也统一成 system，回滚时直接可用
-for f in "$CRASHDIR"/.orig/clash_modify.sh.orig; do
-    [ -f "$f" ] && sed -i 's/stack: mips/stack: system/' "$f" 2>/dev/null
-done
-[ "$_bk" -gt 0 ] && info "备份了 $_bk 个原始脚本到 .orig/"
-[ "$_bk" -eq 0 ] && info "原始脚本已在 .orig/，不重复备份"
+# ---------- 说明 ----------
+# 本版是纯 concord，不保留 mihomo 回滚路径：
+#   - 不再备份 CrashCore.raw.mihomo.bak / command.env.mihomo.bak
+#   - 不再保留 .orig/ 原始脚本副本
+# 需要回退时，用上游 ShellCrash 重装即可。
 
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"
 info "下载 shellcrash-concord 补丁文件"
 for f in $FILES; do
-    url="https://raw.githubusercontent.com/$REPO/$BRANCH/ShellCrash/scripts/$f"
+    # raw.githubusercontent.com 在国内路由器上经常超时（实测 60s 无响应），
+    # 统一走 ghfast 镜像前缀；可用 RAW_BASE 覆盖。
+    url="${RAW_BASE:-https://ghfast.top/https://raw.githubusercontent.com/$REPO/$BRANCH}/ShellCrash/scripts/$f"
     curl -fsSL --retry 3 --max-time 60 -o "$WORK/$(basename "$f")" "$url" || die "下载 $f 失败"
     sh -n "$WORK/$(basename "$f")" || die "$f 语法检查失败，中止"
     cp -f "$WORK/$(basename "$f")" "$CRASHDIR/$f"
@@ -195,10 +152,9 @@ if [ -n "$CPID" ]; then
     info "运行中 PID=$CPID RSS=${RSS}kB"
     curl -s -o /dev/null -w "[自检] google204=%{http_code}/%{time_total}s\n" --max-time 15 \
         -x http://127.0.0.1:7890 https://www.gstatic.com/generate_204 || true
-    info "完成。回滚: sh $0 --rollback"
+    info "完成"
 else
     info "内核未启动，查看 $CRASHDIR/ShellCrash.log"
-    info "回滚: sh $0 --rollback"
     rm -rf "$WORK"
     exit 1
 fi

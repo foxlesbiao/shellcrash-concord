@@ -731,14 +731,8 @@ setdb() {
             "\033[32m$UPG_DB_TITLE2\033[0m" \
             "" \
             "$UPG_DB_SELECT"
-        btm_box "$UPG_DB_WIP" \
-            "$UPG_DB_INSTALL_1" \
-            "$UPG_DB_INSTALL_2" \
-            "$UPG_DB_INSTALL_3" \
-            "$UPG_DB_OLD" \
-            "$UPG_DB_INSTALL_4" \
-            "$UPG_DB_INSTALL_5" \
-            "$UPG_DB_INSTALL_6" \
+        # 只保留 zashboard（concord 唯一可用的面板），其余是 mihomo/clash 专属
+        btm_box "$UPG_DB_INSTALL_1" \
             "$UPG_DB_UNINSTALL" \
             "" \
             "0) $COMMON_BACK"
@@ -748,32 +742,11 @@ setdb() {
             break
             ;;
         1)
+            # concord 不支持 external-ui，面板由 uhttpd 在 :8090 托管
             db_type=zashboard
-            setconfig external_ui_url "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip"
             dbdir
             ;;
         2)
-            db_type=meta_xd
-            setconfig external_ui_url "https://raw.githubusercontent.com/juewuy/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
-            dbdir
-            ;;
-        3)
-            db_type=meta_yacd
-            dbdir
-            ;;
-        4)
-            db_type=clashdb
-            dbdir
-            ;;
-        5)
-            db_type=meta_db
-            dbdir
-            ;;
-        6)
-            db_type=yacd
-            dbdir
-            ;;
-        9)
             while true; do
                 comp_box "$UPG_DB_UNINSTALL_CONFIRM"
                 btm_box "$UPG_DB_UNINSTALL_YES" \

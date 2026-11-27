@@ -1,18 +1,6 @@
 
-clash_check() { #clash启动前检查
-    #检测vless/hysteria协议
-    #concord 原生支持 vless/hysteria，不能因为协议类型就把内核换回 mihomo
-    if ! echo "$crashcore" | grep -qi 'concord'; then
-        [ "$crashcore" != "meta" ] && [ -n "$(cat $core_config | grep -oE 'type: vless|type: hysteria')" ] && core_exchange meta 'vless/hy协议'
-    fi
-    #检测是否存在高级版规则或者tun模式
-    if [ "$crashcore" = "clash" ]; then
-        [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||
-            [ "$redir_mod" = "Mix" ] ||
-            [ "$redir_mod" = "Tun" ] && core_exchange meta '当前内核不支持的配置'
-    fi
-    [ "$crashcore" = "clash" ] && [ "$firewall_area" = 2 -o "$firewall_area" = 3 ] && [ -z "$(grep '0:7890' /etc/passwd)" ] &&
-        core_exchange meta '当前内核不支持非root用户启用本机代理'
+clash_check() { #启动前检查
+    # 本版只有 concord 一个内核，不再有"换内核"的逻辑（core_exchange 已移除）
     check_core
     #预下载GeoIP数据库
     grep -qEi 'GEOIP,CN' "$CRASHDIR"/yamls/config.yaml && ! grep -Eq '^[[:space:]]*geodata-mode:' "$CRASHDIR"/yamls/*.yaml && check_geo Country.mmdb cn_mini.mmdb
