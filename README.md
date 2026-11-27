@@ -131,6 +131,8 @@ install.sh                           # 路由器端安装/回滚脚本
 |---|---|
 | `scripts/starts/clash_check.sh` | 订阅含 vless/hysteria 时**不再自动换内核**（concord 原生支持这两种协议） |
 | `scripts/starts/core_config.sh` | UA 用 `clash.meta/mihomo` 而非 `clash`（部分订阅服务器按 UA 拒绝） |
+| `scripts/init.sh` | **每次更新脚本都会重写 `configs/command.env`**。原来只认 singbox/mihomo，concord 会拿到 mihomo 的 `-d/-f` 启动命令直接起不来。加 concord 分支 |
+| `scripts/libs/core_tools.sh` `core_find()` | 启动时找内核用 `find CrashCore.* \| head -1`，顺序不定，可能选中 `.raw.mihomo.bak`。改为优先 `CrashCore.raw` 并排除 `.bak` |
 
 **面板与显示**
 
@@ -170,11 +172,16 @@ install.sh                           # 路由器端安装/回滚脚本
 | **GeoIP.dat / GeoSite.dat / .srs** | concord 只读 `mmdb` 和 `mrs`。geo 更新菜单已按内核过滤数据源 |
 | **`tun.stack`** | 只有自己的 userspace 栈，配置里写什么都没用，但不影响运行 |
 
-## ⚠️ 「更新管理脚本」会覆盖补丁
+## 「更新管理脚本」已指向本仓库
 
-ShellCrash 菜单里 `9) 更新与支持 → 1) 更新管理脚本` 会把本仓库改过的 10 个脚本换回上游版本，concord 支持就没了。
+菜单 `9) 更新与支持 → 1) 更新管理脚本` 现在从本仓库的 release 取 `ShellCrash.tar.gz`，不会再被上游版本覆盖。
 
-**更新完脚本后重跑一次 `install.sh` 即可恢复**（它会重新拉补丁文件）。
+- 每周一 `sync-concord` workflow 发一个 release，同时带 **concord 内核** 和 **ShellCrash.tar.gz（concord 专用脚本包）** + `version`
+- `libs/web_get_bin.sh` 在 concord 下把 `update_url` 钉死到本仓库，并清空 `url_id`（`url_id=101` 会绕过 `update_url` 指回上游）
+- 下载走 `ghfast.top` 镜像：`github.com` 在国内路由器上直连不通（实测 000 超时）
+- 根目录的 `version` / `ShellCrash.tar.gz` 供 jsDelivr 兜底；`bin/`、`public/`、`rules/` 仍走 jsDelivr
+
+更新完脚本服务会停，需要重新启动。
 
 ## 跟上上游更新
 
