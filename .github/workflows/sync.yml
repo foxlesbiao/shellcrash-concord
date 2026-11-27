@@ -91,7 +91,7 @@ jobs:
           cp -rf ShellCrash/scripts/* pack/
           # 版本号用 beta4：上游 master 的 1.9.6alpha1 会生成非法 tun stack: mips
           echo "1.9.5beta4" > pack/version
-          ( cd pack && tar -czf ../ShellCrash.tar.gz ./* )
+          ( cd pack && tar -czf ../ShellCrash.tar.gz * )
           sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
           ls -lh ShellCrash.tar.gz
           echo "--- 校验补丁已在包内 ---"
