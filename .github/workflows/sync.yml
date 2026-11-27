@@ -92,6 +92,7 @@ jobs:
           # 版本号用 beta4：上游 master 的 1.9.6alpha1 会生成非法 tun stack: mips
           echo "1.9.5beta4" > pack/version
           ( cd pack && tar -czf ../ShellCrash.tar.gz * )
+          cp pack/version version
           sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
           ls -lh ShellCrash.tar.gz
           echo "--- 校验补丁已在包内 ---"
@@ -109,13 +110,13 @@ jobs:
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "release $TAG already exists, refreshing assets"
             gh release upload "$TAG" concord-aarch64.gz concord-aarch64.gz.sha256 \
-              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 \
+              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version \
               --repo "$GITHUB_REPOSITORY" --clobber
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               concord-aarch64.gz concord-aarch64.gz.sha256 \
-              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 \
+              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version \
               --title "concord ${TAG#v} (ShellCrash aarch64)" \
               --notes "从 [nikki-concord](https://github.com/user-7392/nikki-concord) \`$TAG\` 提取的 concord 内核。
 
