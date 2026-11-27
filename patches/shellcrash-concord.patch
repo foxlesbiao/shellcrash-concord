@@ -437,10 +437,10 @@ index 7338b9f..2d7b765 100644
      while true; do
          [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..7ff3177 100644
+index 4ce09ff..41808f0 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
-@@ -31,7 +31,7 @@ upgrade() {
+@@ -31,14 +31,13 @@ upgrade() {
          }
          separator_line "="
          btm_box "1) $UPG_MENU_SCRIPT\033[36m$UPG_MENU_SCRIPT_NAME\t\033[33m$versionsh_l\033[0m > \033[32m$version_new \033[36m$release_type\033[0m" \
@@ -449,7 +449,16 @@ index 4ce09ff..7ff3177 100644
              "3) $UPG_MENU_GEO\033[32m$UPG_MENU_GEO_NAME\033[0m" \
              "4) $UPG_MENU_DB\033[35m$UPG_MENU_DB_NAME\033[0m" \
              "5) $UPG_MENU_CRT\033[33m$UPG_MENU_CRT_NAME\033[0m" \
-@@ -62,8 +62,12 @@ upgrade() {
+             "6) \033[32mPAC\033[0m$UPG_MENU_PAC" \
+-            "7) $UPG_MENU_SOURCE\033[36m$UPG_MENU_SOURCE_NAME\033[0m" \
+-            "8) \033[31m$UPG_MENU_UNINSTALL\033[0m" \
+-            "9) \033[36m$UPG_MENU_THANKS\033[0m" \
++            "7) \033[31m$UPG_MENU_UNINSTALL\033[0m" \
++            "8) \033[36m$UPG_MENU_THANKS\033[0m" \
+             "" \
+             "0) $COMMON_BACK"
+         read -r -p "$COMMON_INPUT> " num
+@@ -62,16 +61,17 @@ upgrade() {
              setcrt
              ;;
          6)
@@ -463,8 +472,30 @@ index 4ce09ff..7ff3177 100644
 +            fi
              ;;
          7)
-             setserver
-@@ -219,38 +223,9 @@ setcpucore() {
+-            setserver
+-            ;;
+-        8)
+             . "$CRASHDIR"/menus/uninstall.sh && uninstall
+             ;;
+-        9)
++        8)
+             comp_box "$UPG_THANKS_TITLE"
+             btm_box "\033[32m$UPG_THANKS_ITEM_CLASH\033[0m" \
+                 "" \
+@@ -123,10 +123,8 @@ checkupdate() {
+     else
+         content_line "\033[31m$UPG_CHECK_FAIL\033[0m"
+         separator_line "="
+-        setserver
+-        if [ "$checkupdate" != false ]; then
+-            checkupdate
+-        fi
++        content_line "\033[33m更新源已固定为本仓库 release，请检查网络连通性\033[0m"
++        sleep 2
+     fi
+     rm -rf "$TMPDIR"/version_new
+ }
+@@ -219,38 +217,9 @@ setcpucore() {
  
  # 手动指定内核类型
  setcoretype() {
@@ -506,7 +537,7 @@ index 4ce09ff..7ff3177 100644
  }
  
  # clash与singbox内核切换
-@@ -325,185 +300,6 @@ getcore() {
+@@ -325,185 +294,6 @@ getcore() {
          ;;
      esac
  }
@@ -692,7 +723,7 @@ index 4ce09ff..7ff3177 100644
  setcore() {
      while true; do
          # 获取核心及版本信息
-@@ -519,24 +315,9 @@ setcore() {
+@@ -519,24 +309,9 @@ setcore() {
              "" \
              "\033[33m$UPG_CORE_MENU_SELECT\033[0m"
  
@@ -720,7 +751,7 @@ index 4ce09ff..7ff3177 100644
              "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -545,46 +326,19 @@ setcore() {
+@@ -545,46 +320,30 @@ setcore() {
              break
              ;;
          1)
@@ -729,8 +760,19 @@ index 4ce09ff..7ff3177 100644
 -            }
 -            crashcore=meta
 -            custcorelink=''
++            # 按当前 CPU 架构选对应内核（nikki-concord 只出这 4 个架构）
 +            crashcore=concord
-+            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
++            case "$cpucore" in
++            arm64)  concord_arch='aarch64_generic' ;;
++            amd64)  concord_arch='x86_64' ;;
++            *)      concord_arch='' ;;
++            esac
++            if [ -z "$concord_arch" ]; then
++                msg_alert "\033[31m当前架构 $cpucore 暂无 concord 内核\033[0m" \
++                    "\033[33m可用: arm64 / amd64\033[0m"
++                continue
++            fi
++            custcorelink="https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
              getcore
              break
              ;;
@@ -744,15 +786,15 @@ index 4ce09ff..7ff3177 100644
          3)
 -            crashcore=singbox
 -            custcorelink=''
--            getcore
--            break
--            ;;
--        4)
--            crashcore=clash
--            custcorelink=''
              getcore
              break
              ;;
+-        4)
+-            crashcore=clash
+-            custcorelink=''
+-            getcore
+-            break
+-            ;;
 -        5)
 -            setziptype
 -            ;;
@@ -770,7 +812,7 @@ index 4ce09ff..7ff3177 100644
          *)
              errornum
              ;;
-@@ -656,7 +410,13 @@ checkcustgeo() {
+@@ -656,7 +415,13 @@ checkcustgeo() {
              comp_box "\033[32m$UPG_GEO_FIND_TITLE\033[0m"
              webget "$TMPDIR"/github_api https://api.github.com/repos/${project}/releases/${api_url}
              release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
@@ -785,7 +827,7 @@ index 4ce09ff..7ff3177 100644
              rm -rf "$TMPDIR"/github_api
          }
          if [ -s "$TMPDIR"/geo.list ]; then
-@@ -710,18 +470,20 @@ setcustgeo() {
+@@ -710,18 +475,20 @@ setcustgeo() {
          content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
          sub_content_line "$UPG_GEO_LOCAL_ONLY1"
  
@@ -813,7 +855,7 @@ index 4ce09ff..7ff3177 100644
          content_line "$UPG_GEO_CUSTOM_LINK"
          content_line ""
          content_line "0) $COMMON_BACK"
-@@ -866,6 +628,8 @@ setgeo() {
+@@ -866,6 +633,8 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -822,7 +864,7 @@ index 4ce09ff..7ff3177 100644
      dblink="${update_url}/"
      line_break
      separator_line "="
-@@ -936,7 +700,7 @@ dbdir() {
+@@ -936,7 +705,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui
@@ -844,6 +886,34 @@ index 0a2dc71..cd4094b 100644
                  [ "$num" = 1 ] && dns_mod=mix || dns_mod=route
                  setconfig dns_mod "$dns_mod"
                  msg_alert "\033[36m$DNS_SET_OK：$dns_mod\033[0m"
+diff --git a/scripts/menus/providers_clash.sh b/scripts/menus/providers_clash.sh
+index f8bc313..ebeb374 100644
+--- a/scripts/menus/providers_clash.sh
++++ b/scripts/menus/providers_clash.sh
+@@ -23,8 +23,7 @@ gen_providers() {
+         get_bin "$TMPDIR"/provider_temp_file "rules/${CORE_TYPE}_providers/$provider_temp_file"
+         [ -z "$(grep -o 'rules' "$TMPDIR"/provider_temp_file)" ] && {
+             msg_alert "\033[31m$PROVIDERS_DOWNLOAD_FAILED\033[0m"
+-            . "$CRASHDIR"/menus/9_upgrade.sh && setserver
+-            setproviders
++            msg_alert "\033[33m模板下载失败，检查网络后重试\033[0m"
+         }
+     fi
+     # 生成proxy_providers模块
+diff --git a/scripts/menus/providers_singbox.sh b/scripts/menus/providers_singbox.sh
+index 26aa5b9..858685c 100644
+--- a/scripts/menus/providers_singbox.sh
++++ b/scripts/menus/providers_singbox.sh
+@@ -22,8 +22,7 @@ gen_providers() {
+         get_bin "$TMPDIR"/provider_temp_file "rules/${CORE_TYPE}_providers/$provider_temp_file"
+         [ -z "$(grep -o 'route' "$TMPDIR"/provider_temp_file)" ] && {
+             msg_alert "\033[31m$PROVIDERS_DOWNLOAD_FAILED\033[0m"
+-            . "$CRASHDIR"/menus/9_upgrade.sh && setserver
+-            setproviders
++            msg_alert "\033[33m模板下载失败，检查网络后重试\033[0m"
+         }
+     fi
+     # 生成outbound_providers模块
 diff --git a/scripts/starts/clash_check.sh b/scripts/starts/clash_check.sh
 index 9346053..13d3a6f 100644
 --- a/scripts/starts/clash_check.sh

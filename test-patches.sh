@@ -272,13 +272,24 @@ hasnt "setcoretype 不再弹选择菜单"      "$(sed -n '/^setcoretype()/,/^}/p
 has  "geo 菜单按内核过滤"        "$(cat "$SRC/menus/9_upgrade.sh")" 'concord.*只读\|concord.*mrs\|geo_pat'
 has  "PAC 对 concord 有提示"     "$(cat "$SRC/menus/9_upgrade.sh")" 'concord 没有 PAC'
 
+# 多架构：按 cpucore 选对应内核
+has  "菜单按架构选内核 (arm64)"   "$(cat "$SRC/menus/9_upgrade.sh")" "arm64).*aarch64_generic"
+has  "菜单按架构选内核 (amd64)"   "$(cat "$SRC/menus/9_upgrade.sh")" "amd64).*x86_64"
+has  "不支持架构时有提示"         "$(cat "$SRC/menus/9_upgrade.sh")" '当前架构.*暂无 concord'
+hasnt "内核 URL 不再硬编码 aarch64" "$(cat "$SRC/menus/9_upgrade.sh")" 'download/concord-aarch64.gz'
+
+# 切换安装源已删（concord 下 update_url 被钉死，改了无效）
+hasnt "已删切换安装源菜单"        "$(cat "$SRC/menus/9_upgrade.sh")" 'UPG_MENU_SOURCE'
+hasnt "已删 setserver 调用"       "$(cat "$SRC/menus/providers_clash.sh")" 'setserver'
+hasnt "已删 setserver 调用(sb)"   "$(cat "$SRC/menus/providers_singbox.sh")" 'setserver'
+
 # ---------- 10. 补丁与上游一致性 ----------
 sec "10. 补丁文件"
 
 PATCH="$(dirname "$0")/patches/shellcrash-concord.patch"
 [ -f "$PATCH" ] && ok "补丁文件存在" || no "补丁文件缺失"
 N=$(grep -c '^diff --git' "$PATCH" 2>/dev/null)
-[ "${N:-0}" -ge 11 ] && ok "补丁覆盖 $N 个文件" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=11）"
+[ "${N:-0}" -ge 14 ] && ok "补丁覆盖 $N 个文件" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=14）"
 
 # 三个关键补丁标记
 for f in init.sh libs/core_tools.sh libs/web_get_bin.sh; do

@@ -15,7 +15,15 @@ set -eu
 
 REPO="${REPO:-foxlesbiao/shellcrash-concord}"
 BRANCH="${BRANCH:-main}"
-CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz}"
+# 按本机架构选内核，可用 CONCORD_ARCH 覆盖（aarch64_generic / aarch64_cortex-a53 / aarch64_cortex-a72 / x86_64）
+if [ -z "${CONCORD_ARCH:-}" ]; then
+    case "$(uname -m)" in
+    aarch64 | arm64) CONCORD_ARCH=aarch64_generic ;;
+    x86_64 | amd64)  CONCORD_ARCH=x86_64 ;;
+    *) echo "[错误] 不支持的架构 $(uname -m)，可用 CONCORD_ARCH=aarch64_generic|x86_64 手动指定" >&2; exit 1 ;;
+    esac
+fi
+CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$CONCORD_ARCH.gz}"
 
 # concord 要改的 ShellCrash 脚本（12 个，与 patches/shellcrash-concord.patch 一致）
 FILES="init.sh menu.sh

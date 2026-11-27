@@ -36,9 +36,8 @@ upgrade() {
             "4) $UPG_MENU_DB\033[35m$UPG_MENU_DB_NAME\033[0m" \
             "5) $UPG_MENU_CRT\033[33m$UPG_MENU_CRT_NAME\033[0m" \
             "6) \033[32mPAC\033[0m$UPG_MENU_PAC" \
-            "7) $UPG_MENU_SOURCE\033[36m$UPG_MENU_SOURCE_NAME\033[0m" \
-            "8) \033[31m$UPG_MENU_UNINSTALL\033[0m" \
-            "9) \033[36m$UPG_MENU_THANKS\033[0m" \
+            "7) \033[31m$UPG_MENU_UNINSTALL\033[0m" \
+            "8) \033[36m$UPG_MENU_THANKS\033[0m" \
             "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " num
@@ -70,12 +69,9 @@ upgrade() {
             fi
             ;;
         7)
-            setserver
-            ;;
-        8)
             . "$CRASHDIR"/menus/uninstall.sh && uninstall
             ;;
-        9)
+        8)
             comp_box "$UPG_THANKS_TITLE"
             btm_box "\033[32m$UPG_THANKS_ITEM_CLASH\033[0m" \
                 "" \
@@ -127,10 +123,8 @@ checkupdate() {
     else
         content_line "\033[31m$UPG_CHECK_FAIL\033[0m"
         separator_line "="
-        setserver
-        if [ "$checkupdate" != false ]; then
-            checkupdate
-        fi
+        content_line "\033[33m更新源已固定为本仓库 release，请检查网络连通性\033[0m"
+        sleep 2
     fi
     rm -rf "$TMPDIR"/version_new
 }
@@ -326,8 +320,19 @@ setcore() {
             break
             ;;
         1)
+            # 按当前 CPU 架构选对应内核（nikki-concord 只出这 4 个架构）
             crashcore=concord
-            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
+            case "$cpucore" in
+            arm64)  concord_arch='aarch64_generic' ;;
+            amd64)  concord_arch='x86_64' ;;
+            *)      concord_arch='' ;;
+            esac
+            if [ -z "$concord_arch" ]; then
+                msg_alert "\033[31m当前架构 $cpucore 暂无 concord 内核\033[0m" \
+                    "\033[33m可用: arm64 / amd64\033[0m"
+                continue
+            fi
+            custcorelink="https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
             getcore
             break
             ;;

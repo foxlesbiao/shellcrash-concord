@@ -23,8 +23,7 @@ gen_providers() {
         get_bin "$TMPDIR"/provider_temp_file "rules/${CORE_TYPE}_providers/$provider_temp_file"
         [ -z "$(grep -o 'rules' "$TMPDIR"/provider_temp_file)" ] && {
             msg_alert "\033[31m$PROVIDERS_DOWNLOAD_FAILED\033[0m"
-            . "$CRASHDIR"/menus/9_upgrade.sh && setserver
-            setproviders
+            msg_alert "\033[33m模板下载失败，检查网络后重试\033[0m"
         }
     fi
     # 生成proxy_providers模块

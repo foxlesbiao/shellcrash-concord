@@ -36,48 +36,68 @@ jobs:
           # 上游所有 release 都是 prerelease，/releases/latest 会 404，必须用列表。
           # 跳过带 lgbm 的变体（那是另一套版本号与配置）。
           gh api "repos/user-7392/nikki-concord/releases?per_page=20" > rel.json
-          read -r TAG URL ARCH <<<"$(python3 - <<'PY'
+          python3 - <<'PY' > resolved.txt
           import json, sys
           releases = json.load(open("rel.json"))
           for r in releases:
               if "lgbm" in r["tag_name"]:
                   continue
+              # 只用非 lgbm 的最新一版；架构从 ipk 文件名里取 (.._<arch>.ipk)
+              ips = {}
               for a in r["assets"]:
-                  if a["name"].endswith("aarch64_generic.ipk"):
-                      print(r["tag_name"], a["browser_download_url"], "aarch64_generic")
-                      sys.exit(0)
-          sys.exit("no suitable aarch64_generic.ipk found")
+                  n = a["name"]
+                  if n.endswith(".ipk") and "_" in n:
+                      arch = n[:-4].split("_", 1)[1]
+                      ips[arch] = a["browser_download_url"]
+              if not ips:
+                  continue
+              print(r["tag_name"])
+              for arch, url in sorted(ips.items()):
+                  print(f"{arch} {url}")
+              sys.exit(0)
+          sys.exit("no usable release")
           PY
-          )"
-          echo "resolved $TAG -> $URL"
+          TAG=$(head -1 resolved.txt)
+          echo "resolved $TAG"
+          tail -n +2 resolved.txt | tee archs.txt
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "arch=$ARCH" >> "$GITHUB_OUTPUT"
+          {
+            echo "archs<<EOF"
+            cat archs.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Download and extract
+      - name: Download and extract all architectures
         env:
-          URL: ${{ steps.upstream.outputs.url }}
+          ARCHS: ${{ steps.upstream.outputs.archs }}
         run: |
           set -euo pipefail
-          curl -fsSL --retry 3 -o nikki.ipk "$URL"
-          ls -lh nikki.ipk
-          mkdir -p x
-          tar xzf nikki.ipk -C x
-          tar xzf x/data.tar.gz -C x
-          CORE=x/usr/libexec/nikkic/concord
-          test -f "$CORE" || { echo "concord not found in package"; ls -R x | head -50; exit 1; }
-          cp "$CORE" concord-aarch64
-          chmod +x concord-aarch64
+          echo "$ARCHS" | while read -r arch url; do
+            [ -n "$arch" ] || continue
+            echo "=== $arch ==="
+            rm -rf x nikki.ipk
+            curl -fsSL --retry 3 -o nikki.ipk "$url"
+            mkdir -p x
+            tar xzf nikki.ipk -C x
+            tar xzf x/data.tar.gz -C x
+            core=$(find x -type f -name concord | head -1)
+            test -n "$core" || { echo "concord not found for $arch"; find x -type f | head -20; exit 1; }
 
-          # 必须是 ARM aarch64 且静态链接，否则路由器（musl）跑不了
-          file concord-aarch64
-          file concord-aarch64 | grep -q 'ARM aarch64'       || { echo "not aarch64"; exit 1; }
-          file concord-aarch64 | grep -q 'statically linked' || { echo "not static"; exit 1; }
+            # 只需静态链接：nilkkic 各架构产物都是 musl static
+            file "$core"
+            file "$core" | grep -q 'statically linked' || { echo "$arch not static"; exit 1; }
 
-          gzip -9 -c concord-aarch64 > concord-aarch64.gz
-          sha256sum concord-aarch64.gz > concord-aarch64.gz.sha256
-          ls -lh concord-aarch64 concord-aarch64.gz
-          cat concord-aarch64.gz.sha256
+            case "$arch" in
+              aarch64*) file "$core" | grep -q 'ARM aarch64' || { echo "$arch not aarch64"; exit 1; } ;;
+              x86_64)   file "$core" | grep -q 'x86-64'      || { echo "$arch not x86_64"; exit 1; } ;;
+            esac
+
+            gzip -9 -c "$core" > "concord-$arch.gz"
+            sha256sum "concord-$arch.gz" > "concord-$arch.gz.sha256"
+            ls -lh "concord-$arch.gz"
+          done
+          echo "--- 产物 ---"
+          ls -1 concord-*.gz
 
       - name: Package ShellCrash scripts
         run: |
@@ -107,22 +127,26 @@ jobs:
           TAG: ${{ steps.upstream.outputs.tag }}
         run: |
           set -euo pipefail
+          # 所有架构的内核 + 脚本包 + 版本号，一次传完
+          ASSETS=$(ls concord-*.gz concord-*.gz.sha256 ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version | tr '\n' ' ')
+          echo "上传: $ASSETS"
+          ARCHLIST=$(ls concord-*.gz | sed 's/^concord-//; s/\.gz$//' | tr '\n' ' ')
+
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "release $TAG already exists, refreshing assets"
-            gh release upload "$TAG" concord-aarch64.gz concord-aarch64.gz.sha256 \
-              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version \
-              --repo "$GITHUB_REPOSITORY" --clobber
+            gh release upload "$TAG" $ASSETS --repo "$GITHUB_REPOSITORY" --clobber
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              concord-aarch64.gz concord-aarch64.gz.sha256 \
-              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version \
-              --title "concord ${TAG#v} (ShellCrash aarch64)" \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" $ASSETS \
+              --title "concord ${TAG#v} (ShellCrash multi-arch)" \
               --notes "从 [nikki-concord](https://github.com/user-7392/nikki-concord) \`$TAG\` 提取的 concord 内核。
 
-          - 静态链接 aarch64，可直接在 OpenWrt（musl）上运行
-          - 用法：\`sh install.sh\` 或手动解压后替换 \`CrashCore.raw\`
-          - 校验：\`sha256sum -c concord-aarch64.gz.sha256\`
+          **架构**：$ARCHLIST
+
+          - 全部静态链接，可直接在 OpenWrt（musl）上运行
+          - 用法：\`sh install.sh\`（会按 \`uname -m\` 自动选架构）
+          - 菜单「更新内核」也会按当前 CPU 架构自动选
+          - 校验：\`sha256sum -c concord-<arch>.gz.sha256\`
           - 上游版本：${{ steps.upstream.outputs.tag }}
 
           `ShellCrash.tar.gz` 是 concord 专用脚本包（每周随内核一起发），路由器菜单的「更新管理脚本」会从这里取。"
@@ -139,5 +163,5 @@ jobs:
             echo "| 上游版本 | \`${{ steps.upstream.outputs.tag }}\` |"
             echo "| 架构 | \`${{ steps.upstream.outputs.arch }}\` |"
             echo "| 新发布 | ${{ steps.publish.outputs.created }} |"
-            cat concord-aarch64.gz.sha256 | awk '{print "| sha256 | `" $1 "` |"}'
+            ls concord-*.gz.sha256 | while read -r f; do echo "| $(basename $f .sha256) | \`$(cut -d' ' -f1 $f)\` |"; done
           } >> "$GITHUB_STEP_SUMMARY"
