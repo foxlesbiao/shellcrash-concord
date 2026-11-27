@@ -165,6 +165,26 @@ install.sh                           # 路由器端安装/回滚脚本
 
 **为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
 
+## 纯 concord：删掉了什么
+
+本 fork 只跑 concord，所以所有 sing-box / mihomo 专属的东西都删了：
+
+| 删除项 | 内容 |
+|---|---|
+| `starts/singbox_modify.sh` | 495 行，sing-box 多 JSON 配置生成 |
+| `starts/singbox_config_check.sh` | 37 行 |
+| `starts/singbox_check.sh` | 10 行 |
+| `menus/providers_singbox.sh` | 137 行，订阅模板生成 |
+| `libs/meta_listeners.sh` | 27 行，自定义入站（listeners） |
+| `bin/meta` `bin/singboxp` `bin/singboxr` | **201MB** 各架构预编译内核，本 fork 永远不会下载 |
+| `singbox_providers.list` | sing-box 模板列表 |
+
+合计 **706 行代码 + 201MB 二进制**，仓库从 226M 降到 27M。
+
+**保留的 mihomo 代码**：`core_tools.sh` / `clash_modify.sh` / `init.sh` 里的 mihomo 分支**不能删**——`install.sh --rollback` 靠它们生成 `-d/-f` 启动命令切回 mihomo。删了就没有退路。
+
+配置层面对 sing-box 的处理：`bfstart.sh` 一旦发现 `crashcore=singbox*` 会直接报错退出，而不是去 source 一个已经被删的文件。
+
 ## 多架构
 
 release 里每个架构各发一个内核，菜单和安装脚本都会按当前 CPU 自动选：
