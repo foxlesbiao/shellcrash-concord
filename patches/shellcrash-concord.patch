@@ -71,9 +71,18 @@ index 128508c..0145294 100644
  GW_WG_TOGGLE="启用/关闭Wireguard服务"
  GW_WG_SET_ENDPOINT="设置Endpoint地址："
 diff --git a/scripts/lang/chs/9_upgrade.lang b/scripts/lang/chs/9_upgrade.lang
-index de986d3..26d0daf 100644
+index de986d3..b005803 100644
 --- a/scripts/lang/chs/9_upgrade.lang
 +++ b/scripts/lang/chs/9_upgrade.lang
+@@ -13,7 +13,7 @@ UPG_MENU_DB="安装/更新本地"
+ UPG_MENU_DB_NAME="Dashboard面板"
+ UPG_MENU_CRT="安装/更新本地"
+ UPG_MENU_CRT_NAME="根证书文件"
+-UPG_MENU_PAC="自动代理查看"
++UPG_MENU_PAC="自动代理查看\033[33m（concord 无此服务）\033[0m"
+ UPG_MENU_SOURCE="切换"
+ UPG_MENU_SOURCE_NAME="安装源及版本分支"
+ UPG_MENU_UNINSTALL="卸载ShellCrash"
 @@ -91,30 +91,19 @@ UPG_CUSTOM_CORE_LINK_HINT2="（必须是以.tar.gz、.upx或.gz结尾的压缩
  UPG_CUSTOM_CORE_LINK_HINT3="或者输入 0 返回上级菜单"
  UPG_CUSTOM_CORE_LINK_MENU="使用自定义内核链接"
@@ -330,9 +339,18 @@ index f74107c..be12960 100644
  GW_WG_TOGGLE="Enable/Disable Wireguard service"
  GW_WG_SET_ENDPOINT="Set Endpoint address:"
 diff --git a/scripts/lang/en/9_upgrade.lang b/scripts/lang/en/9_upgrade.lang
-index 5e91c1e..f7098df 100644
+index 5e91c1e..2c31c9c 100644
 --- a/scripts/lang/en/9_upgrade.lang
 +++ b/scripts/lang/en/9_upgrade.lang
+@@ -13,7 +13,7 @@ UPG_MENU_DB="Install/Update local "
+ UPG_MENU_DB_NAME="Dashboard"
+ UPG_MENU_CRT="Install/Update local "
+ UPG_MENU_CRT_NAME="certificates"
+-UPG_MENU_PAC="Auto proxy view"
++UPG_MENU_PAC="Auto proxy view\033[33m (not in concord)\033[0m"
+ UPG_MENU_SOURCE="Switch "
+ UPG_MENU_SOURCE_NAME="source and branch"
+ UPG_MENU_UNINSTALL="Uninstall ShellCrash"
 @@ -91,30 +91,19 @@ UPG_CUSTOM_CORE_LINK_HINT2="(must end with .tar.gz, .upx, or .gz)"
  UPG_CUSTOM_CORE_LINK_HINT3="Or enter 0 to return to the previous menu"
  UPG_CUSTOM_CORE_LINK_MENU="Use custom core URL"
