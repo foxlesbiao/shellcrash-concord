@@ -92,7 +92,9 @@ jobs:
               x86_64)   file "$core" | grep -q 'x86-64'      || { echo "$arch not x86_64"; exit 1; } ;;
             esac
 
-            gzip -9 -c "$core" > "concord-$arch.gz"
+            # -n：不写原始文件名/时间戳。nikki 包里的 mtime 是 1970+，gzip 会报
+            # "file timestamp out of range" 并以 2 退出，配合 pipefail 直接中断 CI。
+            gzip -9n -c "$core" > "concord-$arch.gz"
             sha256sum "concord-$arch.gz" > "concord-$arch.gz.sha256"
             ls -lh "concord-$arch.gz"
           done
