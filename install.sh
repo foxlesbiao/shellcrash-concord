@@ -24,11 +24,9 @@ if [ -z "${CONCORD_ARCH:-}" ]; then
 fi
 # CONCORD_RELEASE 在 pick_sources() 之后按探测结果拼出来（见下）
 
-# concord 要改的 ShellCrash 脚本（15 个，与 patches 里"修改"的部分一致）
-FILES="init.sh menu.sh
-libs/core_tools.sh libs/web_get_bin.sh
-starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh starts/bfstart.sh
-menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh menus/dns.sh menus/providers_clash.sh"
+# 不再手工维护"改过哪些文件"——补丁改了 41 个，手写列表漂移到只剩 14 个，
+# lang/task_cmd/8_tools/start.sh 这些改动根本装不上。直接解 release 里的完整脚本包，
+# 那一份就是"上游 + 本仓库全部改动"的结果。
 
 # 纯 sing-box 的脚本，装上后直接删掉（concord 永远不走这些分支）
 DROP="starts/singbox_modify.sh starts/singbox_check.sh starts/singbox_config_check.sh
@@ -41,47 +39,35 @@ die()  { echo "[错误] $*" >&2; exit 1; }
 info() { echo "[信息] $*"; }
 
 # ---------- 自动选源 ----------
-# GitHub 直连在国内路由器上时通时不通（实测 raw 有时 5s、有时 60s 超时），
-# 每次装之前探一遍，挑最快的可用源，不用手工改 URL。
-# 结果写进 RAW_BASE（脚本）和 REL_BASE（release 内核）。
-probe() { # $1=URL  $2=期望的最小字节数
-    _out=$(curl -sSL --max-time 8 -o /dev/null -w '%{http_code} %{time_total} %{size_download}' "$1" 2>/dev/null) || return 1
-    _code=$(echo "$_out" | awk '{print $1}')
-    _time=$(echo "$_out" | awk '{print $2}')
-    _size=$(echo "$_out" | awk '{print $3}')
-    [ "$_code" = "200" ] || return 1
-    [ "${_size:-0}" -ge "${2:-1}" ] 2>/dev/null || return 1
-    echo "$_time"
+# GitHub 直连在国内路由器上时通时不通（实测同一 URL 有时 5s、有时 60s 超时）。
+# 脚本包和内核都在 release 里，只有两条路可选：ghfast 镜像 / 直连，探一遍取快的。
+pick_sources() {
+    info "探测下载源..."
+    _rel_gh="https://github.com/$REPO/releases/latest/download"
+    # 镜像优先，不跟直连比速度。实测直连下 348KB 的脚本包能过（1.6s，比镜像快 0.2s），
+    # 但下 12MB 的内核会挂住——按小文件测速选源会把大文件请求送到最不靠谱的那条线上。
+    # 所以顺序固定：镜像能用就用，不能用才退直连。
+    for base in "https://ghfast.top/$_rel_gh" "$_rel_gh"; do
+        _name=$(echo "$base" | sed 's|^https://||; s|/.*||')
+        if _size=$(curl -sSL --max-time 10 -o /dev/null -w '%{size_download}' "$base/core-version" 2>/dev/null) \
+           && [ "${_size:-0}" -ge 1 ]; then
+            printf '  %-58s 可用\n' "$(echo "$base" | cut -c1-56)"
+            REL_BASE=$base
+            info "下载源: $REL_BASE"
+            return 0
+        fi
+        printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"
+    done
+    die "下载源都不可用，检查网络"
 }
 
-pick_sources() {
-    info "探测下载源（各 8s 超时）..."
-    _probe_file="ShellCrash/scripts/init.sh"
-    _best_t=999; _best=""
-    for base in \
-        "https://ghfast.top/https://raw.githubusercontent.com/$REPO/$BRANCH" \
-        "https://testingcf.jsdelivr.net/gh/$REPO@$BRANCH" \
-        "https://raw.githubusercontent.com/$REPO/$BRANCH" \
-        "https://cdn.jsdelivr.net/gh/$REPO@$BRANCH" ; do
-        t=$(probe "$base/$_probe_file" 100) || { printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"; continue; }
-        printf '  %-58s %ss\n' "$(echo "$base" | cut -c1-56)" "$t"
-        awk "BEGIN{exit !($t < $_best_t)}" && { _best_t=$t; _best=$base; }
+# 大文件下载：带重试，镜像失败自动退直连
+fetch() { # $1=远程文件名  $2=本地路径
+    for base in "$REL_BASE" "https://github.com/$REPO/releases/latest/download"; do
+        curl -fsSL --retry 2 --retry-delay 2 --max-time 180 -o "$2" "$base/$1" 2>/dev/null && return 0
+        [ "$base" = "$REL_BASE" ] && info " 从 $(echo "$base" | sed 's|^https://||; s|/.*||') 下载失败，换源重试" >&2
     done
-    [ -n "$_best" ] || die "所有下载源都不可用，检查网络"
-    RAW_BASE=$_best
-    info "脚本源: $RAW_BASE"
-
-    # release 内核也探一遍（ghfast 能代理 release，jsDelivr 不能）
-    _rel_gh="https://github.com/$REPO/releases/latest/download"
-    _best_t=999; _best=""
-    for base in "https://ghfast.top/$_rel_gh" "$_rel_gh"; do
-        t=$(probe "$base/version" 1) || { printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"; continue; }
-        printf '  %-58s %ss\n' "$(echo "$base" | cut -c1-56)" "$t"
-        awk "BEGIN{exit !($t < $_best_t)}" && { _best_t=$t; _best=$base; }
-    done
-    [ -n "$_best" ] || die "release 下载源都不可用"
-    REL_BASE=$_best
-    info "内核源: $REL_BASE"
+    return 1
 }
 
 find_crashdir() {
@@ -119,16 +105,18 @@ CONCORD_RELEASE="${CONCORD_RELEASE:-$REL_BASE/concord-$CONCORD_ARCH.gz}"
 
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"
-info "下载 shellcrash-concord 补丁文件"
-for f in $FILES; do
-    url="$RAW_BASE/ShellCrash/scripts/$f"
-    curl -fsSL --retry 3 --max-time 60 -o "$WORK/$(basename "$f")" "$url" || die "下载 $f 失败"
-    sh -n "$WORK/$(basename "$f")" || die "$f 语法检查失败，中止"
-    cp -f "$WORK/$(basename "$f")" "$CRASHDIR/$f"
-    # cp -f 到已存在文件会保留旧 mode，但新建文件是 644；脚本必须可执行
-    chmod +x "$CRASHDIR/$f"
+info "下载 ShellCrash 脚本包"
+fetch "ShellCrash.tar.gz" "$WORK/scripts.tar.gz" || die "下载脚本包失败"
+mkdir -p "$WORK/scripts"
+tar -xzf "$WORK/scripts.tar.gz" -C "$WORK/scripts" || die "解包失败"
+# 解出来的就是 $CRASHDIR 的内容结构（init.sh / libs/ / menus/ / starts/ / lang/ ...）
+for f in "$WORK"/scripts/*.sh "$WORK"/scripts/*/*.sh "$WORK"/scripts/*/*/*.sh; do
+    [ -f "$f" ] || continue
+    sh -n "$f" 2>/dev/null || die "$(basename "$f") 语法检查失败，中止"
 done
-info "补丁已应用"
+cp -rf "$WORK"/scripts/. "$CRASHDIR"/
+chmod +x "$CRASHDIR"/*.sh "$CRASHDIR"/libs/*.sh "$CRASHDIR"/menus/*.sh "$CRASHDIR"/starts/*.sh 2>/dev/null
+info "脚本已更新（整包覆盖，$(ls "$WORK"/scripts/*/*.sh 2>/dev/null | wc -l) 个子目录脚本）"
 
 # 删掉 sing-box 专用脚本（本版只跑 concord）
 _dropped=0
@@ -150,10 +138,10 @@ done
 }
 
 # ---------- 配置 ----------
-# 从 release 的 tag 取版本（concord 二进制没有 --version，asset 名也不带版本）
-VER="$(curl -fsSL --max-time 30 "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
-    | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
-VER="${VER:-unknown}"
+# 版本从 release 的 core-version asset 取。不能用 api.github.com——国内路由器实测超时，
+# 拿不到就会写成 core_v=unknown，导致「自动更新内核」每天判定有新版本、白下一次 12MB。
+VER="$(curl -fsSL --max-time 30 "$REL_BASE/core-version" 2>/dev/null | head -1 | tr -d '[:space:]')"
+[ -z "$VER" ] && VER=unknown
 set_cfg crashcore    concord
 set_cfg concord_v    "$VER"
 set_cfg core_v       "$VER"
@@ -172,7 +160,7 @@ info "command.env: concord run -c -d /tmp/concord-home"
 mkdir -p "$TMPDIR/concord-home" 2>/dev/null || true
 if ! "$CRASHDIR/CrashCore" run -h 2>&1 | grep -qi concord; then
     info "下载 concord 内核"
-    curl -fsSL --retry 3 --max-time 300 -o "$WORK/concord.gz" "$CONCORD_RELEASE" || die "下载内核失败"
+    fetch "concord-$CONCORD_ARCH.gz" "$WORK/concord.gz" || die "下载内核失败"
     gzip -dc "$WORK/concord.gz" > "$WORK/concord"; chmod +x "$WORK/concord"
     cp -f "$WORK/concord" "$CRASHDIR/CrashCore.raw"
 fi

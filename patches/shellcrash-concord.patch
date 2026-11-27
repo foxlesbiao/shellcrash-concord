@@ -71,10 +71,20 @@ index 128508c..0145294 100644
  GW_WG_TOGGLE="启用/关闭Wireguard服务"
  GW_WG_SET_ENDPOINT="设置Endpoint地址："
 diff --git a/scripts/lang/chs/9_upgrade.lang b/scripts/lang/chs/9_upgrade.lang
-index de986d3..c7fab90 100644
+index de986d3..26d0daf 100644
 --- a/scripts/lang/chs/9_upgrade.lang
 +++ b/scripts/lang/chs/9_upgrade.lang
-@@ -101,11 +101,8 @@ UPG_CORE_MENU_CURRENT="当前内核："
+@@ -91,30 +91,19 @@ UPG_CUSTOM_CORE_LINK_HINT2="（必须是以.tar.gz、.upx或.gz结尾的压缩
+ UPG_CUSTOM_CORE_LINK_HINT3="或者输入 0 返回上级菜单"
+ UPG_CUSTOM_CORE_LINK_MENU="使用自定义内核链接"
+ UPG_ZIPTYPE_TITLE="请选择内核分支及压缩方式："
+-UPG_ZIPTYPE_1="1) \033[36m最简编译release版本，upx压缩\033[0m"
+ UPG_ZIPTYPE_1_HINT="不支持Gvisor、Tailscale、Wireguard、NaiveProxy"
+-UPG_ZIPTYPE_2="2) \033[32m标准编译release版本，tar.gz压缩\033[0m"
+ UPG_ZIPTYPE_2_HINT="完整支持脚本全部内置功能"
+-UPG_ZIPTYPE_3="3) \033[33m完整编译alpha版本，gz压缩\033[0m"
+ UPG_ZIPTYPE_3_HINT="占用可能略高，稳定性自测"
+ UPG_CORE_MENU_CURRENT="当前内核："
  UPG_CORE_MENU_SYS="当前系统处理器架构："
  UPG_CORE_MENU_LOCAL_HINT="如需本地上传，请将.upx .gz .tar.gz文件上传至 /tmp 目录后重新运行crash命令"
  UPG_CORE_MENU_SELECT="请选择需要使用的核心版本："
@@ -84,9 +94,18 @@ index de986d3..c7fab90 100644
  UPG_CORE_MENU_2_SUFFIX=" \033[32m支持全面\033[0m \033[33m使用reF1nd增强分支\033[0m"
 -UPG_CORE_MENU_3_PREFIX="3) \033[43;30mSingBox\033[0m：\033[32m"
  UPG_CORE_MENU_3_SUFFIX=" \033[32m占用较低\033[0m \033[33m不支持providers\033[0m"
- UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
+-UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
  UPG_CORE_MENU_4_SUFFIX=" \033[32m占用低\033[0m \033[33m不安全,已停止维护\033[0m"
-@@ -127,9 +124,8 @@ UPG_GEO_CUSTOM_HINT2="请点击或复制链接前往项目页面查看具体说
+-UPG_CORE_MENU_5_PREFIX="5) 切换版本分支及压缩方式：\033[32m"
+ UPG_CORE_MENU_5_SUFFIX="\033[0m"
+-UPG_CORE_MENU_6_PREFIX="6) \033[36m使用自定义内核\033[0m "
+ UPG_CORE_MENU_6_SUFFIX=""
+-UPG_CORE_MENU_7="7) \033[32m更新当前内核\033[0m"
+-UPG_CORE_MENU_9="9) 手动指定处理器架构"
+ UPG_GEO_GETTING="正在从服务器获取数据库文件......"
+ UPG_GEO_OK_PREFIX=""
+ UPG_GEO_OK_SUFFIX="数据库文件下载成功！"
+@@ -127,9 +116,8 @@ UPG_GEO_CUSTOM_HINT2="请点击或复制链接前往项目页面查看具体说
  UPG_GEO_CUSTOM_HINT3="自定义数据库不支持定时任务及小闪存模式！"
  UPG_GEO_CUSTOM_HINT4="如遇到网络错误请先启动ShellCrash服务！"
  UPG_GEO_SOURCE_SELECT="请选择需要更新的数据库项目来源："
@@ -98,7 +117,37 @@ index de986d3..c7fab90 100644
  UPG_GEO_LOCAL_ONLY4="（仅限Clash-GeoIP）"
  UPG_GEO_CUSTOM_LINK="自定义数据库链接"
  UPG_GEO_CLEAN_HINT1_PREFIX="这将清理"
-@@ -195,8 +191,6 @@ UPG_SOURCE_ROLLBACK_FAIL="版本回退信息获取失败，请尝试更换其他
+@@ -154,12 +142,7 @@ UPG_DB_SELECT="请选择面板安装类型："
+ UPG_DB_WIP="   - - - - - - -维护中- - - - - - -"
+ UPG_DB_OLD="   - - - - - -已停止维护- - - - - -"
+ UPG_DB_INSTALL_1="1) 安装\033[32mzashboard面板\033[0m（约2.2mb）"
+-UPG_DB_INSTALL_2="2) 安装\033[32mMetaXD面板\033[0m（约1.5mb）"
+-UPG_DB_INSTALL_3="3) 安装\033[32mYacd-Meta魔改面板\033[0m（约1.7mb）"
+-UPG_DB_INSTALL_4="4) 安装\033[32m基础面板\033[0m（约500kb）"
+-UPG_DB_INSTALL_5="5) 安装\033[32mMeta基础面板\033[0m（约800kb）"
+-UPG_DB_INSTALL_6="6) 安装\033[32mYacd面板\033[0m（约1.1mb）"
+-UPG_DB_UNINSTALL="9) \033[31m卸载本地面板\033[0m"
++UPG_DB_UNINSTALL="2) \033[31m卸载本地面板\033[0m"
+ UPG_DB_UNINSTALL_CONFIRM="是否卸载本地面板？"
+ UPG_DB_UNINSTALL_YES="1) 确认卸载"
+ UPG_DB_UNINSTALL_OK="面板已经卸载！"
+@@ -170,7 +153,6 @@ UPG_CRT_TITLE3="无上述问题的设备请勿使用！"
+ UPG_CRT_EXISTS="检测到系统已经存在根证书文件："
+ UPG_CRT_UPDATE="1) 覆盖更新"
+ UPG_CRT_INSTALL="1) 立即安装"
+-UPG_CRT_BACK="0) 返回上级菜单"
+ UPG_CRT_WARN="设备可能尚未安装openssl，无法安装证书文件！"
+ UPG_SOURCE_CUR="当前版本："
+ UPG_SOURCE_CUR2="当前源："
+@@ -184,7 +166,6 @@ UPG_SOURCE_DEV_WARN1="开发版未经过妥善测试，可能依然存在大量b
+ UPG_SOURCE_DEV_WARN2="如果你没有足够的耐心或者测试经验，切勿使用此版本！"
+ UPG_SOURCE_DEV_WARN3="请务必加入我们的讨论组：\033[36;4mhttps://t.me/ShellClash\033[0m"
+ UPG_SOURCE_DEV_CONFIRM="是否依然切换到开发版？"
+-UPG_SOURCE_DEV_YES="1) 确认切换"
+ UPG_SOURCE_CUSTOM_HINT="请直接输入个人源路径"
+ UPG_SOURCE_CUSTOM_HINT2="或者输入 0 返回上级菜单"
+ UPG_SOURCE_CUSTOM_INPUT="请输入个人源路径> "
+@@ -195,8 +176,6 @@ UPG_SOURCE_ROLLBACK_FAIL="版本回退信息获取失败，请尝试更换其他
  UPG_SOURCE_ROLLBACK_NOTSUP="当前源不支持版本回退"
  UPG_SOURCE_ROLLBACK_HINT="请尝试更换其他安装源！"
  UPG_THANKS_ITEM_CLASH="Clash              开发：Dreamacro"
@@ -107,7 +156,7 @@ index de986d3..c7fab90 100644
  UPG_THANKS_ITEM_METACUBE="MetaCubeX          开发：MetaCubeX"
  UPG_THANKS_ITEM_METACUBE_URL="项目地址：https://github.com/MetaCubeX"
  UPG_THANKS_ITEM_YACD="YACD面板           开发：haishanh"
-@@ -211,13 +205,10 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          开发：DustinWin"
+@@ -211,33 +190,26 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          开发：DustinWin"
  UPG_THANKS_ITEM_DUSTIN_URL="开发者地址：https://github.com/DustinWin"
  UPG_CORE_GET_LINK_TITLE="正在获取内核文件链接......"
  UPG_CUSTOM_CORE_NOTE1="不支持Gvisor、Tailscale、Wireguard、NaiveProxy"
@@ -120,8 +169,10 @@ index de986d3..c7fab90 100644
 -UPG_CORE_V3_PREFIX="3) \033[43;30mSingBox\033[0m：\033[32m"
  UPG_CORE_V3_SUFFIX=" \033[32m占用较低\033[0m \033[33m不支持providers\033[0m"
  UPG_CORE_V3_DOC="说明文档：\033[36;4mhttps://sing-box.sagernet.org\033[0m"
- UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
-@@ -227,15 +218,14 @@ UPG_CORE_ASUS_WARN="Meta内核使用的GeoSite.dat数据库在华硕设备存在
+-UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m：\033[32m"
+ UPG_CORE_V4_SUFFIX=" \033[32m占用低\033[0m \033[33m不安全,已停止维护\033[0m"
+ UPG_CORE_V4_DOC="说明文档：\033[36;4mhttps://lancellc.gitbook.io\033[0m"
+ UPG_CORE_ASUS_WARN="Meta内核使用的GeoSite.dat数据库在华硕设备存在被系统误删的问题，可能无法使用!"
  UPG_GEO_FIND_TITLE="正在查找可更新的数据库文件......"
  UPG_GEO_SOURCE_TITLE="请选择需要更新的数据库项目来源："
  UPG_GEO_LINK_HINT="请输入自定义数据库的链接地址> "
@@ -135,12 +186,50 @@ index de986d3..c7fab90 100644
 -UPG_GEO_ITEM4="4) Mihomo完整版GeoSite数据库（约5mb）"
 -UPG_GEO_ITEM5="5) Mihomo-mrs数据库常用包（约1mb,非必要勿用）"
 -UPG_GEO_ITEM6="6) Singbox-srs数据库常用包（约0.8mb,非必要勿用）"
+-UPG_GEO_ITEM8="8) \033[36m自定义数据库文件\033[0m"
+-UPG_GEO_ITEM9="9) \033[31m清理数据库文件\033[0m"
 +UPG_GEO_ITEM3="3) 精简版 GeoIP_cn 数据库 mmdb（约0.1mb）"
-+UPG_GEO_ITEM4="4) 完整版 GeoSite 数据库（约5mb）"
-+UPG_GEO_ITEM5="5) mrs 规则集常用包（约1mb）"
- UPG_GEO_ITEM8="8) \033[36m自定义数据库文件\033[0m"
- UPG_GEO_ITEM9="9) \033[31m清理数据库文件\033[0m"
++UPG_GEO_ITEM5="4) mrs 规则集常用包（约1mb）"
++UPG_GEO_ITEM9="5) \033[31m清理数据库文件\033[0m"
  UPG_GEO_CLEAN_PROMPT="确认清理"
+ UPG_GEO_CLEAN_WARN_PREFIX="这将清理"
+ UPG_GEO_CLEAN_WARN_SUFFIX="目录及/ruleset目录下所有数据库文件！"
+@@ -247,27 +219,19 @@ UPG_DB_CONNECTING="正在连接服务器获取安装文件......"
+ UPG_DB_INSTALLED_HINT="检测到已经安装过本地面板"
+ UPG_DB_INSTALL_CANCEL="安装已取消"
+ UPG_DB_DIR_TITLE="请选择面板安装目录："
+-UPG_DB_DIR_1_TEXT_PREFIX="1) 在"
+ UPG_DB_DIR_1_TEXT_SUFFIX="/ui目录安装"
+-UPG_DB_DIR_2_TEXT="2) 在/www/clash目录安装"
+ UPG_DB_INSTALL_TITLE="安装 dashboard 管理面板到本地"
+ UPG_DB_INSTALL_TITLE2="打开管理面板的速度更快且更稳定"
+ UPG_DB_INSTALL_SELECT="请选择面板安装类型："
+ UPG_DB_INSTALL_MID="   - - - - - - -维护中- - - - - - -"
+ UPG_DB_INSTALL_END="   - - - - - -已停止维护- - - - - -"
+-UPG_DB_INSTALL_4_TEXT="4) 安装\033[32m基础面板\033[0m（约500kb）"
+-UPG_DB_INSTALL_5_TEXT="5) 安装\033[32mMeta基础面板\033[0m（约800kb）"
+-UPG_DB_INSTALL_6_TEXT="6) 安装\033[32mYacd面板\033[0m（约1.1mb）"
+ UPG_DB_UNINSTALL_PROMPT="是否卸载本地面板？"
+-UPG_DB_UNINSTALL_CONFIRM_TEXT="1) 确认卸载"
+ UPG_DB_UNINSTALLED="面板已经卸载！"
+ UPG_CRT_CONNECTING="正在连接服务器获取安装文件......"
+ UPG_CRT_INSTALL_TITLE1="安装/更新本地根证书文件（ca-certificates.crt）"
+ UPG_CRT_INSTALL_TITLE2="用于解决证书校验错误，x509报错等问题"
+ UPG_CRT_INSTALL_TITLE3="无上述问题的设备请勿使用！"
+ UPG_CRT_EXIST_HINT="检测到系统已经存在根证书文件："
+-UPG_CRT_OVERWRITE="1) 覆盖更新"
+-UPG_CRT_NOW="1) 立即安装"
+ UPG_CRT_NOT_USE="设备可能尚未安装openssl，无法安装证书文件！"
+ UPG_SOURCE_TITLE2="切换ShellCrash版本及更新源地址"
+ UPG_SOURCE_CUR_VER="当前版本："
+@@ -279,7 +243,6 @@ UPG_SOURCE_DEV_WARN4="开发版未经过妥善测试，可能依然存在大量b
+ UPG_SOURCE_DEV_WARN5="如果你没有足够的耐心或者测试经验，切勿使用此版本！"
+ UPG_SOURCE_DEV_WARN6="请务必加入我们的讨论组：\033[36;4mhttps://t.me/ShellClash\033[0m"
+ UPG_SOURCE_DEV_ASK="是否依然切换到开发版？"
+-UPG_SOURCE_DEV_CONFIRM_TEXT="1) 确认切换"
+ UPG_SOURCE_PATH_HINT="请直接输入个人源路径"
+ UPG_SOURCE_PATH_HINT2="或者输入 0 返回上级菜单"
+ UPG_SOURCE_PATH_INPUT="请输入个人源路径> "
 diff --git a/scripts/lang/chs/dns.lang b/scripts/lang/chs/dns.lang
 index d735c34..801775d 100644
 --- a/scripts/lang/chs/dns.lang
@@ -241,10 +330,20 @@ index f74107c..be12960 100644
  GW_WG_TOGGLE="Enable/Disable Wireguard service"
  GW_WG_SET_ENDPOINT="Set Endpoint address:"
 diff --git a/scripts/lang/en/9_upgrade.lang b/scripts/lang/en/9_upgrade.lang
-index 5e91c1e..96c5741 100644
+index 5e91c1e..f7098df 100644
 --- a/scripts/lang/en/9_upgrade.lang
 +++ b/scripts/lang/en/9_upgrade.lang
-@@ -101,11 +101,8 @@ UPG_CORE_MENU_CURRENT="Current core: "
+@@ -91,30 +91,19 @@ UPG_CUSTOM_CORE_LINK_HINT2="(must end with .tar.gz, .upx, or .gz)"
+ UPG_CUSTOM_CORE_LINK_HINT3="Or enter 0 to return to the previous menu"
+ UPG_CUSTOM_CORE_LINK_MENU="Use custom core URL"
+ UPG_ZIPTYPE_TITLE="Please choose the core branch and compression method:"
+-UPG_ZIPTYPE_1="1) \033[36mMinimal release build, upx compressed\033[0m"
+ UPG_ZIPTYPE_1_HINT="Gvisor, Tailscale, Wireguard, and NaiveProxy are not supported"
+-UPG_ZIPTYPE_2="2) \033[32mStandard release build, tar.gz compressed\033[0m"
+ UPG_ZIPTYPE_2_HINT="Fully supports all built-in script features"
+-UPG_ZIPTYPE_3="3) \033[33mFull alpha build, gz compressed\033[0m"
+ UPG_ZIPTYPE_3_HINT="May use a bit more space; stability is self-tested"
+ UPG_CORE_MENU_CURRENT="Current core: "
  UPG_CORE_MENU_SYS="Current CPU architecture: "
  UPG_CORE_MENU_LOCAL_HINT="If uploading locally, place .upx, .gz, or .tar.gz files in /tmp and rerun the crash command"
  UPG_CORE_MENU_SELECT="Please choose the core version to use:"
@@ -254,9 +353,18 @@ index 5e91c1e..96c5741 100644
  UPG_CORE_MENU_2_SUFFIX=" \033[32mfully featured\033[0m \033[33mreF1nd enhanced branch\033[0m"
 -UPG_CORE_MENU_3_PREFIX="3) \033[43;30mSingBox\033[0m: \033[32m"
  UPG_CORE_MENU_3_SUFFIX=" \033[32mlower resource usage\033[0m \033[33mproviders are not supported\033[0m"
- UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
+-UPG_CORE_MENU_4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
  UPG_CORE_MENU_4_SUFFIX=" \033[32mlow resource usage\033[0m \033[33munsafe, maintenance stopped\033[0m"
-@@ -127,9 +124,8 @@ UPG_GEO_CUSTOM_HINT2="Please click or copy the link to visit the project page fo
+-UPG_CORE_MENU_5_PREFIX="5) Switch branch and compression method: \033[32m"
+ UPG_CORE_MENU_5_SUFFIX="\033[0m"
+-UPG_CORE_MENU_6_PREFIX="6) \033[36mUse custom core\033[0m "
+ UPG_CORE_MENU_6_SUFFIX=""
+-UPG_CORE_MENU_7="7) \033[32mUpdate current core\033[0m"
+-UPG_CORE_MENU_9="9) Manually specify CPU architecture"
+ UPG_GEO_GETTING="Fetching database files from the server..."
+ UPG_GEO_OK_PREFIX=""
+ UPG_GEO_OK_SUFFIX=" database file downloaded successfully!"
+@@ -127,9 +116,8 @@ UPG_GEO_CUSTOM_HINT2="Please click or copy the link to visit the project page fo
  UPG_GEO_CUSTOM_HINT3="Custom databases do not support scheduled tasks or low-flash mode!"
  UPG_GEO_CUSTOM_HINT4="If you encounter network errors, start the ShellCrash service first!"
  UPG_GEO_SOURCE_SELECT="Please choose the database source:"
@@ -268,7 +376,37 @@ index 5e91c1e..96c5741 100644
  UPG_GEO_LOCAL_ONLY4="(Clash-GeoIP only)"
  UPG_GEO_CUSTOM_LINK="Custom database link"
  UPG_GEO_CLEAN_HINT1_PREFIX="This will clean all database files under "
-@@ -195,8 +191,6 @@ UPG_SOURCE_ROLLBACK_FAIL="Failed to fetch rollback information. Please try anoth
+@@ -154,12 +142,7 @@ UPG_DB_SELECT="Please choose the panel installation type:"
+ UPG_DB_WIP="   - - - - - - -Maintenance - - - - - - -"
+ UPG_DB_OLD="   - - - - - -Maintenance stopped - - - - - -"
+ UPG_DB_INSTALL_1="1) Install \033[32mzashboard panel\033[0m (about 2.2mb)"
+-UPG_DB_INSTALL_2="2) Install \033[32mMetaXD panel\033[0m (about 1.5mb)"
+-UPG_DB_INSTALL_3="3) Install \033[32mYacd-Meta modified panel\033[0m (about 1.7mb)"
+-UPG_DB_INSTALL_4="4) Install \033[32mbasic panel\033[0m (about 500kb)"
+-UPG_DB_INSTALL_5="5) Install \033[32mMeta basic panel\033[0m (about 800kb)"
+-UPG_DB_INSTALL_6="6) Install \033[32mYacd panel\033[0m (about 1.1mb)"
+-UPG_DB_UNINSTALL="9) \033[31mUninstall local panel\033[0m"
++UPG_DB_UNINSTALL="2) \033[31mUninstall local panel\033[0m"
+ UPG_DB_UNINSTALL_CONFIRM="Uninstall the local panel?"
+ UPG_DB_UNINSTALL_YES="1) Confirm uninstall"
+ UPG_DB_UNINSTALL_OK="Panel has been uninstalled!"
+@@ -170,7 +153,6 @@ UPG_CRT_TITLE3="Do not use on devices without the above issues!"
+ UPG_CRT_EXISTS="The system already has a root certificate file:"
+ UPG_CRT_UPDATE="1) Overwrite update"
+ UPG_CRT_INSTALL="1) Install now"
+-UPG_CRT_BACK="0) Return to previous menu"
+ UPG_CRT_WARN="This device may not have openssl installed, so certificate files cannot be installed!"
+ UPG_SOURCE_CUR="Current version: "
+ UPG_SOURCE_CUR2="Current source: "
+@@ -184,7 +166,6 @@ UPG_SOURCE_DEV_WARN1="The development branch has not been properly tested and ma
+ UPG_SOURCE_DEV_WARN2="If you do not have enough patience or testing experience, do not use this version!"
+ UPG_SOURCE_DEV_WARN3="Please join our discussion group: \033[36;4mhttps://t.me/ShellClash\033[0m"
+ UPG_SOURCE_DEV_CONFIRM="Still switch to the development branch?"
+-UPG_SOURCE_DEV_YES="1) Confirm switch"
+ UPG_SOURCE_CUSTOM_HINT="Please enter the personal source path directly"
+ UPG_SOURCE_CUSTOM_HINT2="Or enter 0 to return to the previous menu"
+ UPG_SOURCE_CUSTOM_INPUT="Please enter the personal source path> "
+@@ -195,8 +176,6 @@ UPG_SOURCE_ROLLBACK_FAIL="Failed to fetch rollback information. Please try anoth
  UPG_SOURCE_ROLLBACK_NOTSUP="Current source does not support version rollback"
  UPG_SOURCE_ROLLBACK_HINT="Please try another installation source!"
  UPG_THANKS_ITEM_CLASH="Clash              Developer: Dreamacro"
@@ -277,7 +415,7 @@ index 5e91c1e..96c5741 100644
  UPG_THANKS_ITEM_METACUBE="MetaCubeX          Developer: MetaCubeX"
  UPG_THANKS_ITEM_METACUBE_URL="Project: https://github.com/MetaCubeX"
  UPG_THANKS_ITEM_YACD="YACD panel         Developer: haishanh"
-@@ -211,13 +205,10 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          Developer: DustinWin"
+@@ -211,33 +190,26 @@ UPG_THANKS_ITEM_DUSTIN="DustinWin          Developer: DustinWin"
  UPG_THANKS_ITEM_DUSTIN_URL="Developer: https://github.com/DustinWin"
  UPG_CORE_GET_LINK_TITLE="Fetching core file links..."
  UPG_CUSTOM_CORE_NOTE1="Gvisor, Tailscale, Wireguard, and NaiveProxy are not supported"
@@ -290,8 +428,10 @@ index 5e91c1e..96c5741 100644
 -UPG_CORE_V3_PREFIX="3) \033[43;30mSingBox\033[0m: \033[32m"
  UPG_CORE_V3_SUFFIX=" \033[32mlower resource usage\033[0m \033[33mproviders are not supported\033[0m"
  UPG_CORE_V3_DOC="Docs: \033[36;4mhttps://sing-box.sagernet.org\033[0m"
- UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
-@@ -227,15 +218,14 @@ UPG_CORE_ASUS_WARN="The GeoSite.dat database used by Meta core may be deleted by
+-UPG_CORE_V4_PREFIX="4) \033[43;30mClash\033[0m: \033[32m"
+ UPG_CORE_V4_SUFFIX=" \033[32mlow resource usage\033[0m \033[33munsafe, maintenance stopped\033[0m"
+ UPG_CORE_V4_DOC="Docs: \033[36;4mhttps://lancellc.gitbook.io\033[0m"
+ UPG_CORE_ASUS_WARN="The GeoSite.dat database used by Meta core may be deleted by the system on Asus devices, so it may not work!"
  UPG_GEO_FIND_TITLE="Searching for updatable database files..."
  UPG_GEO_SOURCE_TITLE="Please choose the database source:"
  UPG_GEO_LINK_HINT="Please enter the custom database URL> "
@@ -305,12 +445,50 @@ index 5e91c1e..96c5741 100644
 -UPG_GEO_ITEM4="4) Mihomo full GeoSite database (about 5mb)"
 -UPG_GEO_ITEM5="5) Mihomo-mrs common package (about 1mb, use only if needed)"
 -UPG_GEO_ITEM6="6) SingBox-srs common package (about 0.8mb, use only if needed)"
+-UPG_GEO_ITEM8="8) \033[36mCustom database file\033[0m"
+-UPG_GEO_ITEM9="9) \033[31mClean database files\033[0m"
 +UPG_GEO_ITEM3="3) Lite GeoIP_cn mmdb database (about 0.1mb)"
-+UPG_GEO_ITEM4="4) Full GeoSite database (about 5mb)"
-+UPG_GEO_ITEM5="5) mrs ruleset common package (about 1mb)"
- UPG_GEO_ITEM8="8) \033[36mCustom database file\033[0m"
- UPG_GEO_ITEM9="9) \033[31mClean database files\033[0m"
++UPG_GEO_ITEM5="4) mrs ruleset common package (about 1mb)"
++UPG_GEO_ITEM9="5) \033[31mClean database files\033[0m"
  UPG_GEO_CLEAN_PROMPT="Confirm cleanup"
+ UPG_GEO_CLEAN_WARN_PREFIX="This will clean all database files under "
+ UPG_GEO_CLEAN_WARN_SUFFIX=" and /ruleset!"
+@@ -247,27 +219,19 @@ UPG_DB_CONNECTING="Connecting to the server to fetch installation files..."
+ UPG_DB_INSTALLED_HINT="A local panel is already installed"
+ UPG_DB_INSTALL_CANCEL="Installation cancelled"
+ UPG_DB_DIR_TITLE="Please choose the panel install directory:"
+-UPG_DB_DIR_1_TEXT_PREFIX="1) Install in "
+ UPG_DB_DIR_1_TEXT_SUFFIX="/ui"
+-UPG_DB_DIR_2_TEXT="2) Install in /www/clash"
+ UPG_DB_INSTALL_TITLE="Install the dashboard management panel locally"
+ UPG_DB_INSTALL_TITLE2="The management panel opens faster and is more stable"
+ UPG_DB_INSTALL_SELECT="Please choose the panel installation type:"
+ UPG_DB_INSTALL_MID="   - - - - - - -Maintenance - - - - - - -"
+ UPG_DB_INSTALL_END="   - - - - - -Maintenance stopped - - - - - -"
+-UPG_DB_INSTALL_4_TEXT="4) Install \033[32mbasic panel\033[0m (about 500kb)"
+-UPG_DB_INSTALL_5_TEXT="5) Install \033[32mMeta basic panel\033[0m (about 800kb)"
+-UPG_DB_INSTALL_6_TEXT="6) Install \033[32mYacd panel\033[0m (about 1.1mb)"
+ UPG_DB_UNINSTALL_PROMPT="Uninstall the local panel?"
+-UPG_DB_UNINSTALL_CONFIRM_TEXT="1) Confirm uninstall"
+ UPG_DB_UNINSTALLED="Panel has been uninstalled!"
+ UPG_CRT_CONNECTING="Connecting to the server to fetch installation files..."
+ UPG_CRT_INSTALL_TITLE1="Install / update local root certificate file (ca-certificates.crt)"
+ UPG_CRT_INSTALL_TITLE2="Used to fix certificate verification errors, x509 errors, and similar issues"
+ UPG_CRT_INSTALL_TITLE3="Do not use on devices without the above issues!"
+ UPG_CRT_EXIST_HINT="The system already has a root certificate file:"
+-UPG_CRT_OVERWRITE="1) Overwrite update"
+-UPG_CRT_NOW="1) Install now"
+ UPG_CRT_NOT_USE="This device may not have openssl installed, so certificate files cannot be installed!"
+ UPG_SOURCE_TITLE2="Switch ShellCrash version and update source"
+ UPG_SOURCE_CUR_VER="Current version: "
+@@ -279,7 +243,6 @@ UPG_SOURCE_DEV_WARN4="The development branch has not been properly tested and ma
+ UPG_SOURCE_DEV_WARN5="If you do not have enough patience or testing experience, do not use this version!"
+ UPG_SOURCE_DEV_WARN6="Please join our discussion group: \033[36;4mhttps://t.me/ShellClash\033[0m"
+ UPG_SOURCE_DEV_ASK="Still switch to the development branch?"
+-UPG_SOURCE_DEV_CONFIRM_TEXT="1) Confirm switch"
+ UPG_SOURCE_PATH_HINT="Please enter the personal source path directly"
+ UPG_SOURCE_PATH_HINT2="Or enter 0 to return to the previous menu"
+ UPG_SOURCE_PATH_INPUT="Please enter the personal source path> "
 diff --git a/scripts/lang/en/dns.lang b/scripts/lang/en/dns.lang
 index 6e13071..53759bd 100644
 --- a/scripts/lang/en/dns.lang
@@ -1017,7 +1195,7 @@ index 95f2e3e..3ba3a9c 100644
          line_break
          exit
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..9bc1aa3 100644
+index 4ce09ff..b46a41f 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -31,14 +31,13 @@ upgrade() {
@@ -1430,9 +1608,9 @@ index 4ce09ff..9bc1aa3 100644
          3)
 -            crashcore=singbox
 -            custcorelink=''
-             getcore
-             break
-             ;;
+-            getcore
+-            break
+-            ;;
 -        4)
 -            crashcore=clash
 -            custcorelink=''
@@ -1446,9 +1624,9 @@ index 4ce09ff..9bc1aa3 100644
 -            setcustcore
 -            ;;
 -        7)
--            getcore
--            break
--            ;;
+             getcore
+             break
+             ;;
 -        9)
 -            setcpucore
 -            break
@@ -1471,34 +1649,87 @@ index 4ce09ff..9bc1aa3 100644
              rm -rf "$TMPDIR"/github_api
          }
          if [ -s "$TMPDIR"/geo.list ]; then
-@@ -710,18 +437,19 @@ setcustgeo() {
-         content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
-         sub_content_line "$UPG_GEO_LOCAL_ONLY1"
+@@ -696,79 +423,6 @@ checkcustgeo() {
+     done
+ }
  
+-# 下载自定义数据库文件
+-setcustgeo() {
+-    while true; do
+-        rm -rf "$TMPDIR"/geo.list
+-        comp_box "\033[36m$UPG_GEO_CUSTOM_HINT\033[0m" \
+-            "\033[32m$UPG_GEO_CUSTOM_HINT2\033[0m" \
+-            "\033[31m$UPG_GEO_CUSTOM_HINT3\033[0m" \
+-            "\033[33m$UPG_GEO_CUSTOM_HINT4\033[0m"
+-
+-        content_line "\033[0m$UPG_GEO_SOURCE_TITLE\033[0m"
+-        separator_line "-"
+-        content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
+-        sub_content_line "$UPG_GEO_LOCAL_ONLY1"
+-
 -        content_line "2) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
 -        sub_content_line "$UPG_GEO_LOCAL_ONLY1"
-+        if ! echo "$crashcore" | grep -qi 'concord'; then
-+            content_line "2) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-+            sub_content_line "$UPG_GEO_LOCAL_ONLY1"
-+
-+            content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
- 
+-
 -        content_line "3) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
 -        sub_content_line "$UPG_GEO_LOCAL_ONLY2"
-+            content_line "5) \033[36;4mhttps://github.com/Loyalsoldier/geoip\033[0m"
-+            sub_content_line "$UPG_GEO_LOCAL_ONLY4"
-+        fi
- 
-         content_line "4) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
-         sub_content_line "$UPG_GEO_LOCAL_ONLY3"
- 
+-
+-        content_line "4) \033[36;4mhttps://github.com/DustinWin/ruleset_geodata\033[0m"
+-        sub_content_line "$UPG_GEO_LOCAL_ONLY3"
+-
 -        content_line "5) \033[36;4mhttps://github.com/Loyalsoldier/geoip\033[0m"
 -        sub_content_line "$UPG_GEO_LOCAL_ONLY4"
 -
-         content_line "$UPG_GEO_CUSTOM_LINK"
-         content_line ""
-         content_line "0) $COMMON_BACK"
-@@ -778,17 +506,12 @@ setgeo() {
+-        content_line "$UPG_GEO_CUSTOM_LINK"
+-        content_line ""
+-        content_line "0) $COMMON_BACK"
+-        separator_line "="
+-        read -r -p "$COMMON_INPUT> " num
+-        case "$num" in
+-        "" | 0)
+-            break
+-            ;;
+-        1)
+-            project=MetaCubeX/meta-rules-dat
+-            api_tag=latest
+-            checkcustgeo
+-            ;;
+-        2)
+-            project=DustinWin/ruleset_geodata
+-            api_tag=mihomo-geodata
+-            checkcustgeo
+-            ;;
+-        3)
+-            project=DustinWin/ruleset_geodata
+-            api_tag=sing-box-ruleset
+-            checkcustgeo
+-            ;;
+-        4)
+-            project=DustinWin/ruleset_geodata
+-            api_tag=mihomo-ruleset
+-            checkcustgeo
+-            ;;
+-        5)
+-            project=Loyalsoldier/geoip
+-            api_tag=latest
+-            checkcustgeo
+-            ;;
+-        9)
+-            line_break
+-            read -r -p "$UPG_GEO_LINK_HINT" link
+-            [ -n "$link" ] && custgeolink="$link"
+-            getgeo
+-            ;;
+-        *)
+-            errornum
+-            ;;
+-        esac
+-    done
+-}
+-
+ setgeo() {
+     while true; do
+         . $CFG_PATH >/dev/null
+@@ -778,18 +432,14 @@ setgeo() {
              "" \
              "$UPG_GEO_CHOOSE"
  
@@ -1514,13 +1745,14 @@ index 4ce09ff..9bc1aa3 100644
 +            "$UPG_GEO_ITEM3\t\033[33m$cn_mini_v\033[0m" \
              "$UPG_GEO_ITEM5" \
 -            "$UPG_GEO_ITEM6" \
--            "" \
--            "$UPG_GEO_ITEM8" \
--            "$UPG_GEO_ITEM9" \
              "" \
+-            "$UPG_GEO_ITEM8" \
+             "$UPG_GEO_ITEM9" \
+-            "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -812,24 +535,11 @@ setgeo() {
+         case "$num" in
+@@ -812,24 +462,11 @@ setgeo() {
              getgeo
              ;;
          4)
@@ -1546,7 +1778,7 @@ index 4ce09ff..9bc1aa3 100644
              while true; do
                  comp_box "\033[33m${UPG_GEO_CLEAN_HINT1_PREFIX}${CRASHDIR}${UPG_GEO_CLEAN_HINT1_SUFFIX}\033[0m" \
                      "$UPG_GEO_CLEAN_HINT2"
-@@ -841,10 +551,10 @@ setgeo() {
+@@ -841,10 +478,10 @@ setgeo() {
                      break
                      ;;
                  1)
@@ -1559,7 +1791,7 @@ index 4ce09ff..9bc1aa3 100644
                          setconfig $var
                      done
                      rm -rf "$CRASHDIR"/ruleset/*
-@@ -866,6 +576,8 @@ setgeo() {
+@@ -866,6 +503,8 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -1568,7 +1800,7 @@ index 4ce09ff..9bc1aa3 100644
      dblink="${update_url}/"
      line_break
      separator_line "="
-@@ -936,7 +648,7 @@ dbdir() {
+@@ -936,7 +575,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui
@@ -1577,7 +1809,7 @@ index 4ce09ff..9bc1aa3 100644
              getdb
              ;;
          2)
-@@ -962,14 +674,8 @@ setdb() {
+@@ -962,14 +601,8 @@ setdb() {
              "\033[32m$UPG_DB_TITLE2\033[0m" \
              "" \
              "$UPG_DB_SELECT"
@@ -1594,7 +1826,7 @@ index 4ce09ff..9bc1aa3 100644
              "$UPG_DB_UNINSTALL" \
              "" \
              "0) $COMMON_BACK"
-@@ -979,32 +685,11 @@ setdb() {
+@@ -979,32 +612,11 @@ setdb() {
              break
              ;;
          1)
@@ -1628,6 +1860,162 @@ index 4ce09ff..9bc1aa3 100644
              while true; do
                  comp_box "$UPG_DB_UNINSTALL_CONFIRM"
                  btm_box "$UPG_DB_UNINSTALL_YES" \
+@@ -1119,155 +731,3 @@ saveserver() {
+     version_new=''
+     msg_alert -t 0 "\033[32m$UPG_SOURCE_SWITCH_OK\033[0m"
+ }
+-
+-# 安装源
+-setserver() {
+-    while true; do
+-        line_break
+-        LISTFILE="$CRASHDIR"/configs/servers_"$i18n".list
+-        [ -z "$release_type" ] && release_name=$UPG_SOURCE_UNSET
+-        [ -n "$release_type" ] && release_name="$release_type$UPG_SOURCE_ROLLBACK_TAG"
+-        [ "$release_type" = stable ] && release_name=$UPG_SOURCE_STABLE_TEXT
+-        [ "$release_type" = master ] && release_name=$UPG_SOURCE_MASTER_TEXT
+-        [ "$release_type" = dev ] && release_name=$UPG_SOURCE_DEV_TEXT
+-        [ -n "$url_id" ] && url_name=$(grep "$url_id" "$LISTFILE" 2>/dev/null | awk '{print $2}') || url_name="$update_url"
+-
+-        comp_box "\033[30;47m$UPG_SOURCE_TITLE\033[0m" \
+-            "" \
+-            "$UPG_SOURCE_CUR_VER\033[4;33m$release_name\033[0m" \
+-            "$UPG_SOURCE_CUR_URL\n\033[4;32m$url_name\033[0m"
+-
+-        grep -E "^1|^2" "$LISTFILE" |
+-            awk '{print NR") "$2}' |
+-            while IFS= read -r line; do
+-                content_line "$line"
+-            done
+-
+-        btm_box "" \
+-            "$UPG_SOURCE_SWITCH_STABLE" \
+-            "$UPG_SOURCE_SWITCH_MASTER" \
+-            "$UPG_SOURCE_SWITCH_DEV" \
+-            "" \
+-            "$UPG_SOURCE_CUSTOM" \
+-            "$UPG_SOURCE_ROLLBACK" \
+-            "" \
+-            "0) $COMMON_BACK"
+-        read -r -p "$COMMON_INPUT> " num
+-        case "$num" in
+-        "" | 0)
+-            checkupdate=false
+-            break
+-            ;;
+-        [1-99])
+-            url_id_new=$(grep -E "^1|$release_name" "$LISTFILE" | sed -n "$num"p | awk '{print $1}')
+-            if [ -z "$url_id_new" ]; then
+-                errornum
+-                continue
+-            elif [ "$url_id_new" -ge 200 ]; then
+-                update_url=$(grep -E "^1|$release_name" "$LISTFILE" | sed -n "$num"p | awk '{print $3}')
+-                url_id=''
+-                saveserver
+-                break
+-            else
+-                url_id=$url_id_new
+-                update_url=''
+-                saveserver
+-                break
+-            fi
+-            unset url_id_new
+-            ;;
+-        a)
+-            release_type=stable
+-            [ -z "$url_id" ] && url_id=101
+-            saveserver
+-            ;;
+-        b)
+-            release_type=master
+-            [ -z "$url_id" ] && url_id=101
+-            saveserver
+-            ;;
+-        c)
+-            while true; do
+-                comp_box "\033[33m$UPG_SOURCE_DEV_WARN1\033[0m" \
+-                    "\033[33m$UPG_SOURCE_DEV_WARN2\033[0m" \
+-                    "$UPG_SOURCE_DEV_WARN3"
+-                content_line "$UPG_SOURCE_DEV_CONFIRM"
+-                separator_line "-"
+-                btm_box "$UPG_SOURCE_DEV_YES" \
+-                    "0) $COMMON_BACK"
+-                read -r -p "$COMMON_INPUT> " res
+-                case "$res" in
+-                "" | 0)
+-                    break
+-                    ;;
+-                1)
+-                    release_type=dev
+-                    [ -z "$url_id" ] && url_id=101
+-                    saveserver
+-                    break
+-                    ;;
+-                *)
+-                    errornum
+-                    ;;
+-                esac
+-            done
+-            ;;
+-        d)
+-            comp_box "\033[36m$UPG_SOURCE_CUSTOM_HINT\033[0m" \
+-                "$UPG_CUSTOM_CORE_LINK_HINT3"
+-            read -r -p "$UPG_SOURCE_CUSTOM_INPUT" update_url
+-            if [ "$update_url" = 0 ]; then
+-                continue
+-            elif [ ! -z "$update_url" ]; then
+-                url_id=''
+-                release_type=''
+-                saveserver
+-            fi
+-            ;;
+-        e)
+-            if [ -n "$url_id" ] && [ "$url_id" -lt 200 ]; then
+-                line_break
+-                separator_line "="
+-                content_line "\033[32m$UPG_SOURCE_VER_GETTING\033[0m"
+-                . "$CRASHDIR"/libs/web_get_lite.sh
+-                list=$(web_get_lite https://api.github.com/repos/juewuy/ShellCrash/tags | grep -E '"name": "[0-9]' | cut -d '"' -f4)
+-                if [ "$?" = "0" ]; then
+-                    content_line "\033[32m$UPG_SOURCE_VER_OK\033[0m"
+-                    separator_line "="
+-
+-                    line_break
+-                    separator_line "="
+-                    content_line "\033[31m$UPG_SOURCE_ROLLBACK_SELECT\033[0m"
+-                    list_box "$list"
+-                    btm_box "" \
+-                        "0) $COMMON_BACK"
+-                    read -r -p "$COMMON_INPUT> " num
+-                    if [ -z "$num" ] || [ "$num" = 0 ]; then
+-                        continue
+-                    elif [ "$num" -le $(echo "$list" | awk 'END{print NR}') ]; then
+-                        release_type=$(echo "$list" | sed -n "$num"p)
+-                        update_url=''
+-                        saveserver
+-                    else
+-                        errornum
+-                        continue
+-                    fi
+-                else
+-                    content_line "\033[31m$UPG_SOURCE_ROLLBACK_FAIL\033[0m"
+-                    separator_line "="
+-                    sleep 1
+-                    continue
+-                fi
+-                rm -rf "$TMPDIR"/tags
+-            else
+-                msg_alert "\033[31m$UPG_SOURCE_ROLLBACK_NOTSUP\033[0m" \
+-                    "\033[31m$UPG_SOURCE_ROLLBACK_HINT\033[0m"
+-                continue
+-            fi
+-            ;;
+-        *)
+-            errornum
+-            ;;
+-        esac
+-    done
+-}
 diff --git a/scripts/menus/bot_tg.sh b/scripts/menus/bot_tg.sh
 index 6ea88ad..9d4760b 100644
 --- a/scripts/menus/bot_tg.sh
