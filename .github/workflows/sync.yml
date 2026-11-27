@@ -113,6 +113,9 @@ jobs:
           cp -rf ShellCrash/scripts/* pack/
           # 版本号用 beta4：上游 master 的 1.9.6alpha1 会生成非法 tun stack: mips
           echo "1.9.5beta4" > pack/version
+          # 内核版本单独一个 asset：ShellCrash 的 version 是本体的版本号，
+          # 路由器要判断"内核有没有更新"只能看这个。用上游 tag + commit，无可比性歧义。
+          printf '%s\n' "${{ steps.upstream.outputs.tag }}" > core-version
           ( cd pack && tar -czf ../ShellCrash.tar.gz * )
           cp pack/version version
           sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
@@ -130,7 +133,7 @@ jobs:
         run: |
           set -euo pipefail
           # 所有架构的内核 + 脚本包 + 版本号，一次传完
-          ASSETS=$(ls concord-*.gz concord-*.gz.sha256 ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version | tr '\n' ' ')
+          ASSETS=$(ls concord-*.gz concord-*.gz.sha256 ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version core-version | tr '\n' ' ')
           echo "上传: $ASSETS"
           ARCHLIST=$(ls concord-*.gz | sed 's/^concord-//; s/\.gz$//' | tr '\n' ' ')
 

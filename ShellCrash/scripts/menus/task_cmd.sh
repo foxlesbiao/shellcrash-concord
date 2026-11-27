@@ -33,8 +33,19 @@ check_update(){ #检查更新工具
 }
 update_core(){ #自动更新内核
     #检查版本
-    check_update bin/version
-    crash_v_new=$(eval echo \$${crashcore}_v)
+    if echo "$crashcore" | grep -qi 'concord'; then
+        # concord 不在上游 bin/version 里，那个表只有 mihomo/sing-box 的版本。
+        # 内核版本改从本仓库 release 的 core-version asset 取（sync.yml 每次发布时写入）。
+        webget "$TMPDIR/concord_corever" "$rel/core-version" echooff
+        crash_v_new=$(head -1 "$TMPDIR/concord_corever" 2>/dev/null)
+        rm -f "$TMPDIR/concord_corever"
+        # core_check 用 ${concord_v:-0.1.0} 回写 core_v，不先塞进去版本号会被写成 0.1.0，
+        # 明天又判成"有新版本"，形成每天重下一遍 12MB 的死循环。
+        [ -n "$crash_v_new" ] && concord_v="$crash_v_new"
+    else
+        check_update bin/version
+        crash_v_new=$(eval echo \$${crashcore}_v)
+    fi
     if [ -z "$crash_v_new" -o "$crash_v_new" = "$core_v" ];then
         task_logger "$TASK_CMD_CORE_SKIP"
         return 0
