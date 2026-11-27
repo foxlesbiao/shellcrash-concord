@@ -198,7 +198,7 @@ release 里每个架构各发一个内核，菜单和安装脚本都会按当前
 
 菜单 `9) 更新与支持 → 1) 更新管理脚本` 现在从本仓库的 release 取 `ShellCrash.tar.gz`，不会再被上游版本覆盖。
 
-- 每周一 `sync-concord` workflow 发一个 release，同时带 **concord 内核** 和 **ShellCrash.tar.gz（concord 专用脚本包）** + `version`
+- **每日** `sync-concord` workflow 发一个 release（concord 上游发版很快，周更会落后），同时带 **concord 内核**（4 个架构）和 **ShellCrash.tar.gz（脚本包）** + `version`
 - `libs/web_get_bin.sh` 在 concord 下把 `update_url` 钉死到本仓库，并清空 `url_id`（`url_id=101` 会绕过 `update_url` 指回上游）
 - 下载走 `ghfast.top` 镜像：`github.com` 在国内路由器上直连不通（实测 000 超时）
 - 根目录的 `version` / `ShellCrash.tar.gz` 供 jsDelivr 兜底；`bin/`、`public/`、`rules/` 仍走 jsDelivr

@@ -7,11 +7,11 @@ name: sync-concord
 #   - nikki-concord 已经做了 OpenWrt/LuCI 适配（低内存 jemalloc 调优、release_free_memory、
 #     测速并发限流、Mihomo 未知字段兼容等），自己从上游 concord 编出来没有这些补丁
 #   - 免去 BoringSSL + LTO 的 30-60 分钟编译和 OOM 风险
-#   - 上游每周发版，本 workflow 自动跟随
+#   - 上游发版快，本 workflow 每日跟随
 
 on:
   schedule:
-    - cron: "0 4 * * 1"   # 每周一 04:00 UTC
+    - cron: "0 4 * * *"   # 每日 04:00 UTC（concord 上游发版很快，周更会落后）
   workflow_dispatch:
 
 permissions:
@@ -151,7 +151,7 @@ jobs:
           - 校验：\`sha256sum -c concord-<arch>.gz.sha256\`
           - 上游版本：${{ steps.upstream.outputs.tag }}
 
-          `ShellCrash.tar.gz` 是 concord 专用脚本包（每周随内核一起发），路由器菜单的「更新管理脚本」会从这里取。"
+          `ShellCrash.tar.gz` 是 concord 专用脚本包（与内核一起每日发布），路由器菜单的「更新管理脚本」会从这里取。"
             echo "created=true" >> "$GITHUB_OUTPUT"
           fi
 

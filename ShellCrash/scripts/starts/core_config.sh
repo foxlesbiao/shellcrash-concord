@@ -90,11 +90,8 @@ get_core_config() { #下载内核配置文件
         fi
     else
         Https=""
-        if echo "$crashcore" | grep -q 'singbox'; then
-            . "$CRASHDIR"/starts/singbox_config_check.sh
-        else
-            . "$CRASHDIR"/starts/clash_config_check.sh
-        fi
+        # 只保留 clash/concord 路径；sing-box 检查脚本已移除
+        . "$CRASHDIR"/starts/clash_config_check.sh
         check_config
         #如果不同则备份并替换文件
         if [ -s "$core_config" ]; then

@@ -43,6 +43,41 @@ index 684ca55..cce27e0 100644
          v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
          COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
      elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+diff --git a/scripts/libs/meta_listeners.sh b/a/scripts/libs/meta_listeners.sh
+deleted file mode 100644
+index cf9d5b6..0000000
+--- a/scripts/libs/meta_listeners.sh
++++ /dev/null
+@@ -1,28 +0,0 @@
+-#!/bin/sh
+-# Copyright (C) Juewuy
+-
+-#meta内核vmess入站生成
+-[ "$vms_service" = ON ] && {
+-    cat >>"$TMPDIR"/listeners.yaml <<EOF
+-  - name: "vmess-in"
+-    type: vmess
+-    port: $vms_port
+-    listen:
+-    users:
+-      - uuid: $vms_uuid
+-        alterId: 0
+-    ws-path: $vms_ws_path
+-EOF
+-}
+-#meta内核ss入站生成
+-[ "$sss_service" = ON ] && {
+-    cat >>"$TMPDIR"/listeners.yaml <<EOF
+-  - name: "ss-in"
+-    type: shadowsocks
+-    port: $sss_port
+-    listen:
+-    cipher: $sss_cipher
+-    password: $sss_pwd
+-    udp: true
+-EOF
+-}
+\ No newline at end of file
 diff --git a/scripts/libs/web_get_bin.sh b/scripts/libs/web_get_bin.sh
 index d434b67..e5a6900 100644
 --- a/scripts/libs/web_get_bin.sh
@@ -900,20 +935,171 @@ index f8bc313..ebeb374 100644
          }
      fi
      # 生成proxy_providers模块
-diff --git a/scripts/menus/providers_singbox.sh b/scripts/menus/providers_singbox.sh
-index 26aa5b9..858685c 100644
+diff --git a/scripts/menus/providers_singbox.sh b/a/scripts/menus/providers_singbox.sh
+deleted file mode 100644
+index 26aa5b9..0000000
 --- a/scripts/menus/providers_singbox.sh
-+++ b/scripts/menus/providers_singbox.sh
-@@ -22,8 +22,7 @@ gen_providers() {
-         get_bin "$TMPDIR"/provider_temp_file "rules/${CORE_TYPE}_providers/$provider_temp_file"
-         [ -z "$(grep -o 'route' "$TMPDIR"/provider_temp_file)" ] && {
-             msg_alert "\033[31m$PROVIDERS_DOWNLOAD_FAILED\033[0m"
++++ /dev/null
+@@ -1,138 +0,0 @@
+-#!/bin/sh
+-# Copyright (C) Juewuy
+-
+-[ -n "$__IS_PROVIDERS_SINGBOX" ] && return
+-__IS_PROVIDERS_SINGBOX=1
+-
+-load_lang providers
+-
+-. "$CRASHDIR"/libs/web_get_bin.sh
+-
+-# 生成singbox的providers配置文件
+-gen_providers() {
+-    if [ -z "$(grep "provider_temp_${CORE_TYPE}" "$CRASHDIR"/configs/ShellCrash.cfg)" ]; then
+-        provider_temp_file="$(sed -n "1 p" "$CRASHDIR"/configs/"${CORE_TYPE}"_providers.list | awk '{print $2}')"
+-    else
+-        provider_temp_file=$(grep "provider_temp_${CORE_TYPE}" "$CRASHDIR"/configs/ShellCrash.cfg | awk -F '=' '{print $2}')
+-    fi
+-    if [ -s "$provider_temp_file" ]; then
+-        ln -sf "$provider_temp_file" "$TMPDIR"/provider_temp_file
+-    else
+-        msg_alert "\033[33m$PROVIDERS_FETCHING_TEMPLATE\033[0m"
+-        get_bin "$TMPDIR"/provider_temp_file "rules/${CORE_TYPE}_providers/$provider_temp_file"
+-        [ -z "$(grep -o 'route' "$TMPDIR"/provider_temp_file)" ] && {
+-            msg_alert "\033[31m$PROVIDERS_DOWNLOAD_FAILED\033[0m"
 -            . "$CRASHDIR"/menus/9_upgrade.sh && setserver
 -            setproviders
-+            msg_alert "\033[33m模板下载失败，检查网络后重试\033[0m"
-         }
-     fi
-     # 生成outbound_providers模块
+-        }
+-    fi
+-    # 生成outbound_providers模块
+-    mkdir -p "$TMPDIR"/providers
+-    # 预创建文件并写入对应文件头
+-    cat >"$TMPDIR"/providers/providers.json <<EOF
+-{
+-  "providers": [
+-EOF
+-    cat >"$TMPDIR"/providers/outbounds_add.json <<EOF
+-{
+-  "outbounds": [
+-EOF
+-    # 基于单订阅生成providers模块
+-    if [ -n "$1" ]; then
+-        gen_providers_txt "$@"
+-        providers_tags=\"$1\"
+-    else
+-        # 基于全部订阅/本地文件生成
+-        [ -s "$CRASHDIR"/configs/providers.cfg ] && {
+-            providers_tags=''
+-            while read -r line; do
+-                gen_providers_txt $line
+-                providers_tags=$(echo "$providers_tags, \"$tag\"" | sed 's/^, //')
+-            done <"$CRASHDIR"/configs/providers.cfg
+-        }
+-        # 基于全部节点分享链接生成
+-        [ -s "$CRASHDIR"/configs/providers_uri.cfg ] && {
+-            mkdir -p "$CRASHDIR"/providers
+-            awk '{ print ($1=="vmess" ? $2 : $2 "#" $1) }' "$CRASHDIR"/configs/providers_uri.cfg >"$CRASHDIR"/providers/uri_group
+-            gen_providers_txt "Uri_group" "./providers/uri_group" "3" "12"
+-            providers_tags=$(echo "$providers_tags, \"Uri_group\"" | sed 's/^, //')
+-        }
+-    fi
+-    # 修复文件格式
+-    sed -i '$s/},/}]}/' "$TMPDIR"/providers/outbounds_add.json
+-    sed -i '$s/},/}]}/' "$TMPDIR"/providers/providers.json
+-    # 使用模版生成outbounds和rules模块
+-    cat "$TMPDIR"/provider_temp_file | sed "s/{providers_tags}/$providers_tags/g" | sed "s/\"providers_tags\"/$providers_tags/g" >"$TMPDIR"/providers/outbounds.json
+-    rm -rf "$TMPDIR"/provider_temp_file
+-    # 调用内核测试
+-    . "$CRASHDIR"/starts/check_core.sh && check_core && "$TMPDIR"/CrashCore merge "$TMPDIR"/config.json -C "$TMPDIR"/providers
+-    if [ "$?" = 0 ]; then
+-        msg_alert "\033[32m$PROVIDERS_GEN_OK_SINGBOX\033[0m"
+-        mkdir -p "$CRASHDIR"/jsons
+-        mv -f "$TMPDIR"/config.json "$CRASHDIR"/jsons/config.json
+-        rm -rf "$TMPDIR"/providerss
+-        comp_box "$PROVIDERS_RESTART_ASK"
+-        btm_box "1) $PROVIDERS_YES" \
+-            "0) $PROVIDERS_NO"
+-        read -r -p "$COMMON_INPUT> " res
+-        [ "$res" = 1 ] && {
+-            start_core && . "$CRASHDIR"/libs/set_cron.sh && cronset "$PROVIDERS_CRON_SUB_UPDATE"
+-            exit
+-        }
+-    else
+-        rm -rf "$TMPDIR"/CrashCore
+-        msg_alert "\033[31m$PROVIDERS_GEN_FAILED\033[0m"
+-        # rm -rf "$TMPDIR"/providers
+-    fi
+-}
+-
+-gen_providers_txt() {
+-    tag=$1
+-    interval=${3:-3}
+-    interval2=${4:-12}
+-    ua=${5:-clash.meta}
+-    exclude=${6#\#}
+-    include=${7#\#}
+-    [ -n "$exclude" ] && exclude_ele="\"exclude\": \"$exclude\","
+-    [ -n "$include" ] && include_ele="\"include\": \"$include\","
+-    if [ -n "$(echo "$2" | grep -E '^./')" ]; then
+-        cat >>"$TMPDIR"/providers/providers.json <<EOF
+-    {
+-      "tag": "$tag",
+-      "type": "local",
+-      "path": "$2",
+-EOF
+-    else
+-        cat >>"$TMPDIR"/providers/providers.json <<EOF
+-    {
+-      "tag": "$tag",
+-      "type": "remote",
+-      "url": "$2",
+-      "path": "./providers/$tag.yaml",
+-      "user_agent": "$ua",
+-      "update_interval": "${interval2}h",
+-      $exclude_ele
+-      $include_ele
+-EOF
+-    fi
+-    # 通用部分生成
+-    [ "$skip_cert" != "OFF" ] && override_tls='true' || override_tls='false'
+-    cat >>"$TMPDIR"/providers/providers.json <<EOF
+-      "health_check": {
+-        "enabled": true,
+-        "url": "https://www.gstatic.com/generate_204",
+-        "interval": "${interval}m",
+-        "timeout": "3s"
+-      },
+-	  "override_dialer": {
+-        "domain_resolver": "$dns_proxy_server"
+-	  },
+-      "override_tls": {
+-        "enabled": true,
+-        "insecure": $override_tls
+-      }
+-    },
+-EOF
+-    # 写入提供者
+-    echo '{ "tag": "'"$tag"'", "type": "urltest", "tolerance": 100, "providers": ["'"$tag"'"], "include": ".*" },' >>"$TMPDIR"/providers/outbounds_add.json
+-}
+diff --git a/scripts/starts/bfstart.sh b/scripts/starts/bfstart.sh
+index ebd5a8d..7f55f77 100644
+--- a/scripts/starts/bfstart.sh
++++ b/scripts/starts/bfstart.sh
+@@ -125,13 +125,9 @@ catpac                                       #生成pac文件
+     ln -sf "$CRASHDIR"/providers/* "$BINDIR"/providers/
+ }
+ if echo "$crashcore" | grep -q 'singbox'; then
+-    . "$CRASHDIR"/starts/singbox_check.sh && singbox_check
+-    [ -d "$TMPDIR"/jsons ] && rm -rf "$TMPDIR"/jsons/* || mkdir -p "$TMPDIR"/jsons #准备目录
+-    if [ "$disoverride" != "1" ]; then
+-        . "$CRASHDIR"/starts/singbox_modify.sh && modify_json
+-    else
+-        ln -sf "$core_config" "$TMPDIR"/jsons/config.json
+-    fi
++    # 本版只支持 concord；sing-box 相关脚本已移除
++    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 sing-box，请执行 sh install.sh 修复" 31
++    exit 1
+ else
+     . "$CRASHDIR"/starts/clash_check.sh && clash_check
+     if [ "$disoverride" != "1" ]; then
 diff --git a/scripts/starts/clash_check.sh b/scripts/starts/clash_check.sh
 index 9346053..13d3a6f 100644
 --- a/scripts/starts/clash_check.sh
@@ -931,7 +1117,7 @@ index 9346053..13d3a6f 100644
      if [ "$crashcore" = "clash" ]; then
          [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
-index dcf4cb9..847c759 100644
+index dcf4cb9..4176123 100644
 --- a/scripts/starts/clash_modify.sh
 +++ b/scripts/starts/clash_modify.sh
 @@ -2,12 +2,18 @@
@@ -954,7 +1140,7 @@ index dcf4cb9..847c759 100644
      else
          tun='tun: {enable: false}'
      fi
-@@ -206,11 +212,13 @@ split_and_customize_yaml_parts() {
+@@ -206,11 +212,7 @@ split_and_customize_yaml_parts() {
  }
  
  add_custom_inbounds_and_rules() {
@@ -963,17 +1149,11 @@ index dcf4cb9..847c759 100644
 -        . "$CRASHDIR"/configs/gateway.cfg
 -        . "$CRASHDIR"/libs/meta_listeners.sh
 -    }
-+    #添加自定义入站（concord 不支持 listeners，开了也静默失效，直接跳过）
-+    if ! echo "$core_kind" | grep -qi 'concord'; then
-+        [ "$vms_service" = ON ] || [ "$sss_service" = ON ] && {
-+            . "$CRASHDIR"/configs/gateway.cfg
-+            . "$CRASHDIR"/libs/meta_listeners.sh
-+        }
-+    fi
++    #添加自定义入站：concord 不支持 listeners，相关菜单和生成逻辑已移除
      #节点绕过功能支持
      sed -i "/#节点绕过/d" "$TMPDIR"/rules.yaml
      [ "$proxies_bypass" = "ON" ] && {
-@@ -283,9 +291,20 @@ merger_yaml() {
+@@ -283,9 +285,20 @@ merger_yaml() {
  
  test_yaml() {
      #测试自定义配置文件
@@ -998,7 +1178,7 @@ index dcf4cb9..847c759 100644
          logger "错误详情请参考 "$TMPDIR"/error.yaml 文件！" 33
          mv -f "$TMPDIR"/config.yaml "$TMPDIR"/error.yaml >/dev/null 2>&1
 diff --git a/scripts/starts/core_config.sh b/scripts/starts/core_config.sh
-index 256b3a6..3f36845 100644
+index 256b3a6..9752744 100644
 --- a/scripts/starts/core_config.sh
 +++ b/scripts/starts/core_config.sh
 @@ -19,7 +19,7 @@ gen_ua(){  #自动生成ua
@@ -1010,3 +1190,579 @@ index 256b3a6..3f36845 100644
              user_agent="clash.meta/mihomo"
          else
              user_agent="clash"
+@@ -90,11 +90,8 @@ get_core_config() { #下载内核配置文件
+         fi
+     else
+         Https=""
+-        if echo "$crashcore" | grep -q 'singbox'; then
+-            . "$CRASHDIR"/starts/singbox_config_check.sh
+-        else
+-            . "$CRASHDIR"/starts/clash_config_check.sh
+-        fi
++        # 只保留 clash/concord 路径；sing-box 检查脚本已移除
++        . "$CRASHDIR"/starts/clash_config_check.sh
+         check_config
+         #如果不同则备份并替换文件
+         if [ -s "$core_config" ]; then
+diff --git a/scripts/starts/singbox_check.sh b/a/scripts/starts/singbox_check.sh
+deleted file mode 100644
+index 10bbf6f..0000000
+--- a/scripts/starts/singbox_check.sh
++++ /dev/null
+@@ -1,11 +0,0 @@
+-
+-singbox_check() { #singbox启动前检查
+-    #检测singboxr专属功能
+-    [ "$crashcore" != "singboxr" ] && [ -n "$(cat "$CRASHDIR"/jsons/*.json | grep -oE '"shadowsocksr"|"providers"')" ] && {
+-        . "$CRASHDIR"/starts/core_exchange.sh && core_exchange singboxr 'singboxr内核专属功能'
+-    }
+-    check_core
+-    #预下载cn.srs数据库
+-    [ "$dns_mod" = "mix" ] || [ "$dns_mod" = "route" ] && ! grep -Eq '"tag" *:[[:space:]]*"cn"' "$CRASHDIR"/jsons/*.json && check_geo ruleset/cn.srs srs_geosite_cn.srs
+-    return 0
+-}
+\ No newline at end of file
+diff --git a/scripts/starts/singbox_config_check.sh b/a/scripts/starts/singbox_config_check.sh
+deleted file mode 100644
+index d4b1731..0000000
+--- a/scripts/starts/singbox_config_check.sh
++++ /dev/null
+@@ -1,37 +0,0 @@
+-#!/bin/sh
+-# Copyright (C) Juewuy
+-
+-check_config() { #检查singbox配置文件
+-    #检测节点或providers
+-    if ! grep -qE '"(socks|http|shadowsocks(r)?|vmess|trojan|wireguard|hysteria(2)?|vless|shadowtls|tuic|ssh|tor|providers|anytls|soduku)"' "$core_config_new"; then
+-        echo "-----------------------------------------------"
+-        logger "获取到了配置文件【$core_config_new】，但似乎并不包含正确的节点信息！" 31
+-        echo "请尝试使用6-2或者6-3的方式生成配置文件！"
+-        exit 1
+-    fi
+-    #删除不兼容的旧版内容
+-    [ "$(wc -l <"$core_config_new")" -lt 3 ] && {
+-        sed -i 's/^.*"inbounds":/{"inbounds":/' "$core_config_new"
+-        sed -i 's/{[^{}]*"dns-out"[^{}]*}//g' "$core_config_new"
+-    }
+-    #检查不支持的旧版内容
+-    grep -q '"sni"' "$core_config_new" && {
+-        logger "获取到了不支持的旧版(<1.12)配置文件【$core_config_new】！" 31
+-        echo "请尝试使用支持1.12以上版本内核的方式生成配置文件！"
+-        exit 1
+-    }
+-    #检测并去除无效策略组
+-    [ -n "$url_type" ] && {
+-        #获得无效策略组名称
+-        grep -oE '\{"type":"urltest","tag":"[^"]*","outbounds":\["DIRECT"\]' "$core_config_new" | sed -n 's/.*"tag":"\([^"]*\)".*/\1/p' >"$TMPDIR"/singbox_tags
+-        #删除策略组
+-        sed -i 's/{"type":"urltest","tag":"[^"]*","outbounds":\["DIRECT"\]}//g; s/{"type":"[^"]*","tag":"[^"]*","outbounds":\["DIRECT"\],"url":"[^"]*","interval":"[^"]*","tolerance":[^}]*}//g' "$core_config_new"
+-        #删除全部包含策略组名称的规则
+-        while read line; do
+-            sed -i "s/\"$line\"//g" "$core_config_new"
+-        done <"$TMPDIR"/singbox_tags
+-        rm -rf "$TMPDIR"/singbox_tags
+-    }
+-    #清理多余逗号
+-    sed -i 's/,\+/,/g; s/\[,/\[/g; s/,]/]/g' "$core_config_new"
+-}
+diff --git a/scripts/starts/singbox_modify.sh b/a/scripts/starts/singbox_modify.sh
+deleted file mode 100644
+index ba24d9b..0000000
+--- a/scripts/starts/singbox_modify.sh
++++ /dev/null
+@@ -1,495 +0,0 @@
+-#!/bin/sh
+-# Copyright (C) Juewuy
+-
+-#修饰singbox配置文件
+-
+-parse_singbox_dns() { #dns转换工具
+-    first_dns=$(echo "$1" | cut -d',' -f1 | cut -d' ' -f1)
+-    type=""
+-    server=""
+-    port=""
+-    case "$first_dns" in
+-        *://*)
+-            type="${first_dns%%://*}"
+-            tmp="${first_dns#*://}"
+-            ;;
+-        *)
+-            type="udp"
+-            tmp="$first_dns"
+-            ;;
+-    esac
+-    case "$tmp" in
+-        \[*\]*)
+-            server="${tmp%%]*}"
+-            server="${server#[}"
+-            port="${tmp#*\]}"
+-            port="${port#:}"
+-            ;;
+-        *)
+-            server="${tmp%%[:/]*}"
+-            port="${tmp#*:}"
+-            [ "$port" = "$tmp" ] && port=""
+-            ;;
+-    esac
+-    if [ -z "$port" ]; then
+-        case "$type" in
+-            udp|tcp) port=53 ;;
+-            doh|https) port=443 ;;
+-            dot|tls) port=853 ;;
+-            *) port=53 ;;
+-        esac
+-    fi
+-    # 输出
+-    echo '"type": "'"$type"'", "server": "'"$server"'", "server_port": '"$port"','
+-}
+-
+-extract_base_jsons() { #提取配置文件以获得outbounds.json,providers.json及route.json
+-    "$TMPDIR"/CrashCore format -c $core_config >"$TMPDIR"/format.json
+-    echo '{' >"$TMPDIR"/jsons/outbounds.json
+-    echo '{' >"$TMPDIR"/jsons/route.json
+-    cat "$TMPDIR"/format.json | sed -n '/"outbounds":/,/^  "[a-z]/p' | sed '$d' >>"$TMPDIR"/jsons/outbounds.json
+-    [ "$crashcore" = "singboxr" ] && {
+-        echo '{' >"$TMPDIR"/jsons/providers.json
+-        cat "$TMPDIR"/format.json | sed -n '/^  "providers":/,/^  "[a-z]/p' | sed '$d' >>"$TMPDIR"/jsons/providers.json
+-    }
+-    cat "$TMPDIR"/format.json | sed -n '/"route":/,/^\(  "[a-z]\|}\)/p' | sed '$d' >>"$TMPDIR"/jsons/route.json
+-	#清理PASS规则
+-    sed -i 's/"PASS"/"DIRECT"/g' "$TMPDIR"/jsons/outbounds.json
+-}
+-
+-generate_basic_jsons() {
+-	#适配1.14+版本
+-	if [ "$(printf '%s' "$core_v" | cut -d. -f2)" -lt 14 ];then
+-		preferred='"ip_accept_any": true,'
+-		detour_direct='"download_detour": "DIRECT"'
+-	else
+-		preferred='"preferred_by": [ "hosts" ],'
+-		detour_direct='"http_client": "detour_direct"'
+-		#生成http_clients.json
+-		cat >"$TMPDIR"/jsons/http_clients.json <<EOF
+-	{
+-	  "http_clients": [
+-		{
+-		  "tag": "detour_proxy",
+-		  "detour": "GLOBAL"
+-		},
+-		{
+-		  "tag": "detour_direct",
+-		  "detour": "DIRECT"
+-		}
+-	  ]
+-	}
+-EOF
+-	fi
+-    #生成endpoints.json
+-    [ "$ts_service" = ON ] || [ "$wg_service" = ON ] && [ "$zip_type" != upx ] && {
+-        . "$CRASHDIR"/configs/gateway.cfg
+-        . "$CRASHDIR"/libs/sb_endpoints.sh
+-    }
+-    #生成log.json
+-    cat >"$TMPDIR"/jsons/log.json <<EOF
+-{ "log": { "level": "info", "timestamp": true } }
+-EOF
+-    #生成add_hosts.json
+-    if [ "$hosts_opt" != "OFF" ]; then #本机hosts
+-        [ -s /data/etc/custom_hosts ] && custom_hosts='"/data/etc/custom_hosts",'
+-        #NTP劫持
+-        cat >"$TMPDIR"/jsons/add_hosts.json <<EOF
+-{
+-  "dns": {
+-    "servers": [
+-      {
+-        "type": "hosts",
+-        "tag": "hosts",
+-        "path": [
+-          $custom_hosts
+-          "$HOME/.hosts",
+-          "/etc/hosts"
+-        ],
+-        "predefined": {
+-          "localhost": [
+-            "127.0.0.1",
+-            "::1"
+-          ],
+-          "time.android.com": "203.107.6.88",
+-          "time.facebook.com": "203.107.6.88"
+-        }
+-      }
+-    ],
+-    "rules": [
+-      {
+-        $preferred
+-        "server": "hosts"
+-      }
+-    ]
+-  }
+-}
+-EOF
+-    fi
+-}
+-
+-gen_dns() {
+-    #生成dns.json
+-    [ "$ipv6_dns" != "OFF" ] && strategy='prefer_ipv4' || strategy='ipv4_only'
+-    #获取detour出口
+-    auto_detour=$(grep -E '"type": "urltest"' -A 1 "$TMPDIR"/jsons/outbounds.json | grep '自动' | head -n 1 | sed 's/^[[:space:]]*"tag": //;s/,$//')
+-    [ -z "$auto_detour" ] && auto_detour=$(grep -E '"type": "urltest"' -A 1 "$TMPDIR"/jsons/outbounds.json | grep '"tag":' | head -n 1 | sed 's/^[[:space:]]*"tag": //;s/,$//')
+-    [ -z "$auto_detour" ] && auto_detour=$(grep -E '"type": "selector"' -A 1 "$TMPDIR"/jsons/outbounds.json | grep '"tag":' | head -n 1 | sed 's/^[[:space:]]*"tag": //;s/,$//')
+-    [ -z "$auto_detour" ] && auto_detour='"DIRECT"'
+-    #ecs优化
+-    [ "$ecs_subnet" = ON ] && {
+-        . "$CRASHDIR"/libs/get_ecsip.sh
+-        if [ -n "$ecs_address" ]; then
+-            client_subnet='"client_subnet": "'"$ecs_address"'",'
+-        else
+-            logger "自动获取ecs网段失败！" 33
+-        fi
+-    }
+-    #根据dns模式生成
+-    [ "$dns_mod" = "redir_host" ] && {
+-        global_dns=dns_proxy
+-        direct_dns='{ "inbound": [ "dns-in" ], "server": "dns_direct" }'
+-    }
+-    [ "$dns_mod" = "fake-ip" ] || [ "$dns_mod" = "mix" ] && {
+-        global_dns=dns_fakeip
+-        fake_ip_filter_domain=$(cat ${CRASHDIR}/configs/fake_ip_filter ${CRASHDIR}/configs/fake_ip_filter.list 2>/dev/null | grep -Ev '#|\*|\+|Mijia' | sed '/^\s*$/d' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-        fake_ip_filter_suffix=$(cat ${CRASHDIR}/configs/fake_ip_filter ${CRASHDIR}/configs/fake_ip_filter.list 2>/dev/null | grep -v '.\*' | grep -E '\*|\+' | sed 's/^[*+]\.//' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-        fake_ip_filter_regex=$(cat ${CRASHDIR}/configs/fake_ip_filter ${CRASHDIR}/configs/fake_ip_filter.list 2>/dev/null | grep '.\*' | sed 's/\./\\\\./g' | sed 's/\*/.\*/' | sed 's/^+/.\+/' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-        [ -n "$fake_ip_filter_domain" ] && fake_ip_filter_domain="{ \"domain\": [$fake_ip_filter_domain], \"server\": \"dns_direct\" },"
+-        [ -n "$fake_ip_filter_suffix" ] && fake_ip_filter_suffix="{ \"domain_suffix\": [$fake_ip_filter_suffix], \"server\": \"dns_direct\" },"
+-        [ -n "$fake_ip_filter_regex" ] && fake_ip_filter_regex="{ \"domain_regex\": [$fake_ip_filter_regex], \"server\": \"dns_direct\" },"
+-        # 用户自定义直连域名
+-        if [ -s "$CRASHDIR/configs/dns_direct_domains" ]; then
+-            custom_direct_domain=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep -Ev '#|\*|\+' | sed '/^\s*$/d' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            custom_direct_suffix=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep '\*' | grep -v '.\*' | sed 's/\*\.//' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            custom_direct_regex=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep '.\*' | sed 's/\./\\\\./g' | sed 's/\*/.\*/' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            [ -n "$custom_direct_domain" ] && custom_direct_domain_rule="{ \"domain\": [$custom_direct_domain], \"server\": \"dns_direct\" },"
+-            [ -n "$custom_direct_suffix" ] && custom_direct_suffix_rule="{ \"domain_suffix\": [$custom_direct_suffix], \"server\": \"dns_direct\" },"
+-            [ -n "$custom_direct_regex" ] && custom_direct_regex_rule="{ \"domain_regex\": [$custom_direct_regex], \"server\": \"dns_direct\" },"
+-        fi
+-        proxy_dns='{ "query_type": ["A", "AAAA"], "server": "dns_fakeip", "rewrite_ttl": 1 }'
+-        #mix模式插入fakeip过滤规则
+-        [ "$dns_mod" = "mix" ] && direct_dns='{ "rule_set": ["cn"], "server": "dns_direct" },'
+-    }
+-    [ "$dns_mod" = "route" ] && {
+-        global_dns=dns_proxy
+-        direct_dns='{ "rule_set": ["cn"], "server": "dns_direct" }'
+-        # 用户自定义直连域名
+-        if [ -s "$CRASHDIR/configs/dns_direct_domains" ]; then
+-            custom_direct_domain=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep -Ev '#|\*|\+' | sed '/^\s*$/d' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            custom_direct_suffix=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep '\*' | grep -v '.\*' | sed 's/\*\.//' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            custom_direct_regex=$(cat "$CRASHDIR/configs/dns_direct_domains" | grep '.\*' | sed 's/\./\\\\./g' | sed 's/\*/.\*/' | awk '{printf "\"%s\", ",$1}' | sed 's/, $//')
+-            [ -n "$custom_direct_domain" ] && custom_direct_domain_rule="{ \"domain\": [$custom_direct_domain], \"server\": \"dns_direct\" },"
+-            [ -n "$custom_direct_suffix" ] && custom_direct_suffix_rule="{ \"domain_suffix\": [$custom_direct_suffix], \"server\": \"dns_direct\" },"
+-            [ -n "$custom_direct_regex" ] && custom_direct_regex_rule="{ \"domain_regex\": [$custom_direct_regex], \"server\": \"dns_direct\" },"
+-        fi
+-    }
+-    #防泄露设置
+-    [ "$dns_protect" = "OFF" ] && sed -i 's/"server": "dns_proxy"/"server": "dns_direct"/g' "$TMPDIR"/jsons/route.json
+-    #生成add_rule_set.json
+-    [ "$dns_mod" = "mix" ] || [ "$dns_mod" = "route" ] && ! grep -Eq '"tag" *:[[:space:]]*"cn"' "$CRASHDIR"/jsons/*.json && ! grep -Eq '"tag"[[:space:]]*:[[:space:]]*\[[^]]*"cn"' "$CRASHDIR"/jsons/*.json && {
+-        [ "$crashcore" = "singboxr" ] && srs_path='"path": "./ruleset/cn.srs",'
+-        cat >"$TMPDIR"/jsons/add_rule_set.json <<EOF
+-{
+-  "route": {
+-    "rule_set": [
+-      {
+-        "tag": "cn",
+-        "type": "remote",
+-        "format": "binary",
+-        $srs_path
+-        "url": "https://testingcf.jsdelivr.net/gh/DustinWin/ruleset_geodata@sing-box-ruleset/cn.srs",
+-        $detour_direct
+-      }
+-    ]
+-  }
+-}
+-EOF
+-}
+-    cat >"$TMPDIR"/jsons/dns.json <<EOF
+-{
+-  "dns": {
+-    "servers": [
+-      {
+-        "tag": "dns_proxy",
+-        $(parse_singbox_dns "$dns_fallback")
+-        "routing_mark": $routing_mark,
+-        "detour": $auto_detour,
+-        "domain_resolver": "dns_resolver"
+-      },
+-      {
+-        "tag": "dns_direct",
+-        $(parse_singbox_dns "$dns_nameserver")
+-        "routing_mark": $routing_mark,
+-        "domain_resolver": "dns_resolver"
+-      },
+-      {
+-        "tag": "dns_fakeip",
+-        "type": "fakeip",
+-        "inet4_range": "$fakeip4",
+-        "inet6_range": "$fakeip6"
+-      },
+-      {
+-        "tag": "dns_resolver",
+-        $(parse_singbox_dns "$dns_resolver")
+-        "routing_mark": $routing_mark
+-      },
+-      {
+-        "tag": "dns_proxy_server",
+-        $(parse_singbox_dns "$dns_proxy_server")
+-        "routing_mark": $routing_mark
+-      }
+-    ],
+-    "rules": [
+-      { "clash_mode": "Direct", "server": "dns_direct" },
+-      { "domain_suffix": ["services.googleapis.cn"], "server": "dns_fakeip", "rewrite_ttl": 1 },
+-      $fake_ip_filter_domain
+-      $fake_ip_filter_suffix
+-      $fake_ip_filter_regex
+-      $custom_direct_domain_rule
+-      $custom_direct_suffix_rule
+-      $custom_direct_regex_rule
+-      { "clash_mode": "Global", "query_type": ["A", "AAAA"], "server": "$global_dns", "rewrite_ttl": 1 },
+-      $direct_dns
+-      $proxy_dns
+-    ],
+-    "final": "dns_proxy",
+-    "strategy": "$strategy",
+-    $client_subnet
+-    "reverse_mapping": true
+-  }
+-}
+-EOF
+-}
+-
+-gen_outbounds() {
+-    #生成add_route.json
+-    #域名嗅探配置
+-    grep -q 'telegramip' "$TMPDIR"/jsons/route.json && telegramip_set=' "rule_set": [ "telegramip" ],'
+-    [ "$sniffer" != OFF ] && sniffer_set='{ "domain_suffix": [ "push.apple.com" ],'"$telegramip_set"' "domain": [ "Mijia Cloud" ], "invert": true, "action": "sniff", "timeout": "500ms" },'
+-    [ "$ts_service" = ON ] && tailscale_set='{ "inbound": [ "ts-ep" ], "port": 53, "action": "hijack-dns" },'
+-    cat >"$TMPDIR"/jsons/add_route.json <<EOF
+-{
+-  "route": {
+-    "default_domain_resolver": "dns_resolver",
+-    "default_mark": $routing_mark,
+-    "rules": [
+-      $tailscale_set
+-      $sniffer_set
+-      { "inbound": [ "dns-in" ], "action": "hijack-dns" },
+-      { "clash_mode": "Direct" , "outbound": "DIRECT" },
+-      { "clash_mode": "Global" , "outbound": "GLOBAL" }
+-    ]
+-  }
+-}
+-EOF
+-}
+-
+-gen_certificate() { #生成certificate.json
+-    cat >"$TMPDIR"/jsons/certificate.json <<EOF
+-{
+-  "certificate": {
+-    "store": "mozilla"
+-  }
+-}
+-EOF
+-}
+-
+-gen_inbounds() { #生成inbounds.json
+-    [ -n "$authentication" ] && {
+-        username=$(echo $authentication | awk -F ':' '{print $1}') #混合端口账号密码
+-        password=$(echo $authentication | awk -F ':' '{print $2}')
+-        userpass='"users": [{ "username": "'$username'", "password": "'$password'" }], '
+-    }
+-    cat >"$TMPDIR"/jsons/inbounds.json <<EOF
+-{
+-  "inbounds": [
+-    {
+-      "type": "mixed",
+-      "tag": "mixed-in",
+-      "listen": "::",
+-      $userpass
+-      "listen_port": $mix_port
+-    },
+-    {
+-      "type": "direct",
+-      "tag": "dns-in",
+-      "listen": "::",
+-      "listen_port": $dns_port
+-    },
+-    {
+-      "type": "redirect",
+-      "tag": "redirect-in",
+-      "listen": "::",
+-      "listen_port": $redir_port
+-    },
+-    {
+-      "type": "tproxy",
+-      "tag": "tproxy-in",
+-      "listen": "::",
+-      "listen_port": $tproxy_port
+-    }
+-  ]
+-}
+-EOF
+-    #inbounds.json添加自定义入站
+-    [ "$vms_service" = ON ] || [ "$sss_service" = ON ] && {
+-        . "$CRASHDIR"/configs/gateway.cfg
+-        . "$CRASHDIR"/libs/sb_inbounds.sh
+-    }
+-    if [ "$redir_mod" = "Mix" ] || [ "$redir_mod" = "Tun" ]; then
+-        [ "$ipv6_redir" = 'ON' ] && [ -n "$(ip -6 rule show)" ] && ipv6_address='"fd00:face:b00c::1/126",'
+-		[ "$(printf '%s' "$core_v" | cut -d. -f2)" -le 14 ] && stack='"stack": "system",'
+-        cat >>"$TMPDIR"/jsons/tun.json <<EOF
+-{
+-  "inbounds": [
+-    {
+-      "type": "tun",
+-      "tag": "tun-in",
+-      "interface_name": "utun",
+-      "address": [
+-        $ipv6_address
+-        "198.18.0.1/15"
+-      ],
+-      $stack
+-      "auto_route": false
+-    }
+-  ]
+-}
+-EOF
+-    fi
+-}
+-
+-add_outbounds() { #生成add_outbounds.json
+-    grep -qE '"tag": "DIRECT"' "$TMPDIR"/jsons/outbounds.json || add_direct='{ "tag": "DIRECT", "type": "direct" }'
+-    grep -qE '"tag": "REJECT"' "$TMPDIR"/jsons/outbounds.json || add_reject='{ "tag": "REJECT", "type": "block" }'
+-    grep -qE '"tag": "GLOBAL"' "$TMPDIR"/jsons/outbounds.json || {
+-        auto_proxies=$(grep -E '"type": "(selector|urltest)"' -A 1 "$TMPDIR"/jsons/outbounds.json | grep '"tag":' | sed 's/^[[:space:]]*"tag": //;$ s/,$//')
+-        [ -n "$auto_proxies" ] && add_global='{ "tag": "GLOBAL", "type": "selector", "outbounds": ['"$auto_proxies"', "DIRECT"]}'
+-    }
+-    [ -n "$add_direct" -a -n "$add_reject" ] && add_direct="${add_direct},"
+-    [ -n "$add_reject" -a -n "$add_global" ] && add_reject="${add_reject},"
+-    [ -n "$add_direct$add_reject$add_global" ] && cat >"$TMPDIR"/jsons/add_outbounds.json <<EOF
+-{
+-  "outbounds": [
+-    $add_direct
+-    $add_reject
+-    $add_global
+-  ]
+-}
+-EOF
+-}
+-
+-gen_experimental() { #生成experimental.json
+-    [ "$crashcore" = "singboxr" ] && urltest_unified_delay=',"urltest_unified_delay": true'
+-    cat >"$TMPDIR"/jsons/experimental.json <<EOF
+-{
+-  "experimental": {
+-    "clash_api": {
+-      "external_controller": "0.0.0.0:$db_port",
+-      "external_ui": "ui",
+-      "external_ui_download_url": "$external_ui_url",
+-      "secret": "$secret",
+-      "default_mode": "Rule"
+-    }$urltest_unified_delay
+-  }
+-}
+-EOF
+-}
+-
+-generate_custom_rules_json() { #生成自定义规则文件
+-    [ -n "$(grep -Ev ^# "$CRASHDIR"/yamls/rules.yaml 2>/dev/null)" ] && {
+-        cat "$CRASHDIR"/yamls/rules.yaml |
+-            sed '/#.*/d' |
+-            sed 's/,no-resolve//g' |
+-            grep -oE '\-.*,.*,.*' |
+-            sed 's/- DOMAIN-SUFFIX,/{ "domain_suffix": [ "/g' |
+-            sed 's/- DOMAIN-KEYWORD,/{ "domain_keyword": [ "/g' |
+-            sed 's/- IP-CIDR,/{ "ip_cidr": [ "/g' |
+-            sed 's/- SRC-IP-CIDR,/{ "._ip_cidr": [ "/g' |
+-            sed 's/- DST-PORT,/{ "port": [ "/g' |
+-            sed 's/- SRC-PORT,/{ "._port": [ "/g' |
+-            sed 's/- GEOIP,/{ "geoip": [ "/g' |
+-            sed 's/- GEOSITE,/{ "geosite": [ "/g' |
+-            sed 's/- IP-CIDR6,/{ "ip_cidr": [ "/g' |
+-            sed 's/- DOMAIN,/{ "domain": [ "/g' |
+-            sed 's/- PROCESS-NAME,/{ "process_name": [ "/g' |
+-            sed 's/,/" ], "outbound": "/g' |
+-            sed 's/$/" },/g' |
+-            sed '1i\{ "route": { "rules": [ ' |
+-            sed '$s/,$/ ] } }/' >"$TMPDIR"/jsons/cust_add_rules.json
+-        [ ! -s "$TMPDIR"/jsons/cust_add_rules.json ] && rm -rf "$TMPDIR"/jsons/cust_add_rules.json
+-    }
+-}
+-
+-normalize_and_finalize_jsons() { #修饰文件
+-    #清理route.json中的process_name规则以及"auto_detect_interface"
+-    sed -i '/"process_name": \[/,/],$/d' "$TMPDIR"/jsons/route.json
+-    sed -i '/"process_name": "[^"]*",/d' "$TMPDIR"/jsons/route.json
+-	sed -i 's/"auto_detect_interface": true/"auto_detect_interface": false/g' "$TMPDIR"/jsons/route.json
+-    #跳过本地tls证书验证
+-    if [ "$skip_cert" != "OFF" ]; then
+-        sed -i 's/"insecure": false/"insecure": true/' "$TMPDIR"/jsons/outbounds.json "$TMPDIR"/jsons/providers.json 2>/dev/null
+-    else
+-        sed -i 's/"insecure": true/"insecure": false/' "$TMPDIR"/jsons/outbounds.json "$TMPDIR"/jsons/providers.json 2>/dev/null
+-    fi
+-    #判断可用并修饰outbounds&providers&route.json结尾
+-    for file in outbounds providers route; do
+-        if [ -n "$(grep ${file} "$TMPDIR"/jsons/${file}.json 2>/dev/null)" ]; then
+-            sed -i 's/^  },$/  }/; s/^  ],$/  ]/' "$TMPDIR"/jsons/${file}.json
+-            echo '}' >>"$TMPDIR"/jsons/${file}.json
+-        else
+-            rm -rf "$TMPDIR"/jsons/${file}.json
+-        fi
+-    done
+-}
+-
+-link_custom_jsons() { #合并文件
+-    #加载自定义配置文件
+-    mkdir -p "$TMPDIR"/jsons_base
+-    #以下为覆盖脚本的自定义文件
+-    for char in log dns ntp certificate http_clients experimental; do
+-        [ -s "$CRASHDIR"/jsons/${char}.json ] && {
+-            ln -sf "$CRASHDIR"/jsons/${char}.json "$TMPDIR"/jsons/cust_${char}.json
+-            mv -f "$TMPDIR"/jsons/${char}.json "$TMPDIR"/jsons_base #如果重复则临时备份
+-        }
+-    done
+-    #以下为增量添加的自定义文件
+-    for char in others endpoints inbounds outbounds providers route services; do
+-        [ -s "$CRASHDIR"/jsons/${char}.json ] && {
+-            ln -sf "$CRASHDIR"/jsons/${char}.json "$TMPDIR"/jsons/cust_${char}.json
+-        }
+-    done
+-}
+-
+-test_json() { #测试自定义配置文件
+-    if ! error=$("$TMPDIR"/CrashCore check -D "$BINDIR" -C "$TMPDIR"/jsons 2>&1); then
+-        echo $error
+-        error_file=$(echo $error | grep -Eo 'cust.*\.json' | sed 's/cust_//g')
+-        [ "$error_file" = 'add_rules.json' ] && error_file="$CRASHDIR"/yamls/rules.yaml自定义规则 || error_file="$CRASHDIR"/jsons/$error_file
+-        logger "自定义配置文件校验失败，请检查【${error_file}】文件！" 31
+-        logger "尝试使用基础配置文件启动~" 33
+-        #清理自定义配置文件并还原基础配置
+-        rm -rf "$TMPDIR"/jsons/cust_*
+-        mv -f "$TMPDIR"/jsons_base/* "$TMPDIR"/jsons 2>/dev/null
+-    fi
+-}
+-
+-modify_json() { #入口
+-    extract_base_jsons
+-    generate_basic_jsons
+-    gen_dns
+-    gen_outbounds
+-	gen_certificate
+-	gen_inbounds
+-    add_outbounds
+-	gen_experimental
+-    generate_custom_rules_json
+-    normalize_and_finalize_jsons
+-    link_custom_jsons
+-    test_json
+-    #清理缓存
+-    rm -rf "$TMPDIR"/*.json
+-    rm -rf "$TMPDIR"/jsons_base
+-    return 0
+-}

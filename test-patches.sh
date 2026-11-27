@@ -246,10 +246,9 @@ grep -q 'core_kind="\$crashcore"' "$SRC/starts/clash_modify.sh" && ok "保留原
 grep -q "concord' \]; then crashcore=meta\|concord.*&& crashcore=meta\|grep -qi 'concord' && crashcore=meta" "$SRC/starts/clash_modify.sh" \
     && ok "concord 归一化为 meta" || no "缺少归一化"
 
-# 归一化后，listeners 生成要被跳过
-grep -q 'core_kind' "$SRC/starts/clash_modify.sh" && \
-    grep -q "core_kind.*concord" "$SRC/starts/clash_modify.sh" && \
-    ok "listeners 生成按 core_kind 跳过" || no "listeners 没按 core_kind 跳过"
+# listeners 生成逻辑已整块移除（meta_listeners.sh 也删了）
+grep -q 'meta_listeners' "$SRC/starts/clash_modify.sh" \
+    && no "clash_modify 仍引用 meta_listeners" || ok "listeners 生成逻辑已移除"
 
 # ---------- 9. 菜单裁剪 ----------
 sec "9. 菜单裁剪"
@@ -281,7 +280,7 @@ hasnt "内核 URL 不再硬编码 aarch64" "$(cat "$SRC/menus/9_upgrade.sh")" 'd
 # 切换安装源已删（concord 下 update_url 被钉死，改了无效）
 hasnt "已删切换安装源菜单"        "$(cat "$SRC/menus/9_upgrade.sh")" 'UPG_MENU_SOURCE'
 hasnt "已删 setserver 调用"       "$(cat "$SRC/menus/providers_clash.sh")" 'setserver'
-hasnt "已删 setserver 调用(sb)"   "$(cat "$SRC/menus/providers_singbox.sh")" 'setserver'
+# providers_singbox.sh 整个文件已删除，无需再检查其内容
 
 # ---------- 10. 补丁与上游一致性 ----------
 sec "10. 补丁文件"
@@ -289,12 +288,36 @@ sec "10. 补丁文件"
 PATCH="$(dirname "$0")/patches/shellcrash-concord.patch"
 [ -f "$PATCH" ] && ok "补丁文件存在" || no "补丁文件缺失"
 N=$(grep -c '^diff --git' "$PATCH" 2>/dev/null)
-[ "${N:-0}" -ge 14 ] && ok "补丁覆盖 $N 个文件" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=14）"
+[ "${N:-0}" -ge 19 ] && ok "补丁覆盖 $N 个文件（含删除）" || no "补丁只覆盖 ${N:-0} 个文件（预期 >=19）"
 
 # 三个关键补丁标记
 for f in init.sh libs/core_tools.sh libs/web_get_bin.sh; do
     grep -q "$f" "$PATCH" 2>/dev/null && ok "补丁含 $f" || no "补丁缺 $f"
 done
+
+# ---------- 11. 纯 concord：sing-box 专用文件已移除 ----------
+sec "11. 纯 concord 完整性"
+
+SDIR="$(dirname "$0")/ShellCrash/scripts"
+for f in starts/singbox_modify.sh starts/singbox_check.sh starts/singbox_config_check.sh \
+         menus/providers_singbox.sh libs/meta_listeners.sh; do
+    [ -f "$SDIR/$f" ] && no "仍存在 $f" || ok "已删除 $f"
+done
+
+# 补丁里应体现为删除
+grep -q 'deleted file mode' "$PATCH" && ok "补丁含文件删除记录" || no "补丁没有删除记录"
+
+# 不能有指向已删文件的 source
+DANGLING=$(grep -rn 'singbox_modify\|singbox_check\|singbox_config_check\|providers_singbox\|meta_listeners' "$SDIR" 2>/dev/null | wc -l)
+[ "$DANGLING" -eq 0 ] && ok "无指向已删文件的引用" || no "$DANGLING 处 dangling 引用"
+
+# bin 里不该再有 mihomo/sing-box
+[ -d "$(dirname "$0")/ShellCrash/bin/meta" ] && no "bin/meta 仍在" || ok "bin/meta 已删"
+[ -d "$(dirname "$0")/ShellCrash/bin/singboxr" ] && no "bin/singboxr 仍在" || ok "bin/singboxr 已删"
+
+# workflow 改成每日
+grep -q 'cron: "0 4 \* \* \*"' "$(dirname "$0")/.github/workflows/sync.yml" \
+    && ok "内核同步为每日" || no "内核同步不是每日"
 
 # ---------- 汇总 ----------
 printf '\n\033[36m== 汇总 ==\033[0m\n'

@@ -125,13 +125,9 @@ catpac                                       #生成pac文件
     ln -sf "$CRASHDIR"/providers/* "$BINDIR"/providers/
 }
 if echo "$crashcore" | grep -q 'singbox'; then
-    . "$CRASHDIR"/starts/singbox_check.sh && singbox_check
-    [ -d "$TMPDIR"/jsons ] && rm -rf "$TMPDIR"/jsons/* || mkdir -p "$TMPDIR"/jsons #准备目录
-    if [ "$disoverride" != "1" ]; then
-        . "$CRASHDIR"/starts/singbox_modify.sh && modify_json
-    else
-        ln -sf "$core_config" "$TMPDIR"/jsons/config.json
-    fi
+    # 本版只支持 concord；sing-box 相关脚本已移除
+    logger "本版 ShellCrash 只支持 concord 内核，当前配置为 sing-box，请执行 sh install.sh 修复" 31
+    exit 1
 else
     . "$CRASHDIR"/starts/clash_check.sh && clash_check
     if [ "$disoverride" != "1" ]; then

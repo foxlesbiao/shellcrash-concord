@@ -25,11 +25,15 @@ if [ -z "${CONCORD_ARCH:-}" ]; then
 fi
 CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$CONCORD_ARCH.gz}"
 
-# concord 要改的 ShellCrash 脚本（12 个，与 patches/shellcrash-concord.patch 一致）
+# concord 要改的 ShellCrash 脚本（15 个，与 patches 里"修改"的部分一致）
 FILES="init.sh menu.sh
 libs/core_tools.sh libs/web_get_bin.sh
-starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh
-menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh menus/dns.sh"
+starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh starts/bfstart.sh
+menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh menus/dns.sh menus/providers_clash.sh"
+
+# 纯 sing-box 的脚本，装上后直接删掉（concord 永远不走这些分支）
+DROP="starts/singbox_modify.sh starts/singbox_check.sh starts/singbox_config_check.sh
+menus/providers_singbox.sh libs/meta_listeners.sh"
 
 # ShellCrash 的运行时目录（配置/软链都在这里）
 TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
@@ -120,6 +124,15 @@ for f in $FILES; do
     cp -f "$WORK/$(basename "$f")" "$CRASHDIR/$f"
 done
 info "补丁已应用"
+
+# 删掉 sing-box 专用脚本（本版只跑 concord）
+_dropped=0
+for f in $DROP; do
+    if [ -f "$CRASHDIR/$f" ]; then
+        rm -f "$CRASHDIR/$f" && _dropped=$((_dropped+1))
+    fi
+done
+[ "$_dropped" -gt 0 ] && info "已删除 $_dropped 个 sing-box 专用脚本"
 
 # ---------- 配置 ----------
 # 从 release 的 tag 取版本（concord 二进制没有 --version，asset 名也不带版本）
