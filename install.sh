@@ -32,7 +32,7 @@ menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh me
 
 # 纯 sing-box 的脚本，装上后直接删掉（concord 永远不走这些分支）
 DROP="starts/singbox_modify.sh starts/singbox_check.sh starts/singbox_config_check.sh
-menus/providers_singbox.sh libs/meta_listeners.sh"
+menus/providers_singbox.sh libs/meta_listeners.sh starts/core_exchange.sh"
 
 # ShellCrash 的运行时目录（配置/软链都在这里）
 TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
