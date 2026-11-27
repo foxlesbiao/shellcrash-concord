@@ -12,7 +12,7 @@
 
 ```
 nikki-concord release (.ipk)
-        │  Actions 每周一自动拉取、解包
+        │  Actions 每日拉取、解包
         ▼
   concord-aarch64.gz  ← 本仓库 release
         │  install.sh
@@ -106,11 +106,12 @@ uhttpd -p 0.0.0.0:8090 -h $CRASHDIR/ui
 ## 仓库结构
 
 ```
-.github/workflows/sync.yml          # 每周一同步 concord 内核 → 发布 release
-.github/workflows/sync-upstream.yml # 每周一拉上游 ShellCrash → 应用补丁 → 提交；冲突则开 issue
-patches/shellcrash-concord.patch    # 对 ShellCrash 的全部改动（3 个文件）
+.github/workflows/sync.yml          # 每日同步 concord 内核 → 发布 release
+patches/shellcrash-concord.patch    # 对 ShellCrash 的全部改动（40 个文件）
+regen-patch.sh                       # 重新生成补丁（自动 diff 全树 + 自检一致性）
+merge-upstream.sh                    # 手动合并上游（试打 → 冲突则停下）
 ShellCrash/                          # 全量 ShellCrash 源码（已打补丁）
-install.sh                           # 路由器端安装/回滚脚本
+install.sh                           # 路由器端安装脚本（自动选源）
 ```
 
 ## 改动了 ShellCrash 的哪些地方
@@ -252,10 +253,24 @@ ssh root@<路由器IP> sh /tmp/smoke-test.sh
 ShellCrash 上游更新频繁。本仓库的做法是 **全量代码 + 补丁双轨**：
 
 - 别人 `git clone` 就能直接用（`ShellCrash/` 是全量的）
-- 每周一 `sync-upstream.yml` 自动拉上游 → 应用 `patches/shellcrash-concord.patch` → 通过则提交
-- **补丁打不上时不开 PR、不静默失败，而是自动开 issue 报警**，issue 里写了三处改动分别是什么、怎么重新生成补丁
+- 上游合并是**手动的**，不做自动合并。补丁 40 文件 / 2600 行，冲突要人看，机器判断不了「这处删掉还算不算纯 concord」：
 
-补丁过期是迟早的事（上游改了 `core_check` 之类就会冲突）。那时候按 issue 里的步骤，重新 diff 一次生成补丁即可，通常几分钟。
+```sh
+sh merge-upstream.sh --check   # 只看能不能打，不动文件
+sh merge-upstream.sh           # 试合并，改动写进工作区，不提交不推送
+```
+
+脚本会拉上游、试打补丁、同步 `scripts/` 和 `tools/`、跑 `test-patches.sh`，然后停下等你确认。冲突时它会列出是哪个文件的哪个 hunk 打不上，然后退出——**不会半途改你的仓库**。
+
+补丁过期是迟早的事（上游改了 `core_check` 之类就会冲突）。那时的步骤：
+
+1. `sh merge-upstream.sh --check` 看冲突在哪
+2. 手动把上游改动并进 `ShellCrash/` 对应文件（保持本仓库的 concord 语义）
+3. `sh test-patches.sh` 确认没漏
+4. `sh regen-patch.sh` 重新生成补丁（它会自动 diff 全树并断言「打完补丁 == 仓库」）
+5. 提交
+
+**为什么补丁要自动生成**：早期补丁按手写文件列表拼，漂移过两次（`start.sh`、`lang/en/providers.lang` 改了但没进补丁），下次合并会被上游覆盖回去。现在 `regen-patch.sh` 直接 diff 整个 `scripts/` 和 `tools/`，并做双向自检。
 
 ## 许可
 
