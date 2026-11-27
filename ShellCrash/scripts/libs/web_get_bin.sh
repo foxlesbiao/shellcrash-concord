@@ -16,6 +16,12 @@ get_bin() { #专用于项目内部文件的下载
         else
             bin_url="$(grep "$url_id" "$CRASHDIR"/configs/servers_chs.list | awk '{print $3}')/$rt/$2"
         fi
+    elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
+        # 本仓库把源码放在 ShellCrash/ 子目录下，根目录只留 version 和 ShellCrash.tar.gz
+        case "$2" in
+        bin/* | public/* | rules/*) bin_url="$update_url/ShellCrash/$2" ;;
+        *)                          bin_url="$update_url/$2" ;;
+        esac
     else
         bin_url="$update_url/$2"
     fi
