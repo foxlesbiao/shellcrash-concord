@@ -139,6 +139,16 @@ for f in $DROP; do
 done
 [ "$_dropped" -gt 0 ] && info "已删除 $_dropped 个 sing-box 专用脚本"
 
+# ---------- 定时任务脚本 ----------
+# task/task.sh 是 ShellCrash 安装时生成的副本，不从包里来，也不跟 scripts/ 一起更新。
+# 但它才是 crontab 实际执行的那个文件（menus/task_cmd.sh 只是菜单用的同内容源），
+# 不一起覆盖的话「自动更新内核」永远跑的是旧逻辑。
+[ -f "$CRASHDIR/menus/task_cmd.sh" ] && {
+    cp -f "$CRASHDIR/menus/task_cmd.sh" "$CRASHDIR/task/task.sh"
+    chmod +x "$CRASHDIR/task/task.sh"
+    info "同步 task/task.sh（定时任务实际执行的副本）"
+}
+
 # ---------- 配置 ----------
 # 从 release 的 tag 取版本（concord 二进制没有 --version，asset 名也不带版本）
 VER="$(curl -fsSL --max-time 30 "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \

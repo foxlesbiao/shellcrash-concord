@@ -1,5 +1,9 @@
 . "$CRASHDIR"/libs/web_get.sh
 
+# release 地址提到函数外：定时任务的 update_core() 要直接用它取 core-version，
+# 而 rel 原来只在 get_bin() 里赋值，没人调 get_bin 时它是空的。
+rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
+
 get_bin() { #专用于项目内部文件的下载
     # concord 版：脚本/数据一律从本仓库取，忽略 url_id 指向的上游服务器列表
     if echo "$crashcore$custcorelink" | grep -qi 'concord'; then
@@ -17,8 +21,7 @@ get_bin() { #专用于项目内部文件的下载
             bin_url="$(grep "$url_id" "$CRASHDIR"/configs/servers_chs.list | awk '{print $3}')/$rt/$2"
         fi
     elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
-        # 脚本包和版本号走 release（每周随内核一起发），其余静态资源走 jsDelivr
-        rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
+        # 脚本包和版本号走 release（每日随内核一起发），其余静态资源走 jsDelivr
         case "$2" in
         ShellCrash.tar.gz | version) bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
         bin/* | public/* | rules/*)  bin_url="$update_url/ShellCrash/$2" ;;
