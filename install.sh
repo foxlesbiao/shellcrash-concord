@@ -22,7 +22,7 @@ if [ -z "${CONCORD_ARCH:-}" ]; then
     *) echo "[错误] 不支持的架构 $(uname -m)，可用 CONCORD_ARCH=aarch64_generic|x86_64 手动指定" >&2; exit 1 ;;
     esac
 fi
-CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$CONCORD_ARCH.gz}"
+# CONCORD_RELEASE 在 pick_sources() 之后按探测结果拼出来（见下）
 
 # concord 要改的 ShellCrash 脚本（15 个，与 patches 里"修改"的部分一致）
 FILES="init.sh menu.sh
@@ -39,6 +39,50 @@ TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
 
 die()  { echo "[错误] $*" >&2; exit 1; }
 info() { echo "[信息] $*"; }
+
+# ---------- 自动选源 ----------
+# GitHub 直连在国内路由器上时通时不通（实测 raw 有时 5s、有时 60s 超时），
+# 每次装之前探一遍，挑最快的可用源，不用手工改 URL。
+# 结果写进 RAW_BASE（脚本）和 REL_BASE（release 内核）。
+probe() { # $1=URL  $2=期望的最小字节数
+    _out=$(curl -sSL --max-time 8 -o /dev/null -w '%{http_code} %{time_total} %{size_download}' "$1" 2>/dev/null) || return 1
+    _code=$(echo "$_out" | awk '{print $1}')
+    _time=$(echo "$_out" | awk '{print $2}')
+    _size=$(echo "$_out" | awk '{print $3}')
+    [ "$_code" = "200" ] || return 1
+    [ "${_size:-0}" -ge "${2:-1}" ] 2>/dev/null || return 1
+    echo "$_time"
+}
+
+pick_sources() {
+    info "探测下载源（各 8s 超时）..."
+    _probe_file="ShellCrash/scripts/init.sh"
+    _best_t=999; _best=""
+    for base in \
+        "https://ghfast.top/https://raw.githubusercontent.com/$REPO/$BRANCH" \
+        "https://testingcf.jsdelivr.net/gh/$REPO@$BRANCH" \
+        "https://raw.githubusercontent.com/$REPO/$BRANCH" \
+        "https://cdn.jsdelivr.net/gh/$REPO@$BRANCH" ; do
+        t=$(probe "$base/$_probe_file" 100) || { printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"; continue; }
+        printf '  %-58s %ss\n' "$(echo "$base" | cut -c1-56)" "$t"
+        awk "BEGIN{exit !($t < $_best_t)}" && { _best_t=$t; _best=$base; }
+    done
+    [ -n "$_best" ] || die "所有下载源都不可用，检查网络"
+    RAW_BASE=$_best
+    info "脚本源: $RAW_BASE"
+
+    # release 内核也探一遍（ghfast 能代理 release，jsDelivr 不能）
+    _rel_gh="https://github.com/$REPO/releases/latest/download"
+    _best_t=999; _best=""
+    for base in "https://ghfast.top/$_rel_gh" "$_rel_gh"; do
+        t=$(probe "$base/version" 1) || { printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"; continue; }
+        printf '  %-58s %ss\n' "$(echo "$base" | cut -c1-56)" "$t"
+        awk "BEGIN{exit !($t < $_best_t)}" && { _best_t=$t; _best=$base; }
+    done
+    [ -n "$_best" ] || die "release 下载源都不可用"
+    REL_BASE=$_best
+    info "内核源: $REL_BASE"
+}
 
 find_crashdir() {
     for d in /etc/ShellCrash /mnt/*/ShellCrash /data/ShellCrash /root/ShellCrash; do
@@ -69,16 +113,20 @@ set_cfg() {
 #   - 不再保留 .orig/ 原始脚本副本
 # 需要回退时，用上游 ShellCrash 重装即可。
 
+# ---------- 选源 ----------
+pick_sources
+CONCORD_RELEASE="${CONCORD_RELEASE:-$REL_BASE/concord-$CONCORD_ARCH.gz}"
+
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"
 info "下载 shellcrash-concord 补丁文件"
 for f in $FILES; do
-    # raw.githubusercontent.com 在国内路由器上经常超时（实测 60s 无响应），
-    # 统一走 ghfast 镜像前缀；可用 RAW_BASE 覆盖。
-    url="${RAW_BASE:-https://ghfast.top/https://raw.githubusercontent.com/$REPO/$BRANCH}/ShellCrash/scripts/$f"
+    url="$RAW_BASE/ShellCrash/scripts/$f"
     curl -fsSL --retry 3 --max-time 60 -o "$WORK/$(basename "$f")" "$url" || die "下载 $f 失败"
     sh -n "$WORK/$(basename "$f")" || die "$f 语法检查失败，中止"
     cp -f "$WORK/$(basename "$f")" "$CRASHDIR/$f"
+    # cp -f 到已存在文件会保留旧 mode，但新建文件是 644；脚本必须可执行
+    chmod +x "$CRASHDIR/$f"
 done
 info "补丁已应用"
 
