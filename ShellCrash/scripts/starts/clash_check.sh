@@ -1,7 +1,10 @@
 
 clash_check() { #clash启动前检查
     #检测vless/hysteria协议
-    [ "$crashcore" != "meta" ] && [ -n "$(cat $core_config | grep -oE 'type: vless|type: hysteria')" ] && core_exchange meta 'vless/hy协议'
+    #concord 原生支持 vless/hysteria，不能因为协议类型就把内核换回 mihomo
+    if ! echo "$crashcore" | grep -qi 'concord'; then
+        [ "$crashcore" != "meta" ] && [ -n "$(cat $core_config | grep -oE 'type: vless|type: hysteria')" ] && core_exchange meta 'vless/hy协议'
+    fi
     #检测是否存在高级版规则或者tun模式
     if [ "$crashcore" = "clash" ]; then
         [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||

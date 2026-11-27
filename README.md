@@ -115,15 +115,47 @@ install.sh                           # 路由器端安装/回滚脚本
 
 ## 改动了 ShellCrash 的哪些地方
 
-只有三处，全部在 `patches/shellcrash-concord.patch` 里：
+9 个文件、204 行，全部在 `patches/shellcrash-concord.patch` 里。按作用分四类：
+
+**内核识别与校验**
 
 | 文件 | 函数 | 改动 |
 |---|---|---|
-| `scripts/libs/core_tools.sh` | `core_check()` | 在 sing-box / mihomo 判定之前，先看二进制是不是 concord（`run -h` 输出含 `concord`），是则用 `run -c ... -d ...` 的启动命令 |
-| `scripts/starts/clash_modify.sh` | `test_yaml()` | concord 的 `-t` 只接受 `-c <file>`，不接受 mihomo 的 `-d/-f`，按二进制类型分支 |
-| `scripts/menus/9_upgrade.sh` | `setcoretype()` | 内核类型菜单只保留 Concord 一项 |
+| `scripts/libs/core_tools.sh` | `core_check()` | 先探测二进制是否 concord（`run -h` 输出含 `concord`），是则用 `run -c ... -d ...` 启动 |
+| `scripts/starts/clash_modify.sh` | `test_yaml()` | concord 的 `-t` 只接受 `-c <file>`，不接受 mihomo 的 `-d/-f` |
+| `scripts/starts/clash_modify.sh` | `prepare_clash_base_config()` | concord 归一化为 meta，复用整套 mihomo 配置生成逻辑 |
+
+**防止被自动换回 mihomo**
+
+| 文件 | 改动 |
+|---|---|
+| `scripts/starts/clash_check.sh` | 订阅含 vless/hysteria 时**不再自动换内核**（concord 原生支持这两种协议） |
+| `scripts/starts/core_config.sh` | UA 用 `clash.meta/mihomo` 而非 `clash`（部分订阅服务器按 UA 拒绝） |
+
+**面板与显示**
+
+| 文件 | 改动 |
+|---|---|
+| `scripts/menu.sh` | 面板地址 `:db_port/ui` → `:8090`；内核名显示 `Concord` |
+| `scripts/menus/1_start.sh` | 隐藏 PAC 地址（concord 无 PAC 服务） |
+| `scripts/menus/9_upgrade.sh` | 面板安装后把 hostdir 归一成 `:8090`；内核类型菜单只留 Concord |
+
+**内核专属功能放行**
+
+| 文件 | 改动 |
+|---|---|
+| `scripts/menus/6_core_config.sh` | 本地节点管理（providers）不再只认 meta/singboxr |
+| `scripts/menus/dns.sh` | DNS 模式（mix/route）设置不再拒绝 concord |
 
 **为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
+
+## 已知不支持
+
+| 功能 | 原因 |
+|---|---|
+| **自定义入站**（`listeners`：vmess-in / ss-in） | concord 明确不打开 `listeners`。默认关闭，开启后该功能静默失效，不影响其他 |
+| **PAC** | concord 无 PAC 服务 |
+| **`tun.stack`** | 只有自己的 userspace 栈，配置里的值被忽略 |
 
 ## 跟上上游更新
 

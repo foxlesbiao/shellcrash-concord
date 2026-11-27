@@ -36,7 +36,7 @@ set_dns_mod() {
             break
             ;;
         1 | 2)
-            if echo "$crashcore" | grep -q 'singbox' || [ "$crashcore" = meta ]; then
+            if echo "$crashcore" | grep -q 'singbox' || [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
                 [ "$num" = 1 ] && dns_mod=mix || dns_mod=route
                 setconfig dns_mod "$dns_mod"
                 msg_alert "\033[36m$DNS_SET_OK：$dns_mod\033[0m"

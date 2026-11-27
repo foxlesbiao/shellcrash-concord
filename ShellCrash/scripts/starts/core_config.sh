@@ -19,7 +19,7 @@ gen_ua(){  #自动生成ua
     [ -z "$user_agent" -o "$user_agent" = "auto" ] && {
         if echo "$crashcore" | grep -q 'singbox'; then
             user_agent="sing-box/$core_v"
-        elif [ "$crashcore" = meta ]; then
+        elif [ "$crashcore" = meta ] || echo "$crashcore" | grep -qi 'concord'; then
             user_agent="clash.meta/mihomo"
         else
             user_agent="clash"

@@ -70,7 +70,7 @@ set_core_config() {
             ;;
         b)
             if [ -s "$CRASHDIR"/configs/providers.cfg ] || [ -s "$CRASHDIR"/configs/providers_uri.cfg ]; then
-                if [ "$crashcore" = meta ] || [ "$crashcore" = singboxr ]; then
+                if [ "$crashcore" = meta ] || [ "$crashcore" = singboxr ] || echo "$crashcore" | grep -qi 'concord'; then
                     . "$CRASHDIR"/menus/providers.sh
                     providers
                 else
