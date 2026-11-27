@@ -84,12 +84,13 @@ jobs:
           TAG: ${{ steps.upstream.outputs.tag }}
         run: |
           set -euo pipefail
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "release $TAG already exists, refreshing assets"
-            gh release upload "$TAG" concord-aarch64.gz concord-aarch64.gz.sha256 --clobber
+            gh release upload "$TAG" concord-aarch64.gz concord-aarch64.gz.sha256 \
+              --repo "$GITHUB_REPOSITORY" --clobber
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$TAG" \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               concord-aarch64.gz concord-aarch64.gz.sha256 \
               --title "concord ${TAG#v} (ShellCrash aarch64)" \
               --notes "从 [nikki-concord](https://github.com/user-7392/nikki-concord) \`$TAG\` 提取的 concord 内核。
