@@ -1,8 +1,33 @@
+diff --git a/scripts/init.sh b/scripts/init.sh
+index 338aed1..a4ea4a4 100644
+--- a/scripts/init.sh
++++ b/scripts/init.sh
+@@ -100,6 +100,9 @@ fi
+ [ -f "$COMMAND_FILE" ] || : > "$COMMAND_FILE"
+ if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
+     COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
++elif [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
++    # concord 用 run -c <config> -d <datahome>，与 mihomo 的 -d/-f 完全不同
++    COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
+ else
+     COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
+ fi
 diff --git a/scripts/libs/core_tools.sh b/scripts/libs/core_tools.sh
-index 684ca55..9c68dea 100644
+index 684ca55..cce27e0 100644
 --- a/scripts/libs/core_tools.sh
 +++ b/scripts/libs/core_tools.sh
-@@ -50,7 +50,14 @@ core_check(){
+@@ -41,7 +41,9 @@ core_find(){
+     if [ ! -f "$TMPDIR"/CrashCore ];then
+         [ -n "$(find "$CRASHDIR"/CrashCore.* $find_para 2>/dev/null)" ] && [ "$CRASHDIR" != "$BINDIR" ] &&
+             mv -f "$CRASHDIR"/CrashCore.* "$BINDIR"/
+-        core_dir=$(find "$BINDIR"/CrashCore.* $find_para 2>/dev/null | head -n 1)
++        # 优先用 CrashCore.raw（当前内核），排除备份文件，避免 find 顺序不确定选到 .bak
++        core_dir=$(find "$BINDIR"/CrashCore.raw $find_para 2>/dev/null | head -n 1)
++        [ -z "$core_dir" ] && core_dir=$(find "$BINDIR"/CrashCore.* $find_para 2>/dev/null | grep -v '\.bak' | head -n 1)
+         [ -n "$core_dir" ] && core_unzip "$core_dir" CrashCore
+     fi
+ }
+@@ -50,7 +52,14 @@ core_check(){
      core_unzip "$1" core_new
      sbcheck=$(echo "$crashcore" | grep 'singbox')
      v=''
@@ -18,6 +43,37 @@ index 684ca55..9c68dea 100644
          v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
          COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
      elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+diff --git a/scripts/libs/web_get_bin.sh b/scripts/libs/web_get_bin.sh
+index d434b67..e5a6900 100644
+--- a/scripts/libs/web_get_bin.sh
++++ b/scripts/libs/web_get_bin.sh
+@@ -1,6 +1,11 @@
+ . "$CRASHDIR"/libs/web_get.sh
+ 
+ get_bin() { #专用于项目内部文件的下载
++    # concord 版：脚本/数据一律从本仓库取，忽略 url_id 指向的上游服务器列表
++    if echo "$crashcore$custcorelink" | grep -qi 'concord'; then
++        update_url="${concord_update_url:-https://testingcf.jsdelivr.net/gh/foxlesbiao/shellcrash-concord@main}"
++        url_id=''
++    fi
+     [ -z "$update_url" ] && update_url=https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master
+     if [ -n "$url_id" ]; then
+         [ -n "$release_type" ] && rt="$release_type" || rt=master
+@@ -11,6 +16,14 @@ get_bin() { #专用于项目内部文件的下载
+         else
+             bin_url="$(grep "$url_id" "$CRASHDIR"/configs/servers_chs.list | awk '{print $3}')/$rt/$2"
+         fi
++    elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
++        # 脚本包和版本号走 release（每周随内核一起发），其余静态资源走 jsDelivr
++        rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
++        case "$2" in
++        ShellCrash.tar.gz | version) bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
++        bin/* | public/* | rules/*)  bin_url="$update_url/ShellCrash/$2" ;;
++        *)                           bin_url="$update_url/$2" ;;
++        esac
+     else
+         bin_url="$update_url/$2"
+     fi
 diff --git a/scripts/menu.sh b/scripts/menu.sh
 index a685d35..a6d83ce 100644
 --- a/scripts/menu.sh
@@ -381,7 +437,7 @@ index 7338b9f..2d7b765 100644
      while true; do
          [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..56fa9b1 100644
+index 4ce09ff..cb4b543 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -62,8 +62,12 @@ upgrade() {
@@ -480,7 +536,7 @@ index 4ce09ff..56fa9b1 100644
 -            crashcore=meta
 -            checkcustcore
 +            crashcore=concord
-+            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
++            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
 +            getcore
              ;;
          9)
@@ -524,7 +580,7 @@ index 4ce09ff..56fa9b1 100644
 -            crashcore=meta
 -            custcorelink=''
 +            crashcore=concord
-+            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
++            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
              getcore
              break
              ;;
