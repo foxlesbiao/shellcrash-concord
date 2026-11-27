@@ -75,10 +75,11 @@ sh install.sh --rollback
 
 | 项 | 情况 |
 |---|---|
-| **内置面板** | ❌ concord 忽略 `external-ui`，ShellCrash 的 zashboard 走不了内置路径。解决：用 `uhttpd` 托管 `$CRASHDIR/ui`，API 仍在 `:9999` |
-| **TUN stack** | ⚠️ 只有 concord 自己的 userspace 栈，配置里的 `tun.stack` 被忽略。用 tproxy/redir 模式不受影响 |
-| **glibc 二进制** | ❌ 从 FlClash `-rs` 版提取的 `FlClashCore` 是 glibc 动态链接 + 宿主绑定（报 `session token: missing`），不能用。本仓库给的是静态链接版本 |
-| **架构** | 仅 `aarch64`（`aarch64_cortex-a53/a72/generic` 共用同一产物） |
+| **内置面板** | ⚠️ concord 不提供静态文件（`/ui` 返回 501 `{"message":"not supported by Concord"}`）。**已自动解决**：`install.sh` 用路由器自带的 `uhttpd` 托管 ShellCrash 下载的同一份面板，地址变成 `http://<路由器IP>:8090/`，菜单里的面板链接也同步改好了 |
+| **PAC** | ❌ concord 无 PAC 服务，菜单里那行 PAC 地址已隐藏 |
+| **TUN stack** | ⚠️ concord 只有自己的 userspace 栈，配置里的 `tun.stack` 被忽略。实测 `utun` 设备能正常创建（`198.18.0.1/30`），但 TUN 模式的完整转发未实测（当前走 tproxy） |
+| **glibc 二进制** | ✅ 已解决：本仓库提供的是静态链接版本，不依赖 libc |
+| **架构** | 仅 `aarch64`（`aarch64_cortex-a53/a72/generic` 共用）。需要 x86_64 时，上游 ipk 里有对应产物，改 `CONCORD_RELEASE` 即可 |
 
 ### 面板怎么救
 
