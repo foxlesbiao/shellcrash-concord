@@ -40,35 +40,45 @@ info() { echo "[信息] $*"; }
 
 # ---------- 自动选源 ----------
 # GitHub 直连在国内路由器上时通时不通（实测同一 URL 有时 5s、有时 60s 超时）。
-# 脚本包和内核都在 release 里，只有两条路可选：ghfast 镜像 / 直连，探一遍取快的。
+# 脚本包和内核都在 release 里，镜像优先、直连兜底。
+
+# 实测可用的镜像；ghfast 会按客户端 IP 长时间缓存 release 资产，不能只靠它
+MIRRORS="https://gh-proxy.com/https://github.com
+https://ghproxy.net/https://github.com
+https://ghfast.top/https://github.com"
+
 pick_sources() {
     info "探测下载源..."
-    _rel_gh="https://github.com/$REPO/releases/latest/download"
-    # 镜像优先，不跟直连比速度。实测直连下 348KB 的脚本包能过（1.6s，比镜像快 0.2s），
-    # 但下 12MB 的内核会挂住——按小文件测速选源会把大文件请求送到最不靠谱的那条线上。
-    # 所以顺序固定：镜像能用就用，不能用才退直连。
-    for base in "https://ghfast.top/$_rel_gh" "$_rel_gh"; do
-        _name=$(echo "$base" | sed 's|^https://||; s|/.*||')
-        if _size=$(curl -sSL --max-time 10 -o /dev/null -w '%{size_download}' "$base/core-version" 2>/dev/null) \
-           && [ "${_size:-0}" -ge 1 ]; then
-            printf '  %-58s 可用\n' "$(echo "$base" | cut -c1-56)"
-            REL_BASE=$base
-            info "下载源: $REL_BASE"
-            return 0
+    _ts=$(date +%s)
+    _first=""
+    for _m in $MIRRORS "https://github.com"; do
+        _tag=$(curl -fsSL --max-time 10 "$_m/$REPO/releases/latest/download/core-version?t=$_ts" 2>/dev/null | head -1 | tr -d '[:space:]')
+        if [ -n "$_tag" ]; then
+            printf '  %-46s 可用（%s）\n' "$(echo "$_m" | sed 's|https://||')" "$_tag"
+            [ -z "$_first" ] && { _first="$_m"; _first_tag="$_tag"; }
+        else
+            printf '  %-46s 不可用\n' "$(echo "$_m" | sed 's|https://||')"
         fi
-        printf '  %-58s 不可用\n' "$(echo "$base" | cut -c1-56)"
     done
-    die "下载源都不可用，检查网络"
+    [ -n "$_first" ] || die "下载源都不可用，检查网络"
+    REL_BASE="$_first/$REPO/releases/download"
+    TAG=$_first_tag
+    info "下载源: $REL_BASE  版本: $TAG"
 }
 
-# 大文件下载：带重试，镜像失败自动退直连
+# 大文件下载：换源重试 + 时间戳破缓存。
+# 用具体 tag 而不是 /latest/download（后者是重定向，镜像会缓存重定向目标）；
+# 再加 ?t= 是因为实测同一个 tag 的同一个 URL，本机拿到新包、路由器拿到几代前的旧包。
 fetch() { # $1=远程文件名  $2=本地路径
-    for base in "$REL_BASE" "https://github.com/$REPO/releases/latest/download"; do
-        curl -fsSL --retry 2 --retry-delay 2 --max-time 180 -o "$2" "$base/$1" 2>/dev/null && return 0
-        [ "$base" = "$REL_BASE" ] && info " 从 $(echo "$base" | sed 's|^https://||; s|/.*||') 下载失败，换源重试" >&2
+    _ts=$(date +%s)
+    for _m in $MIRRORS "https://github.com"; do
+        _url="$_m/$REPO/releases/download/$TAG/$1"
+        curl -fsSL --retry 2 --retry-delay 2 --max-time 180 -o "$2" "$_url?t=$_ts" 2>/dev/null && return 0
+        info " 下载失败，换源重试" >&2
     done
     return 1
 }
+
 
 find_crashdir() {
     for d in /etc/ShellCrash /mnt/*/ShellCrash /data/ShellCrash /root/ShellCrash; do
@@ -101,7 +111,9 @@ set_cfg() {
 
 # ---------- 选源 ----------
 pick_sources
-CONCORD_RELEASE="${CONCORD_RELEASE:-$REL_BASE/concord-$CONCORD_ARCH.gz}"
+# 必须用探测选中的镜像，不能写死 github.com —— 路由器直连不通，
+# 定时任务 update_core 会拿这个 URL 去下载，直连就永远失败。
+CONCORD_RELEASE="${CONCORD_RELEASE:-$REL_BASE/$TAG/concord-$CONCORD_ARCH.gz}"
 
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"
@@ -140,7 +152,7 @@ done
 # ---------- 配置 ----------
 # 版本从 release 的 core-version asset 取。不能用 api.github.com——国内路由器实测超时，
 # 拿不到就会写成 core_v=unknown，导致「自动更新内核」每天判定有新版本、白下一次 12MB。
-VER="$(curl -fsSL --max-time 30 "$REL_BASE/core-version" 2>/dev/null | head -1 | tr -d '[:space:]')"
+VER="$TAG"
 [ -z "$VER" ] && VER=unknown
 set_cfg crashcore    concord
 set_cfg concord_v    "$VER"
