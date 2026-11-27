@@ -100,6 +100,28 @@ info "重启 ShellCrash"
 sh "$CRASHDIR/start.sh" restart >/dev/null 2>&1 || true
 sleep 12
 
+# ---------- 面板 ----------
+# concord 不支持 external-ui，用 uhttpd 托管 ShellCrash 自带的 zashboard 目录
+UI_DIR="$CRASHDIR/ui"
+if [ -d "$UI_DIR" ] && [ -x /usr/sbin/uhttpd ]; then
+    if ! netstat -lnt 2>/dev/null | grep -q ":8090 "; then
+        uhttpd -p 0.0.0.0:8090 -h "$UI_DIR" 2>/dev/null && info "面板已启动: http://<路由器IP>:8090/"
+    fi
+    # 开机自启（幂等：已加过就跳过）
+    if [ -f /etc/rc.local ] && ! grep -q "shellcrash-concord-ui" /etc/rc.local 2>/dev/null; then
+        cp -f /etc/rc.local /etc/rc.local.bak_scc 2>/dev/null || true
+        cat > /tmp/scc-ui.sh <<UIEOF
+#!/bin/sh
+# shellcrash-concord-ui: concord 没有内置面板，用 uhttpd 托管 zashboard
+( sleep 25; [ -d "$UI_DIR" ] && ! netstat -lnt 2>/dev/null | grep -q ':8090 ' && uhttpd -p 0.0.0.0:8090 -h "$UI_DIR" ) &
+UIEOF
+        chmod +x /tmp/scc-ui.sh
+        cp -f /tmp/scc-ui.sh "$CRASHDIR/ui-server.sh"
+        sed -i "/^exit 0/i $CRASHDIR/ui-server.sh # shellcrash-concord-ui" /etc/rc.local 2>/dev/null || true
+        info "已设置面板开机自启"
+    fi
+fi
+
 # ---------- 自检 ----------
 CPID=$(pgrep -f "CrashCore run -c" 2>/dev/null | head -1 || true)
 if [ -n "$CPID" ]; then

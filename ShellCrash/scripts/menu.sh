@@ -105,6 +105,10 @@ ckstatus() {
     if [ -f /www/clash/index.html ]; then
         dbdir=/www/clash
         hostdir=/clash
+    elif echo "$crashcore" | grep -qi 'concord'; then
+        # concord 不支持 external-ui（/ui 返回 501），面板由 uhttpd 在 8090 托管同一份文件
+        dbdir="$CRASHDIR"/ui
+        hostdir=":8090"
     else
         dbdir="$CRASHDIR"/ui
         hostdir=":$db_port/ui"

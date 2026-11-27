@@ -18,8 +18,38 @@ index 684ca55..2188963 100644
          v=$("$TMPDIR"/core_new version 2>/dev/null | grep version | awk '{print $3}')
          COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
      elif [ -z "$sbcheck" ] && "$TMPDIR"/core_new -h 2>&1 | grep -q '\-t';then
+diff --git a/scripts/menu.sh b/scripts/menu.sh
+index a685d35..9da238c 100644
+--- a/scripts/menu.sh
++++ b/scripts/menu.sh
+@@ -105,6 +105,10 @@ ckstatus() {
+     if [ -f /www/clash/index.html ]; then
+         dbdir=/www/clash
+         hostdir=/clash
++    elif echo "$crashcore" | grep -qi 'concord'; then
++        # concord 不支持 external-ui（/ui 返回 501），面板由 uhttpd 在 8090 托管同一份文件
++        dbdir="$CRASHDIR"/ui
++        hostdir=":8090"
+     else
+         dbdir="$CRASHDIR"/ui
+         hostdir=":$db_port/ui"
+diff --git a/scripts/menus/1_start.sh b/scripts/menus/1_start.sh
+index 9516133..2c616e0 100644
+--- a/scripts/menus/1_start.sh
++++ b/scripts/menus/1_start.sh
+@@ -11,7 +11,9 @@ startover() {
+         "$START_WEB_HINT \033[4;36mhttp://$host$hostdir\033[0m"
+     if [ "$firewall_area" = 4 ]; then
+         content_line ""
+-        content_line "$START_PAC_HINT \033[4;32mhttp://$host:$db_port/ui/pac\033[0m"
++        # concord 没有 PAC 服务，不显示这行
++        echo "$crashcore" | grep -qi 'concord' || \
++            content_line "$START_PAC_HINT \033[4;32mhttp://$host:$db_port/ui/pac\033[0m"
+         content_line "$START_PROXY_HINT IP{\033[36m$host\033[0m} Port{\033[36m$mix_port\033[0m}"
+     fi
+     separator_line "="
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..70e997c 100644
+index 4ce09ff..d7d731c 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -222,26 +222,14 @@ setcoretype() {
@@ -51,6 +81,24 @@ index 4ce09ff..70e997c 100644
              ;;
          *)
              errornum
+@@ -866,6 +854,8 @@ setgeo() {
+ 
+ # Dashboard
+ getdb() {
++    # concord 不支持 external-ui（/ui 返回 501），面板由 uhttpd 在 8090 托管
++    echo "$crashcore" | grep -qi 'concord' && hostdir=":8090"
+     dblink="${update_url}/"
+     line_break
+     separator_line "="
+@@ -936,7 +926,7 @@ dbdir() {
+             ;;
+         1)
+             dbdir="$CRASHDIR"/ui
+-            hostdir=": $db_port/ui"
++            echo "$crashcore" | grep -qi 'concord' && hostdir=":8090" || hostdir=": $db_port/ui"
+             getdb
+             ;;
+         2)
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
 index dcf4cb9..3414b1d 100644
 --- a/scripts/starts/clash_modify.sh

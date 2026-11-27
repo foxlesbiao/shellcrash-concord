@@ -854,6 +854,8 @@ setgeo() {
 
 # Dashboard
 getdb() {
+    # concord 不支持 external-ui（/ui 返回 501），面板由 uhttpd 在 8090 托管
+    echo "$crashcore" | grep -qi 'concord' && hostdir=":8090"
     dblink="${update_url}/"
     line_break
     separator_line "="
@@ -924,7 +926,7 @@ dbdir() {
             ;;
         1)
             dbdir="$CRASHDIR"/ui
-            hostdir=": $db_port/ui"
+            echo "$crashcore" | grep -qi 'concord' && hostdir=":8090" || hostdir=": $db_port/ui"
             getdb
             ;;
         2)

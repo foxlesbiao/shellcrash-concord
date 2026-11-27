@@ -11,7 +11,9 @@ startover() {
         "$START_WEB_HINT \033[4;36mhttp://$host$hostdir\033[0m"
     if [ "$firewall_area" = 4 ]; then
         content_line ""
-        content_line "$START_PAC_HINT \033[4;32mhttp://$host:$db_port/ui/pac\033[0m"
+        # concord 没有 PAC 服务，不显示这行
+        echo "$crashcore" | grep -qi 'concord' || \
+            content_line "$START_PAC_HINT \033[4;32mhttp://$host:$db_port/ui/pac\033[0m"
         content_line "$START_PROXY_HINT IP{\033[36m$host\033[0m} Port{\033[36m$mix_port\033[0m}"
     fi
     separator_line "="
