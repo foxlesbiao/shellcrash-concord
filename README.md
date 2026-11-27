@@ -158,10 +158,31 @@ install.sh                           # 路由器端安装/回滚脚本
 | `scripts/menus/9_upgrade.sh` `setcore()` | 菜单只剩 1) 更新 Concord / 2) CPU 架构 / 3) 重新下载，父菜单叫「更新内核」 |
 | `scripts/menus/9_upgrade.sh` `setcoretype()` | 原来是个只有一项的「选择内核」交互，改成直接 `crashcore=concord` |
 | `scripts/menus/9_upgrade.sh` | 删掉 `setcustcore()` / `checkcustcore()` / `setziptype()`（约 144 行），自定义内核源整块移除 |
+| `scripts/menus/9_upgrade.sh` | 「更新 Concord」按 `$cpucore` 选对应架构内核；删掉「切换安装源」（`get_bin` 已钉死 `update_url`，改了无效），卸载/感谢重编号为 7/8 |
+| `scripts/menus/providers_{clash,singbox}.sh` | 模板下载失败时不再回落到 `setserver`（源已固定），改为提示检查网络 |
 | `scripts/menus/9_upgrade.sh` `checkcustgeo()` | geo 数据源按内核过滤：concord 只列 `Country.mmdb` 和 `.mrs`，不列 `GeoIP.dat`/`GeoSite.dat`/`.srs`（它读不了） |
 | `scripts/menus/9_upgrade.sh` `setcustgeo()` | concord 下隐藏 dat/srs 三个数据源，只留 meta-rules-dat(mmdb) 和 ruleset_geodata(mrs) |
 
 **为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
+
+## 多架构
+
+release 里每个架构各发一个内核，菜单和安装脚本都会按当前 CPU 自动选：
+
+| 架构 | 来源 | 大小 |
+|---|---|---|
+| `aarch64_generic` | nikki-concord ipk | 12.7MB |
+| `aarch64_cortex-a53` | 同上 | 12.7MB |
+| `aarch64_cortex-a72` | 同上 | 12.7MB |
+| `x86_64` | 同上 | 13.4MB |
+
+映射规则：
+
+- 菜单「更新内核」→ 按 ShellCrash 的 `$cpucore`：`arm64` → `aarch64_generic`，`amd64` → `x86_64`
+- `install.sh` → 按 `uname -m`，可用 `CONCORD_ARCH=...` 覆盖
+- 不支持的架构会明确提示，不会下错二进制
+
+历史遗留的 `concord-aarch64.gz` 已从 release 删除，现在只有 `concord-<arch>.gz`。
 
 ## 已知不支持
 
