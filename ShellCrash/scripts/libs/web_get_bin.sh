@@ -3,7 +3,7 @@
 get_bin() { #专用于项目内部文件的下载
     # concord 版：脚本/数据一律从本仓库取，忽略 url_id 指向的上游服务器列表
     if echo "$crashcore$custcorelink" | grep -qi 'concord'; then
-        update_url="${concord_update_url:-https://cdn.jsdelivr.net/gh/foxlesbiao/shellcrash-concord@main}"
+        update_url="${concord_update_url:-https://testingcf.jsdelivr.net/gh/foxlesbiao/shellcrash-concord@main}"
         url_id=''
     fi
     [ -z "$update_url" ] && update_url=https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master
