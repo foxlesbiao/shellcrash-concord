@@ -1,277 +1,144 @@
 # shellcrash-concord
 
-把 [concord](https://github.com/chen08209/concord)（Rust 写的代理内核）装进 [ShellCrash](https://github.com/juewuy/ShellCrash)，用于 OpenWrt 路由器。
+把 ShellCrash 的代理内核换成 [concord](https://github.com/chen08209/concord) —— 一个用 Rust 重写、行为和 mihomo 一样的内核。
 
-**它解决什么问题**：ShellCrash 默认用 mihomo（Go）。concord 是照着 mihomo 行为重写的 Rust 内核，同样配置能直接跑，内存占用约为 mihomo 的 40%。
+**一句话**：节点、订阅、分流规则全都不用改，装完照常用。换来的是路由器内存占用降到原来的一半。
 
 ---
 
-## 工作原理
+## 适合谁
 
-不自己编译，而是**从 [nikki-concord](https://github.com/user-7392/nikki-concord) 的 release 里提取静态链接的 aarch64 内核**，重新发布成本仓库的 release。
+- 路由器内存紧张（512MB / 1GB 那种），跑 mihomo 时经常吃满
+- 想让路由器的 CPU 轻松一点
+- 已经在用 ShellCrash，不想换软件
 
-```
-nikki-concord release (.ipk)
-        │  Actions 每日拉取、解包
-        ▼
-  concord-aarch64.gz  ← 本仓库 release
-        │  install.sh
-        ▼
-  路由器 CrashCore.raw
-```
+**不适合**：如果你希望上网更快 —— 换内核不会让网速变快，瓶颈一般在节点带宽。
 
-这么做的三个理由：
+## 换上之后有什么区别
 
-1. **上游已经打好 OpenWrt 补丁**：低内存 jemalloc 调优、`release_free_memory()` 主动退页、测速并发限流、Mihomo 未知字段静默忽略等。自己从上游 concord 编译**没有**这些。
-2. **免掉 BoringSSL + LTO 的 30–60 分钟编译**，以及 8GB 内存机器上的 OOM 风险。
-3. **自动跟随上游版本**，不必自己维护编译链。
+同一个节点、同一份配置、同一台路由器（小米 BE7000）实测：
+
+| | mihomo（原来的） | concord（换上后） |
+|---|---|---|
+| 下载速度 | 6.67 MB/s | 6.67 MB/s |
+| 多任务并发 | 10.0 MB/s | 10.5 MB/s |
+| 网页延迟 | 135 ms | 140 ms |
+| **内存占用** | **53 MB** | **22 MB** |
+| **CPU（高并发时）** | 42 | **22** |
+
+速度和延迟基本一样，**内存省 60%**，高并发时 CPU 少用一半。
 
 ---
 
 ## 安装
 
-在路由器上执行（需要已装好 ShellCrash）：
+路由器上已经装好 ShellCrash 的话：
 
 ```sh
 sh install.sh
 ```
 
-脚本会：下载 → 校验 sha256 → 备份原内核 → 替换 `CrashCore.raw` → 改写 `command.env` 与 `clash_modify.sh` 的启动参数 → 重启 → 自检代理是否通。
+脚本会自己挑最快能用的下载源，下完自动重启并检查代理是否正常。
+
+看到 `[自检] google204=204` 就是成功了。
 
 指定版本：
 
 ```sh
-sh install.sh v0.1.0-r28
+sh install.sh v0.1.0-r31
 ```
 
-## 回滚
+## 面板（网页管理界面）
 
-```sh
-sh install.sh --rollback
+原来地址是 `路由器IP:9999/ui`，换上后变成：
+
+```
+http://<路由器IP>:8090/
 ```
 
-恢复 `CrashCore.raw.mihomo.bak` 及相关脚本备份。首次安装时自动创建这些备份。
+第一次打开会让你填后端地址，填 `<路由器IP>:9999`。
+
+> 端口变了是因为 concord 不提供网页文件，改由路由器自带的 uhttpd 托管。面板还是同一个 zashboard，功能没少。
+
+## 自动更新
+
+**内核**：每天 13:00（北京时间）自动检查，有新版本就下载并重启。不用管。
+
+**管理脚本**：菜单 `9) 更新与支持` → `1) 更新管理脚本`，从本仓库取，不会退回上游。
 
 ---
 
-## 实测数据（IPQ9554，ShellCrash 1.9.5beta4）
+## 日常使用
 
-| 维度 | mihomo | concord |
-|---|---|---|
-| 单流 100MB | 6.67 MB/s | 6.67 MB/s |
-| 16/32/64 路并发 | 9.4 / 10.0 / 10.0 MB/s | 9.4 / 10.3 / 10.5 MB/s |
-| 延迟（100 并发） | 1.481s | 1.430s |
-| Loopback 极限 | 344.8 MB/s | 285.8 MB/s |
-| **内存 RSS** | 53.4 MB | **21.6 MB** |
-| **CPU（100 并发）** | 42 jiffies | **22 jiffies** |
+全照旧。菜单、启停、订阅更新、分流规则、定时任务，用法和以前一样。
 
-**结论：延迟、吞吐、并发三项持平，唯一确定的收益是资源占用减半。**
+菜单里少了几项，是故意去掉的（这内核上用不了，留着只会误点）：
 
-在家宽 + 共享专线环境里，瓶颈是节点带宽（约 84 Mbps），换内核不会让网速变快。如果你的动机是"延迟更低"，这个方案帮不上；如果想让路由器省点内存/CPU，它是对的。
+- 内核切换 —— 现在只有一个内核
+- 切换安装源 —— 已固定指向本仓库
+- VMess / Shadowsocks 入站
+- Tailscale（不支持；WireGuard 还在）
+- PAC 模式
 
 ---
 
-## 已知限制
+## 出问题了
 
-| 项 | 情况 |
-|---|---|
-| **内置面板** | ⚠️ concord 不提供静态文件（`/ui` 返回 501 `{"message":"not supported by Concord"}`）。**已自动解决**：`install.sh` 用路由器自带的 `uhttpd` 托管 ShellCrash 下载的同一份面板，地址变成 `http://<路由器IP>:8090/`，菜单里的面板链接也同步改好了 |
-| **PAC** | ❌ concord 无 PAC 服务，菜单里那行 PAC 地址已隐藏 |
-| **TUN stack** | ⚠️ concord 只有自己的 userspace 栈，配置里的 `tun.stack` 被忽略。实测 `utun` 设备能正常创建（`198.18.0.1/30`），但 TUN 模式的完整转发未实测（当前走 tproxy） |
-| **glibc 二进制** | ✅ 已解决：本仓库提供的是静态链接版本，不依赖 libc |
-| **架构** | 仅 `aarch64`（`aarch64_cortex-a53/a72/generic` 共用）。需要 x86_64 时，上游 ipk 里有对应产物，改 `CONCORD_RELEASE` 即可 |
+**代理不通**
 
-### 面板怎么救
+路由器上跑：
 
 ```sh
-uhttpd -p 0.0.0.0:8090 -h $CRASHDIR/ui
-# 浏览器打开 http://<路由器IP>:8090/ ，后端地址填 <路由器IP>:9999
+ps w | grep CrashCore                                              # 内核在不在
+curl -x http://127.0.0.1:7890 https://www.gstatic.com/generate_204 -o /dev/null -w '%{http_code}\n'
 ```
 
-写进 `/etc/rc.local` 可开机自启（注意加 `sleep` 等 USB 挂载完成）。
+`204` 就是通的。`000` 说明没起来，看日志：
+
+```sh
+tail -50 /tmp/ShellCrash/ShellCrash.log
+```
+
+**面板打不开**
+
+```sh
+netstat -lnt | grep 8090
+```
+
+没有的话重启路由器，开机脚本会拉起来。
+
+**想换回 mihomo**
+
+重装一遍原版 ShellCrash 即可。本仓库不提供回滚 —— 保留回滚路径就得留着 mihomo 的启动代码，和"纯 concord"冲突。
 
 ---
 
-## 为什么不用别的方案
+## 自己检查装得对不对
 
-| 方案 | 为什么不行 |
-|---|---|
-| FlClash `-rs` 版 deb 里的内核 | glibc 动态链接，OpenWrt（musl）跑不了；且需宿主 token |
-| clash-rs | 读不了 mihomo 完整配置：`proxy-groups` 的 url-test/load-balance/fallback 和整块 `dns` 都解析失败 |
-| 直接吃 nikki-concord 的 OpenWrt 包 | 要求 OpenWrt 23.05+/24.10（firewall4 + nftables），老固件装不上；本方案只取其中的内核二进制 |
-| 自己 `cargo zigbuild` | 可行，但没有上游的 OpenWrt 适配补丁，且 CI 上 7GB runner 编译 LTO 容易 OOM |
+仓库里有个只读自检脚本，不改任何东西：
+
+```sh
+sh smoke-test.sh
+```
+
+全绿（`0 FAIL`）就是装对了。
 
 ---
 
-## 仓库结构
+## 给维护者
 
-```
-.github/workflows/sync.yml          # 每日同步 concord 内核 → 发布 release
-patches/shellcrash-concord.patch    # 对 ShellCrash 的全部改动（40 个文件）
-regen-patch.sh                       # 重新生成补丁（自动 diff 全树 + 自检一致性）
-merge-upstream.sh                    # 手动合并上游（试打 → 冲突则停下）
-ShellCrash/                          # 全量 ShellCrash 源码（已打补丁）
-install.sh                           # 路由器端安装脚本（自动选源）
-```
+仓库里还有三个脚本，日常用不到：
 
-## 改动了 ShellCrash 的哪些地方
-
-9 个文件、204 行，全部在 `patches/shellcrash-concord.patch` 里。按作用分四类：
-
-**内核识别与校验**
-
-| 文件 | 函数 | 改动 |
-|---|---|---|
-| `scripts/libs/core_tools.sh` | `core_check()` | 先探测二进制是否 concord（`run -h` 输出含 `concord`），是则用 `run -c ... -d ...` 启动 |
-| `scripts/starts/clash_modify.sh` | `test_yaml()` | concord 的 `-t` 只接受 `-c <file>`，不接受 mihomo 的 `-d/-f` |
-| `scripts/starts/clash_modify.sh` | `prepare_clash_base_config()` | concord 归一化为 meta，复用整套 mihomo 配置生成逻辑 |
-
-**防止被自动换回 mihomo**
-
-| 文件 | 改动 |
+| 脚本 | 用途 |
 |---|---|
-| `scripts/starts/clash_check.sh` | 订阅含 vless/hysteria 时**不再自动换内核**（concord 原生支持这两种协议） |
-| `scripts/starts/core_config.sh` | UA 用 `clash.meta/mihomo` 而非 `clash`（部分订阅服务器按 UA 拒绝） |
-| `scripts/init.sh` | **每次更新脚本都会重写 `configs/command.env`**。原来只认 singbox/mihomo，concord 会拿到 mihomo 的 `-d/-f` 启动命令直接起不来。加 concord 分支 |
-| `scripts/libs/core_tools.sh` `core_find()` | 启动时找内核用 `find CrashCore.* \| head -1`，顺序不定，可能选中 `.raw.mihomo.bak`。改为优先 `CrashCore.raw` 并排除 `.bak` |
+| `smoke-test.sh` | 只读自检，验装得对不对 |
+| `merge-upstream.sh` | 手动合并上游 ShellCrash（试打补丁，冲突则停下） |
+| `regen-patch.sh` | 重新生成补丁 |
 
-**面板与显示**
-
-| 文件 | 改动 |
-|---|---|
-| `scripts/menu.sh` | 面板地址 `:db_port/ui` → `:8090`；内核名显示 `Concord` |
-| `scripts/menus/1_start.sh` | 隐藏 PAC 地址（concord 无 PAC 服务） |
-| `scripts/menus/9_upgrade.sh` | 面板安装后把 hostdir 归一成 `:8090`；内核类型菜单只留 Concord |
-
-**内核专属功能放行**
-
-| 文件 | 改动 |
-|---|---|
-| `scripts/menus/6_core_config.sh` | 本地节点管理（providers）不再只认 meta/singboxr |
-| `scripts/menus/dns.sh` | DNS 模式（mix/route）设置不再拒绝 concord |
-
-**砍掉 concord 不支持的功能**
-
-| 文件 | 改动 |
-|---|---|
-| `scripts/menus/7_gateway.sh` | 删掉「VMess 入站」「Shadowsocks 入站」两个菜单项及其子菜单（共 265 行）。这两项靠 `listeners`，concord 不打开。Tailscale/WireGuard 编号上移为 4/5 |
-| `scripts/starts/clash_modify.sh` | `add_custom_inbounds_and_rules()` 里跳过 `listeners` 生成——即使配置里残留 `vms_service=ON`，也不会往配置里写无用的 `listeners:` 段 |
-| `scripts/menus/9_upgrade.sh` `setcore()` | 菜单只剩 1) 更新 Concord / 2) CPU 架构 / 3) 重新下载，父菜单叫「更新内核」 |
-| `scripts/menus/9_upgrade.sh` `setcoretype()` | 原来是个只有一项的「选择内核」交互，改成直接 `crashcore=concord` |
-| `scripts/menus/9_upgrade.sh` | 删掉 `setcustcore()` / `checkcustcore()` / `setziptype()`（约 144 行），自定义内核源整块移除 |
-| `scripts/menus/9_upgrade.sh` | 「更新 Concord」按 `$cpucore` 选对应架构内核；删掉「切换安装源」（`get_bin` 已钉死 `update_url`，改了无效），卸载/感谢重编号为 7/8 |
-| `scripts/menus/providers_{clash,singbox}.sh` | 模板下载失败时不再回落到 `setserver`（源已固定），改为提示检查网络 |
-| `scripts/menus/9_upgrade.sh` `checkcustgeo()` | geo 数据源按内核过滤：concord 只列 `Country.mmdb` 和 `.mrs`，不列 `GeoIP.dat`/`GeoSite.dat`/`.srs`（它读不了） |
-| `scripts/menus/9_upgrade.sh` `setcustgeo()` | concord 下隐藏 dat/srs 三个数据源，只留 meta-rules-dat(mmdb) 和 ruleset_geodata(mrs) |
-
-**为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
-
-## 纯 concord：删掉了什么
-
-本 fork 只跑 concord，所以所有 sing-box / mihomo 专属的东西都删了：
-
-| 删除项 | 内容 |
-|---|---|
-| `starts/singbox_modify.sh` | 495 行，sing-box 多 JSON 配置生成 |
-| `starts/singbox_config_check.sh` | 37 行 |
-| `starts/singbox_check.sh` | 10 行 |
-| `menus/providers_singbox.sh` | 137 行，订阅模板生成 |
-| `libs/meta_listeners.sh` | 27 行，自定义入站（listeners） |
-| `bin/meta` `bin/singboxp` `bin/singboxr` | **201MB** 各架构预编译内核，本 fork 永远不会下载 |
-| `singbox_providers.list` | sing-box 模板列表 |
-
-合计 **706 行代码 + 201MB 二进制**，仓库从 226M 降到 27M。
-
-**保留的 mihomo 代码**：`core_tools.sh` / `clash_modify.sh` / `init.sh` 里的 mihomo 分支**不能删**——`install.sh --rollback` 靠它们生成 `-d/-f` 启动命令切回 mihomo。删了就没有退路。
-
-配置层面对 sing-box 的处理：`bfstart.sh` 一旦发现 `crashcore=singbox*` 会直接报错退出，而不是去 source 一个已经被删的文件。
-
-## 多架构
-
-release 里每个架构各发一个内核，菜单和安装脚本都会按当前 CPU 自动选：
-
-| 架构 | 来源 | 大小 |
-|---|---|---|
-| `aarch64_generic` | nikki-concord ipk | 12.7MB |
-| `aarch64_cortex-a53` | 同上 | 12.7MB |
-| `aarch64_cortex-a72` | 同上 | 12.7MB |
-| `x86_64` | 同上 | 13.4MB |
-
-映射规则：
-
-- 菜单「更新内核」→ 按 ShellCrash 的 `$cpucore`：`arm64` → `aarch64_generic`，`amd64` → `x86_64`
-- `install.sh` → 按 `uname -m`，可用 `CONCORD_ARCH=...` 覆盖
-- 不支持的架构会明确提示，不会下错二进制
-
-历史遗留的 `concord-aarch64.gz` 已从 release 删除，现在只有 `concord-<arch>.gz`。
-
-## 已知不支持
-
-| 功能 | 处理 |
-|---|---|
-| **自定义入站**（`listeners`：vmess-in / ss-in） | **已从菜单删除**，配置生成也不再写 `listeners:` |
-| **Tailscale / WireGuard** | 是 sing-box 内核的 `endpoints` 功能（`sb_endpoints.sh` + `singbox_modify.sh`），不是独立进程，concord 彻底用不了。菜单保留原限制提示 |
-| **PAC** | 菜单里那行地址已隐藏，concord 无 PAC 服务 |
-| **GeoIP.dat / GeoSite.dat / .srs** | concord 只读 `mmdb` 和 `mrs`。geo 更新菜单已按内核过滤数据源 |
-| **`tun.stack`** | 只有自己的 userspace 栈，配置里写什么都没用，但不影响运行 |
-
-## 「更新管理脚本」已指向本仓库
-
-菜单 `9) 更新与支持 → 1) 更新管理脚本` 现在从本仓库的 release 取 `ShellCrash.tar.gz`，不会再被上游版本覆盖。
-
-- **每日** `sync-concord` workflow 发一个 release（concord 上游发版很快，周更会落后），同时带 **concord 内核**（4 个架构）和 **ShellCrash.tar.gz（脚本包）** + `version`
-- `libs/web_get_bin.sh` 在 concord 下把 `update_url` 钉死到本仓库，并清空 `url_id`（`url_id=101` 会绕过 `update_url` 指回上游）
-- 下载走 `ghfast.top` 镜像：`github.com` 在国内路由器上直连不通（实测 000 超时）
-- 根目录的 `version` / `ShellCrash.tar.gz` 供 jsDelivr 兜底；`bin/`、`public/`、`rules/` 仍走 jsDelivr
-
-更新完脚本服务会停，需要重新启动。
-
-## 冒烟测试
-
-```sh
-# 传到路由器后跑（只读，不改任何东西）
-scp smoke-test.sh root@<路由器IP>:/tmp/
-ssh root@<路由器IP> sh /tmp/smoke-test.sh
-```
-
-覆盖 7 组共 51 项：
-
-| 组 | 检查内容 |
-|---|---|
-| 1. 文件与配置 | 12 个脚本语法、`crashcore=concord`、6 处补丁标记是否在位、备份是否存在 |
-| 2. 启动命令 | `command.env` 是否为 concord 的 `run -c` 格式 |
-| 3. 进程与服务 | 进程 PID/RSS、7890/9999/8090 三个端口 |
-| 4. 代理功能 | HTTPS 代理、国内站点、出口 IP、**分流（国内直连 IP vs 代理 IP）**、IPv6 出网 |
-| 5. 面板 | 6 个 API 端点、面板页面、`/ui` 应返回 501、节点测速端点 |
-| 6. 配置生成 | 运行配置、tun 段、节点数、rules 段、无 `listeners.yaml` |
-| 7. 更新源 | release 的 `version`/`ShellCrash.tar.gz`、jsDelivr geo 数据 |
-
-退出码 = 失败项数，可直接接 CI 或监控。
-
-## 跟上上游更新
-
-ShellCrash 上游更新频繁。本仓库的做法是 **全量代码 + 补丁双轨**：
-
-- 别人 `git clone` 就能直接用（`ShellCrash/` 是全量的）
-- 上游合并是**手动的**，不做自动合并。补丁 40 文件 / 2600 行，冲突要人看，机器判断不了「这处删掉还算不算纯 concord」：
-
-```sh
-sh merge-upstream.sh --check   # 只看能不能打，不动文件
-sh merge-upstream.sh           # 试合并，改动写进工作区，不提交不推送
-```
-
-脚本会拉上游、试打补丁、同步 `scripts/` 和 `tools/`、跑 `test-patches.sh`，然后停下等你确认。冲突时它会列出是哪个文件的哪个 hunk 打不上，然后退出——**不会半途改你的仓库**。
-
-补丁过期是迟早的事（上游改了 `core_check` 之类就会冲突）。那时的步骤：
-
-1. `sh merge-upstream.sh --check` 看冲突在哪
-2. 手动把上游改动并进 `ShellCrash/` 对应文件（保持本仓库的 concord 语义）
-3. `sh test-patches.sh` 确认没漏
-4. `sh regen-patch.sh` 重新生成补丁（它会自动 diff 全树并断言「打完补丁 == 仓库」）
-5. 提交
-
-**为什么补丁要自动生成**：早期补丁按手写文件列表拼，漂移过两次（`start.sh`、`lang/en/providers.lang` 改了但没进补丁），下次合并会被上游覆盖回去。现在 `regen-patch.sh` 直接 diff 整个 `scripts/` 和 `tools/`，并做双向自检。
+改的是 `ShellCrash/` 全量源码，改动汇总在 `patches/shellcrash-concord.patch`。
 
 ## 许可
 
-`install.sh` 与本仓库的 workflow 为 MIT。分发的 concord 二进制采用其上游许可（GPL-3.0-or-later），见 [chen08209/concord](https://github.com/chen08209/concord)。
+安装与自动化脚本为 MIT。
+
+concord 二进制提取自 [nikki-concord](https://github.com/user-7392/nikki-concord)（已针对 OpenWrt 和低内存设备打补丁），遵循上游 [concord](https://github.com/chen08209/concord) 的 GPL-3.0-or-later。
