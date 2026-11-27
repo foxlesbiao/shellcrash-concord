@@ -158,11 +158,19 @@ info "command.env: concord run -c -d /tmp/concord-home"
 
 # ---------- 内核 ----------
 mkdir -p "$TMPDIR/concord-home" 2>/dev/null || true
-if ! "$CRASHDIR/CrashCore" run -h 2>&1 | grep -qi concord; then
+# 内核在 $CRASHDIR/CrashCore.raw；$CRASHDIR/CrashCore 是 $TMPDIR 下的软链，这里不存在。
+# 原来判断的就是那个不存在的路径，于是每次安装都判定"没装内核"、重下 12MB。
+if [ -f "$CRASHDIR/CrashCore.raw" ] && "$CRASHDIR/CrashCore.raw" run -h 2>&1 | grep -qi concord; then
+    info "内核已是 concord，跳过下载"
+else
     info "下载 concord 内核"
     fetch "concord-$CONCORD_ARCH.gz" "$WORK/concord.gz" || die "下载内核失败"
-    gzip -dc "$WORK/concord.gz" > "$WORK/concord"; chmod +x "$WORK/concord"
+    gzip -dc "$WORK/concord.gz" > "$WORK/concord" || die "解压内核失败"
+    chmod +x "$WORK/concord"
+    "$WORK/concord" run -h 2>&1 | grep -qi concord || die "下载到的不是 concord 内核"
     cp -f "$WORK/concord" "$CRASHDIR/CrashCore.raw"
+    chmod +x "$CRASHDIR/CrashCore.raw"
+    info "内核已更新: $(ls -lh "$CRASHDIR/CrashCore.raw" | awk '{print $5}')"
 fi
 
 info "重启 ShellCrash"

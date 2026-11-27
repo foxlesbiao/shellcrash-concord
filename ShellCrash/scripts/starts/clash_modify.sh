@@ -98,6 +98,14 @@ EOF
 }
 
 generate_set_and_hosts_yaml() {
+    # concord 不提供静态文件服务（GET /ui 返回 501），面板由 uhttpd 在 8090 托管。
+    # 继续写 external-ui 只会让 concord 打 unsupported_key 警告，所以整段不生成。
+    if echo "${core_kind:-$crashcore}" | grep -qi 'concord'; then
+        ext_ui=''
+    else
+        ext_ui="external-ui: ui
+external-ui-url: \"$external_ui_url\""
+    fi
     #生成set.yaml
     cat >"$TMPDIR"/set.yaml <<EOF
 mixed-port: $mix_port
@@ -109,8 +117,7 @@ mode: Rule
 log-level: info
 ipv6: true
 external-controller: :$db_port
-external-ui: ui
-external-ui-url: "$external_ui_url"
+$ext_ui
 secret: $secret
 $tun
 $exper

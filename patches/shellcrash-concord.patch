@@ -2395,7 +2395,7 @@ index 9346053..ba17934 100644
      #预下载GeoIP数据库
      grep -qEi 'GEOIP,CN' "$CRASHDIR"/yamls/config.yaml && ! grep -Eq '^[[:space:]]*geodata-mode:' "$CRASHDIR"/yamls/*.yaml && check_geo Country.mmdb cn_mini.mmdb
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
-index dcf4cb9..4176123 100644
+index dcf4cb9..2c53ca2 100644
 --- a/scripts/starts/clash_modify.sh
 +++ b/scripts/starts/clash_modify.sh
 @@ -2,12 +2,18 @@
@@ -2418,7 +2418,32 @@ index dcf4cb9..4176123 100644
      else
          tun='tun: {enable: false}'
      fi
-@@ -206,11 +212,7 @@ split_and_customize_yaml_parts() {
+@@ -92,6 +98,14 @@ EOF
+ }
+ 
+ generate_set_and_hosts_yaml() {
++    # concord 不提供静态文件服务（GET /ui 返回 501），面板由 uhttpd 在 8090 托管。
++    # 继续写 external-ui 只会让 concord 打 unsupported_key 警告，所以整段不生成。
++    if echo "${core_kind:-$crashcore}" | grep -qi 'concord'; then
++        ext_ui=''
++    else
++        ext_ui="external-ui: ui
++external-ui-url: \"$external_ui_url\""
++    fi
+     #生成set.yaml
+     cat >"$TMPDIR"/set.yaml <<EOF
+ mixed-port: $mix_port
+@@ -103,8 +117,7 @@ mode: Rule
+ log-level: info
+ ipv6: true
+ external-controller: :$db_port
+-external-ui: ui
+-external-ui-url: "$external_ui_url"
++$ext_ui
+ secret: $secret
+ $tun
+ $exper
+@@ -206,11 +219,7 @@ split_and_customize_yaml_parts() {
  }
  
  add_custom_inbounds_and_rules() {
@@ -2431,7 +2456,7 @@ index dcf4cb9..4176123 100644
      #节点绕过功能支持
      sed -i "/#节点绕过/d" "$TMPDIR"/rules.yaml
      [ "$proxies_bypass" = "ON" ] && {
-@@ -283,9 +285,20 @@ merger_yaml() {
+@@ -283,9 +292,20 @@ merger_yaml() {
  
  test_yaml() {
      #测试自定义配置文件
