@@ -381,10 +381,25 @@ index 7338b9f..2d7b765 100644
      while true; do
          [ -n "$ts_auth_key" ] && ts_auth_key_info='*********'
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..7ce970b 100644
+index 4ce09ff..56fa9b1 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
-@@ -222,26 +222,14 @@ setcoretype() {
+@@ -62,8 +62,12 @@ upgrade() {
+             setcrt
+             ;;
+         6)
+-            msg_alert -t 2 "$UPG_PAC_LINK\033[30;47m http://$host:$db_port/ui/pac \033[0m" \
+-                "$UPG_PAC_GUIDE\033[4;32mhttps://juewuy.github.io/ehRUeewcv\033[0m"
++            if echo "$crashcore" | grep -qi 'concord'; then
++                msg_alert "concord 没有 PAC 服务（不支持 external-ui），此功能不可用"
++            else
++                msg_alert -t 2 "$UPG_PAC_LINK\033[30;47m http://$host:$db_port/ui/pac \033[0m" \
++                    "$UPG_PAC_GUIDE\033[4;32mhttps://juewuy.github.io/ehRUeewcv\033[0m"
++            fi
+             ;;
+         7)
+             setserver
+@@ -222,26 +226,14 @@ setcoretype() {
      while true; do
          echo "$crashcore" | grep -q 'singbox' && core_old=singbox || core_old=clash
          comp_box "\033[33m$UPG_CORETYPE_CONFIRM\033[0m"
@@ -413,7 +428,7 @@ index 4ce09ff..7ce970b 100644
              ;;
          *)
              errornum
-@@ -404,11 +392,7 @@ setcustcore() {
+@@ -404,11 +396,7 @@ setcustcore() {
          separator_line "="
          content_line "$UPG_CUSTOM_CORE_SELECT"
          separator_line "-"
@@ -426,7 +441,7 @@ index 4ce09ff..7ce970b 100644
              "9) $UPG_CUSTOM_CORE_LINK_MENU" \
              "" \
              "0) $COMMON_BACK"
-@@ -418,40 +402,9 @@ setcustcore() {
+@@ -418,40 +406,9 @@ setcustcore() {
              break
              ;;
          1)
@@ -470,7 +485,7 @@ index 4ce09ff..7ce970b 100644
              ;;
          9)
              comp_box "$UPG_CUSTOM_CORE_LINK_HINT" \
-@@ -519,24 +472,10 @@ setcore() {
+@@ -519,24 +476,10 @@ setcore() {
              "" \
              "\033[33m$UPG_CORE_MENU_SELECT\033[0m"
  
@@ -499,7 +514,7 @@ index 4ce09ff..7ce970b 100644
              "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -545,46 +484,22 @@ setcore() {
+@@ -545,46 +488,22 @@ setcore() {
              break
              ;;
          1)
@@ -530,9 +545,9 @@ index 4ce09ff..7ce970b 100644
          4)
 -            crashcore=clash
 -            custcorelink=''
--            getcore
--            break
--            ;;
+             getcore
+             break
+             ;;
 -        5)
 -            setziptype
 -            ;;
@@ -540,9 +555,9 @@ index 4ce09ff..7ce970b 100644
 -            setcustcore
 -            ;;
 -        7)
-             getcore
-             break
-             ;;
+-            getcore
+-            break
+-            ;;
 -        9)
 -            setcpucore
 -            break
@@ -550,7 +565,7 @@ index 4ce09ff..7ce970b 100644
          *)
              errornum
              ;;
-@@ -656,7 +571,13 @@ checkcustgeo() {
+@@ -656,7 +575,13 @@ checkcustgeo() {
              comp_box "\033[32m$UPG_GEO_FIND_TITLE\033[0m"
              webget "$TMPDIR"/github_api https://api.github.com/repos/${project}/releases/${api_url}
              release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
@@ -565,7 +580,7 @@ index 4ce09ff..7ce970b 100644
              rm -rf "$TMPDIR"/github_api
          }
          if [ -s "$TMPDIR"/geo.list ]; then
-@@ -710,18 +631,20 @@ setcustgeo() {
+@@ -710,18 +635,20 @@ setcustgeo() {
          content_line "1) \033[36;4mhttps://github.com/MetaCubeX/meta-rules-dat\033[0m"
          sub_content_line "$UPG_GEO_LOCAL_ONLY1"
  
@@ -593,7 +608,7 @@ index 4ce09ff..7ce970b 100644
          content_line "$UPG_GEO_CUSTOM_LINK"
          content_line ""
          content_line "0) $COMMON_BACK"
-@@ -866,6 +789,8 @@ setgeo() {
+@@ -866,6 +793,8 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -602,7 +617,7 @@ index 4ce09ff..7ce970b 100644
      dblink="${update_url}/"
      line_break
      separator_line "="
-@@ -936,7 +861,7 @@ dbdir() {
+@@ -936,7 +865,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui

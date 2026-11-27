@@ -62,8 +62,12 @@ upgrade() {
             setcrt
             ;;
         6)
-            msg_alert -t 2 "$UPG_PAC_LINK\033[30;47m http://$host:$db_port/ui/pac \033[0m" \
-                "$UPG_PAC_GUIDE\033[4;32mhttps://juewuy.github.io/ehRUeewcv\033[0m"
+            if echo "$crashcore" | grep -qi 'concord'; then
+                msg_alert "concord 没有 PAC 服务（不支持 external-ui），此功能不可用"
+            else
+                msg_alert -t 2 "$UPG_PAC_LINK\033[30;47m http://$host:$db_port/ui/pac \033[0m" \
+                    "$UPG_PAC_GUIDE\033[4;32mhttps://juewuy.github.io/ehRUeewcv\033[0m"
+            fi
             ;;
         7)
             setserver

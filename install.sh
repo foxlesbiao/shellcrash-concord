@@ -93,10 +93,13 @@ done
 info "补丁已应用"
 
 # ---------- 配置 ----------
-VER="$(basename "$CONCORD_RELEASE" | sed -n 's/^concord-aarch64.*//p')"
-VER="${VER:-0.1.0}"
+# 从 release 的 tag 取版本（concord 二进制没有 --version，asset 名也不带版本）
+VER="$(curl -fsSL --max-time 30 "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+    | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
+VER="${VER:-unknown}"
 set_cfg crashcore    concord
 set_cfg concord_v    "$VER"
+set_cfg core_v       "$VER"
 set_cfg custcorelink "$CONCORD_RELEASE"
 info "配置: crashcore=concord custcorelink=$CONCORD_RELEASE"
 
