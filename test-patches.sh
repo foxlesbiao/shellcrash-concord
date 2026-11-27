@@ -207,6 +207,29 @@ eq "meta -> -d/-f"           "$(gen_command "$SANDBOX/cfg3")" '"$TMPDIR/CrashCor
 # 真实 init.sh 里要有这个分支
 grep -q "crashcore=concord" "$SRC/init.sh" && ok "init.sh 里有 concord 分支" || no "init.sh 里没有 concord 分支"
 
+# ---------- 6.5 tun stack ----------
+sec "6.5 tun stack 兼容性"
+
+# 上游 master 写 stack: mips，mihomo v1.19.x 报 invalid tun stack（实测）。
+# 必须是 system，否则回滚到 mihomo 直接起不来。
+if grep -q 'stack: system' "$SRC/starts/clash_modify.sh"; then
+    ok "clash_modify.sh 用 stack: system（mihomo 全版本兼容）"
+else
+    no "clash_modify.sh 仍写 stack: mips" "$(grep -o 'stack: [a-z]*' "$SRC/starts/clash_modify.sh" | head -1)" "stack: system"
+fi
+# 只看实际的赋值行，注释里提到 mips 是正常的
+grep -E '^[[:space:]]*tun=' "$SRC/starts/clash_modify.sh" | grep -q 'stack: mips' \
+    && no "代码里还残留 stack: mips" || ok "无 mips 残留（注释除外）"
+
+# install.sh 回滚时要兜底修 stack
+I="$(dirname "$0")/install.sh"
+grep -q "s/stack: mips/stack: system/" "$I" 2>/dev/null \
+    && ok "install.sh 回滚时兜底修 stack" || no "install.sh 回滚没修 stack"
+
+# 回滚用 BusyBox 兼容写法（-not 是 GNU find 的）
+grep -q 'find "$CRASHDIR" -name "$f" -not' "$I" 2>/dev/null \
+    && no "install.sh 用了 BusyBox 不支持的 -not" || ok "install.sh 回滚用 BusyBox 兼容写法"
+
 # ---------- 7. test_yaml：校验命令 ----------
 sec "7. test_yaml() 校验命令"
 

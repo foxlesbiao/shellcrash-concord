@@ -11,7 +11,9 @@ prepare_clash_base_config() {
     external="external-controller: 0.0.0.0:$db_port"
     if [ "$redir_mod" = "Mix" -o "$redir_mod" = "Tun" ]; then
         [ "$crashcore" = 'meta' ] && tun_meta=', device: utun, auto-route: false, auto-detect-interface: false'
-        tun="tun: {enable: true, stack: mips$tun_meta}"
+        # 上游写的是 stack: mips（mihomo 新版 IP stack），但 v1.19.x 会报 invalid tun stack，
+        # 回滚到 mihomo 时直接起不来。改成 system：mihomo 全版本兼容，concord 会忽略该字段。
+        tun="tun: {enable: true, stack: system$tun_meta}"
     else
         tun='tun: {enable: false}'
     fi

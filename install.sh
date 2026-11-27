@@ -17,10 +17,11 @@ REPO="${REPO:-foxlesbiao/shellcrash-concord}"
 BRANCH="${BRANCH:-main}"
 CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz}"
 
-# concord 要改的 ShellCrash 脚本（10 个）
-FILES="libs/core_tools.sh starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh
-menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh
-menus/dns.sh menu.sh"
+# concord 要改的 ShellCrash 脚本（12 个，与 patches/shellcrash-concord.patch 一致）
+FILES="init.sh menu.sh
+libs/core_tools.sh libs/web_get_bin.sh
+starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh
+menus/1_start.sh menus/6_core_config.sh menus/7_gateway.sh menus/9_upgrade.sh menus/dns.sh"
 
 # ShellCrash 的运行时目录（配置/软链都在这里）
 TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
@@ -56,9 +57,17 @@ if [ "${1:-}" = "--rollback" ]; then
     [ -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ] || die "没有备份，无法回滚"
     info "恢复 mihomo"
     cp -f "$CRASHDIR/CrashCore.raw.mihomo.bak" "$CRASHDIR/CrashCore.raw"
-    for f in core_tools.sh clash_modify.sh clash_check.sh core_config.sh 1_start.sh 6_core_config.sh 7_gateway.sh 9_upgrade.sh dns.sh menu.sh; do
-        [ -f "$CRASHDIR/.orig/$f.orig" ] && cp -f "$CRASHDIR/.orig/$f.orig" \
-            "$(find "$CRASHDIR" -name "$f" -not -path "*/.orig/*" | head -1)"
+    # 用 BusyBox 兼容的写法：-not 是 GNU find 的，路由器上是 BusyBox
+    for f in init.sh core_tools.sh web_get_bin.sh clash_modify.sh clash_check.sh core_config.sh \
+             1_start.sh 6_core_config.sh 7_gateway.sh 9_upgrade.sh dns.sh menu.sh; do
+        [ -f "$CRASHDIR/.orig/$f.orig" ] || continue
+        tgt=$(find "$CRASHDIR" -name "$f" 2>/dev/null | grep -v '/\.orig/' | head -1)
+        [ -n "$tgt" ] && cp -f "$CRASHDIR/.orig/$f.orig" "$tgt"
+    done
+    # 上游 master 把 tun stack 改成了 mips（mihomo 新版 IP stack），但 v1.19.x 报
+    # "invalid tun stack" 直接起不来。回滚到 mihomo 时强制写回 system（全版本兼容）。
+    for f in "$CRASHDIR/starts/clash_modify.sh" "$CRASHDIR/starts/clash_modify.sh.orig"; do
+        [ -f "$f" ] && sed -i 's/stack: mips/stack: system/' "$f" 2>/dev/null
     done
     set_cfg crashcore    meta
     set_cfg custcorelink ""
@@ -72,14 +81,26 @@ ENVEOF
 fi
 
 # ---------- 备份 ----------
-if [ ! -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ]; then
-    info "备份原始脚本与内核"
-    { [ -f "$CRASHDIR/CrashCore.raw" ] && cp -f "$CRASHDIR/CrashCore.raw" "$CRASHDIR/CrashCore.raw.mihomo.bak"; } || true
-    mkdir -p "$CRASHDIR/.orig"
-    for f in $FILES; do
-        [ -f "$CRASHDIR/$f" ] && cp -f "$CRASHDIR/$f" "$CRASHDIR/.orig/$(basename "$f").orig"
-    done
+# 内核和每个脚本分别判断：新增的补丁文件（如 init.sh）在上一次安装时不存在，
+# 不能因为"内核备份已存在"就跳过它们的备份，否则回滚时恢复不了。
+if [ ! -f "$CRASHDIR/CrashCore.raw.mihomo.bak" ] && [ -f "$CRASHDIR/CrashCore.raw" ]; then
+    info "备份 mihomo 内核"
+    cp -f "$CRASHDIR/CrashCore.raw" "$CRASHDIR/CrashCore.raw.mihomo.bak"
 fi
+mkdir -p "$CRASHDIR/.orig"
+_bk=0
+for f in $FILES; do
+    o="$CRASHDIR/.orig/$(basename "$f").orig"
+    if [ -f "$CRASHDIR/$f" ] && [ ! -f "$o" ]; then
+        cp -f "$CRASHDIR/$f" "$o" && _bk=$((_bk+1))
+    fi
+done
+# 备份文件里的 tun stack 也统一成 system，回滚时直接可用
+for f in "$CRASHDIR"/.orig/clash_modify.sh.orig; do
+    [ -f "$f" ] && sed -i 's/stack: mips/stack: system/' "$f" 2>/dev/null
+done
+[ "$_bk" -gt 0 ] && info "备份了 $_bk 个原始脚本到 .orig/"
+[ "$_bk" -eq 0 ] && info "原始脚本已在 .orig/，不重复备份"
 
 # ---------- 拉取改过的脚本 ----------
 WORK="/tmp/scc.$$"; mkdir -p "$WORK"

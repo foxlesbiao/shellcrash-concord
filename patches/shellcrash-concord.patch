@@ -712,10 +712,10 @@ index 9346053..13d3a6f 100644
      if [ "$crashcore" = "clash" ]; then
          [ -n "$(cat $core_config | grep -aiE '^script:|proxy-providers|rule-providers|rule-set')" ] ||
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
-index dcf4cb9..96bad07 100644
+index dcf4cb9..847c759 100644
 --- a/scripts/starts/clash_modify.sh
 +++ b/scripts/starts/clash_modify.sh
-@@ -2,6 +2,10 @@
+@@ -2,12 +2,18 @@
  # Copyright (C) Juewuy
  
  prepare_clash_base_config() {
@@ -726,7 +726,16 @@ index dcf4cb9..96bad07 100644
      ##########需要变更的配置###########
      [ "$ipv6_dns" != "OFF" ] && dns_v6='true' || dns_v6='false'
      external="external-controller: 0.0.0.0:$db_port"
-@@ -206,11 +210,13 @@ split_and_customize_yaml_parts() {
+     if [ "$redir_mod" = "Mix" -o "$redir_mod" = "Tun" ]; then
+         [ "$crashcore" = 'meta' ] && tun_meta=', device: utun, auto-route: false, auto-detect-interface: false'
+-        tun="tun: {enable: true, stack: mips$tun_meta}"
++        # 上游写的是 stack: mips（mihomo 新版 IP stack），但 v1.19.x 会报 invalid tun stack，
++        # 回滚到 mihomo 时直接起不来。改成 system：mihomo 全版本兼容，concord 会忽略该字段。
++        tun="tun: {enable: true, stack: system$tun_meta}"
+     else
+         tun='tun: {enable: false}'
+     fi
+@@ -206,11 +212,13 @@ split_and_customize_yaml_parts() {
  }
  
  add_custom_inbounds_and_rules() {
@@ -745,7 +754,7 @@ index dcf4cb9..96bad07 100644
      #节点绕过功能支持
      sed -i "/#节点绕过/d" "$TMPDIR"/rules.yaml
      [ "$proxies_bypass" = "ON" ] && {
-@@ -283,9 +289,20 @@ merger_yaml() {
+@@ -283,9 +291,20 @@ merger_yaml() {
  
  test_yaml() {
      #测试自定义配置文件
