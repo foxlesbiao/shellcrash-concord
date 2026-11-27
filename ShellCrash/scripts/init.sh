@@ -100,6 +100,9 @@ fi
 [ -f "$COMMAND_FILE" ] || : > "$COMMAND_FILE"
 if [ -n "$(grep 'crashcore=singbox' "$CFG_PATH")" ]; then
     COMMAND='"$TMPDIR/CrashCore run -D $BINDIR -C $TMPDIR/jsons"'
+elif [ -n "$(grep 'crashcore=concord' "$CFG_PATH")" ]; then
+    # concord 用 run -c <config> -d <datahome>，与 mihomo 的 -d/-f 完全不同
+    COMMAND='"$TMPDIR/CrashCore run -c $TMPDIR/config.yaml -d $TMPDIR/concord-home"'
 else
     COMMAND='"$TMPDIR/CrashCore -d $BINDIR -f $TMPDIR/config.yaml"'
 fi

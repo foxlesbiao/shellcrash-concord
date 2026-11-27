@@ -41,7 +41,9 @@ core_find(){
     if [ ! -f "$TMPDIR"/CrashCore ];then
         [ -n "$(find "$CRASHDIR"/CrashCore.* $find_para 2>/dev/null)" ] && [ "$CRASHDIR" != "$BINDIR" ] &&
             mv -f "$CRASHDIR"/CrashCore.* "$BINDIR"/
-        core_dir=$(find "$BINDIR"/CrashCore.* $find_para 2>/dev/null | head -n 1)
+        # 优先用 CrashCore.raw（当前内核），排除备份文件，避免 find 顺序不确定选到 .bak
+        core_dir=$(find "$BINDIR"/CrashCore.raw $find_para 2>/dev/null | head -n 1)
+        [ -z "$core_dir" ] && core_dir=$(find "$BINDIR"/CrashCore.* $find_para 2>/dev/null | grep -v '\.bak' | head -n 1)
         [ -n "$core_dir" ] && core_unzip "$core_dir" CrashCore
     fi
 }
