@@ -262,6 +262,12 @@ has  "7_gateway 保留 WireGuard"  "$(cat "$SRC/menus/7_gateway.sh")" 'set_wireg
 has  "内核菜单只留 Concord"      "$(cat "$SRC/menus/9_upgrade.sh")" '更新 Concord 内核'
 hasnt "内核菜单无 mihomo 源"     "$(cat "$SRC/menus/9_upgrade.sh")" 'MetaCubeX/mihomo'
 hasnt "自定义内核无 sing-box 源" "$(cat "$SRC/menus/9_upgrade.sh")" 'SagerNet/sing-box'
+hasnt "已删切换内核：无自定义源函数" "$(cat "$SRC/menus/9_upgrade.sh")" 'setcustcore'
+hasnt "已删切换内核：无 checkcustcore" "$(cat "$SRC/menus/9_upgrade.sh")" 'checkcustcore'
+hasnt "已删切换内核：无 setziptype"    "$(cat "$SRC/menus/9_upgrade.sh")" 'setziptype'
+hasnt "已删切换内核：菜单无自定义链接" "$(cat "$SRC/menus/9_upgrade.sh")" '自定义内核链接'
+has  "setcoretype 无交互直接设 concord" "$(sed -n '/^setcoretype()/,/^}/p' "$SRC/menus/9_upgrade.sh")" 'crashcore=concord'
+hasnt "setcoretype 不再弹选择菜单"      "$(sed -n '/^setcoretype()/,/^}/p' "$SRC/menus/9_upgrade.sh")" 'btm_box'
 
 has  "geo 菜单按内核过滤"        "$(cat "$SRC/menus/9_upgrade.sh")" 'concord.*只读\|concord.*mrs\|geo_pat'
 has  "PAC 对 concord 有提示"     "$(cat "$SRC/menus/9_upgrade.sh")" 'concord 没有 PAC'

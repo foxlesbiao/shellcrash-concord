@@ -31,7 +31,7 @@ upgrade() {
         }
         separator_line "="
         btm_box "1) $UPG_MENU_SCRIPT\033[36m$UPG_MENU_SCRIPT_NAME\t\033[33m$versionsh_l\033[0m > \033[32m$version_new \033[36m$release_type\033[0m" \
-            "2) $UPG_MENU_CORE\033[33m$UPG_MENU_CORE_NAME\t\033[33m$core_v\033[0m > \033[32m$core_v_new\033[0m" \
+            "2) 更新内核\t\t\033[33m$core_v\033[0m > \033[32m$core_v_new\033[0m" \
             "3) $UPG_MENU_GEO\033[32m$UPG_MENU_GEO_NAME\033[0m" \
             "4) $UPG_MENU_DB\033[35m$UPG_MENU_DB_NAME\033[0m" \
             "5) $UPG_MENU_CRT\033[33m$UPG_MENU_CRT_NAME\033[0m" \
@@ -223,26 +223,9 @@ setcpucore() {
 
 # 手动指定内核类型
 setcoretype() {
-    while true; do
-        echo "$crashcore" | grep -q 'singbox' && core_old=singbox || core_old=clash
-        comp_box "\033[33m$UPG_CORETYPE_CONFIRM\033[0m"
-        btm_box "1) Concord (Rust)" \
-            "" \
-            "0) $COMMON_BACK"
-        read -r -p "$COMMON_INPUT> " num
-        case "$num" in
-        "" | 0) ;;
-        1)
-            crashcore=concord
-            ;;
-        *)
-            errornum
-            continue
-            ;;
-        esac
-        echo "$crashcore" | grep -q 'singbox' && core_new=singbox || core_new=clash
-        break
-    done
+    # 只支持 concord，无需选择（本仓库专用版）
+    crashcore=concord
+    core_new=clash
 }
 
 # clash与singbox内核切换
@@ -317,150 +300,6 @@ getcore() {
         ;;
     esac
 }
-
-checkcustcore() {
-    [ "$api_tag" = "latest" ] && api_url=latest || api_url="tags/$api_tag"
-    # 通过githubapi获取内核信息
-    line_break
-    separator_line "="
-    content_line "\033[32m$UPG_CORE_GET_LINK_TITLE\033[0m"
-    webget "$TMPDIR"/github_api https://api.github.com/repos/"${project}"/releases/"${api_url}"
-    if [ "$?" = 0 ]; then
-        release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
-        release_date=$(cat "$TMPDIR"/github_api | grep '"published_at":' | awk -F '"' '{print $4}')
-        update_date=$(cat "$TMPDIR"/github_api | grep '"updated_at":' | head -n 1 | awk -F '"' '{print $4}')
-        echo "$cpucore" | grep -q 'mips' && cpu_type=mips || cpu_type=$cpucore
-        cat "$TMPDIR"/github_api | grep "browser_download_url" | grep -oE "https://github.com/${project}/releases/download.*linux.*${cpu_type}.*\.(gz|upx)\"$" | sed 's/"//' >"$TMPDIR"/core.list
-        rm -rf "$TMPDIR"/github_api
-
-        if [ -s "$TMPDIR"/core.list ]; then
-            separator_line "="
-
-            comp_box "$UPG_CORE_INFO_TITLE\033[36m$release_tag\033[0m" \
-                "$UPG_CORE_INFO_TIME1\033[33m$release_date\033[0m" \
-                "$UPG_CORE_INFO_TIME2\033[32m$update_date\033[0m"
-            content_line "\033[33m$UPG_CORE_INFO_SELECT\033[0m"
-            separator_line "-"
-            grep -oE "$release_tag.*" "$TMPDIR/core.list" |
-                sed 's|.*/||' |
-                awk '{print NR") "$1}' |
-                while IFS= read -r line; do
-                    content_line "$line"
-                done
-            btm_box "" \
-                "0) $COMMON_BACK"
-            read -r -p "$COMMON_INPUT> " num
-            case "$num" in
-            0)
-                return 0
-                ;;
-            [1-9] | [1-9][0-9])
-                if [ "$num" -le "$(wc -l <"$TMPDIR"/core.list)" ]; then
-                    custcorelink=$(sed -n "$num"p "$TMPDIR"/core.list)
-                    getcore
-                else
-                    errornum
-                fi
-                ;;
-            *)
-                errornum
-                ;;
-            esac
-        else
-            content_line "\033[31m$UPG_CORE_NOT_FOUND\033[0m"
-            separator_line "="
-            sleep 1
-        fi
-    else
-        content_line "\033[31m$UPG_CORE_CHECK_FAIL_HINT\033[0m"
-        separator_line "="
-        sleep 1
-    fi
-    rm -rf "$TMPDIR"/core.list
-}
-
-# 自定义内核
-setcustcore() {
-    while true; do
-        [ -z "$cpucore" ] && check_cpucore
-        [ -n "$custcorelink" ] && custcore="$(echo "$custcorelink" | sed 's#.*github.com##; s#/releases/download/#@#')"
-        line_break
-        separator_line "="
-        content_line "\033[36m$UPG_CUSTOM_CORE_SOURCE\033[0m"
-        content_line "\033[33m$UPG_CUSTOM_CORE_WARN\033[0m"
-        content_line "\033[31m$UPG_CUSTOM_CORE_TASK_WARN\033[0m"
-        content_line "\033[32m$UPG_CUSTOM_CORE_NET_WARN\033[0m"
-        [ -n "$custcore" ] && {
-            content_line "$UPG_CUSTOM_CORE_CURRENT\033[36m$custcore\033[0m"
-        }
-        separator_line "="
-        content_line "$UPG_CUSTOM_CORE_SELECT"
-        separator_line "-"
-        btm_box "1) \033[36mfoxlesbiao/shellcrash-concord\033[32m@release\033[0m" \
-            "9) $UPG_CUSTOM_CORE_LINK_MENU" \
-            "" \
-            "0) $COMMON_BACK"
-        read -r -p "$COMMON_INPUT> " num
-        case "$num" in
-        "" | 0)
-            break
-            ;;
-        1)
-            crashcore=concord
-            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
-            getcore
-            ;;
-        9)
-            comp_box "$UPG_CUSTOM_CORE_LINK_HINT" \
-                "$UPG_CUSTOM_CORE_LINK_HINT2" \
-                "" \
-                "$UPG_CUSTOM_CORE_LINK_HINT3"
-            read -r -p "$UPG_SOURCE_CUSTOM_INPUT" link
-            if [ "$link" = 0 ]; then
-                continue
-            elif [ -n "$link" ]; then
-                custcorelink="$link"
-                setcoretype
-                getcore
-            fi
-            ;;
-        *)
-            errornum
-            ;;
-        esac
-    done
-}
-
-setziptype() {
-    comp_box "\033[0m$UPG_ZIPTYPE_TITLE"
-    content_line "$UPG_ZIPTYPE_1"
-    sub_content_line "$UPG_CUSTOM_CORE_NOTE1"
-    content_line "$UPG_ZIPTYPE_2"
-    sub_content_line "$UPG_ZIPTYPE_2_HINT"
-    content_line "$UPG_ZIPTYPE_3"
-    sub_content_line "$UPG_ZIPTYPE_3_HINT"
-    content_line "0) $COMMON_BACK"
-    separator_line "="
-    read -r -p "$COMMON_INPUT> " num
-    case "$num" in
-    "" | 0) ;;
-    1)
-        zip_type='upx'
-        ;;
-    2)
-        zip_type='tar.gz'
-        ;;
-    3)
-        zip_type='gz'
-        ;;
-    *)
-        errornum
-        ;;
-    esac
-    setconfig zip_type "$zip_type"
-}
-
-# 内核选择菜单
 setcore() {
     while true; do
         # 获取核心及版本信息
@@ -477,9 +316,8 @@ setcore() {
             "\033[33m$UPG_CORE_MENU_SELECT\033[0m"
 
         btm_box "1) \033[36m更新 Concord 内核\033[0m（从 shellcrash-concord 自动下载）" \
-            "2) 自定义内核链接" \
-            "3) CPU架构 $cpucore" \
-            "4) 重新下载当前配置的内核" \
+            "2) CPU架构 $cpucore" \
+            "3) 重新下载当前内核" \
             "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " num
@@ -494,13 +332,10 @@ setcore() {
             break
             ;;
         2)
-            setcustcore
-            ;;
-        3)
             setcpucore
             break
             ;;
-        4)
+        3)
             getcore
             break
             ;;
