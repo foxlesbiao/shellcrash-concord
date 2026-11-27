@@ -210,11 +210,13 @@ split_and_customize_yaml_parts() {
 }
 
 add_custom_inbounds_and_rules() {
-    #添加自定义入站
-    [ "$vms_service" = ON ] || [ "$sss_service" = ON ] && {
-        . "$CRASHDIR"/configs/gateway.cfg
-        . "$CRASHDIR"/libs/meta_listeners.sh
-    }
+    #添加自定义入站（concord 不支持 listeners，开了也静默失效，直接跳过）
+    if ! echo "$core_kind" | grep -qi 'concord'; then
+        [ "$vms_service" = ON ] || [ "$sss_service" = ON ] && {
+            . "$CRASHDIR"/configs/gateway.cfg
+            . "$CRASHDIR"/libs/meta_listeners.sh
+        }
+    fi
     #节点绕过功能支持
     sed -i "/#节点绕过/d" "$TMPDIR"/rules.yaml
     [ "$proxies_bypass" = "ON" ] && {

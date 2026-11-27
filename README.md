@@ -147,15 +147,22 @@ install.sh                           # 路由器端安装/回滚脚本
 | `scripts/menus/6_core_config.sh` | 本地节点管理（providers）不再只认 meta/singboxr |
 | `scripts/menus/dns.sh` | DNS 模式（mix/route）设置不再拒绝 concord |
 
+**砍掉 concord 不支持的功能**
+
+| 文件 | 改动 |
+|---|---|
+| `scripts/menus/7_gateway.sh` | 删掉「VMess 入站」「Shadowsocks 入站」两个菜单项及其子菜单（共 265 行）。这两项靠 `listeners`，concord 不打开。Tailscale/WireGuard 编号上移为 4/5 |
+| `scripts/starts/clash_modify.sh` | `add_custom_inbounds_and_rules()` 里跳过 `listeners` 生成——即使配置里残留 `vms_service=ON`，也不会往配置里写无用的 `listeners:` 段 |
+
 **为什么按二进制能力判定而不是读 `$crashcore`**：ShellCrash 有 7 处 `crashcore=meta` 兜底（`init.sh`、`bfstart.sh`、`9_upgrade.sh` 多处）。如果按配置判断，一旦配置和实际内核不一致（首次安装常见），就会走错分支。看二进制实际能力没有这个问题。
 
 ## 已知不支持
 
-| 功能 | 原因 |
+| 功能 | 处理 |
 |---|---|
-| **自定义入站**（`listeners`：vmess-in / ss-in） | concord 明确不打开 `listeners`。默认关闭，开启后该功能静默失效，不影响其他 |
-| **PAC** | concord 无 PAC 服务 |
-| **`tun.stack`** | 只有自己的 userspace 栈，配置里的值被忽略 |
+| **自定义入站**（`listeners`：vmess-in / ss-in） | **已从菜单删除**，配置生成也不再写 `listeners:` |
+| **PAC** | 菜单里那行地址已隐藏，concord 无 PAC 服务 |
+| **`tun.stack`** | 只有自己的 userspace 栈，配置里写什么都没用，但不影响运行 |
 
 ## 跟上上游更新
 
