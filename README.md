@@ -183,6 +183,28 @@ install.sh                           # 路由器端安装/回滚脚本
 
 更新完脚本服务会停，需要重新启动。
 
+## 冒烟测试
+
+```sh
+# 传到路由器后跑（只读，不改任何东西）
+scp smoke-test.sh root@<路由器IP>:/tmp/
+ssh root@<路由器IP> sh /tmp/smoke-test.sh
+```
+
+覆盖 7 组共 51 项：
+
+| 组 | 检查内容 |
+|---|---|
+| 1. 文件与配置 | 12 个脚本语法、`crashcore=concord`、6 处补丁标记是否在位、备份是否存在 |
+| 2. 启动命令 | `command.env` 是否为 concord 的 `run -c` 格式 |
+| 3. 进程与服务 | 进程 PID/RSS、7890/9999/8090 三个端口 |
+| 4. 代理功能 | HTTPS 代理、国内站点、出口 IP、**分流（国内直连 IP vs 代理 IP）**、IPv6 出网 |
+| 5. 面板 | 6 个 API 端点、面板页面、`/ui` 应返回 501、节点测速端点 |
+| 6. 配置生成 | 运行配置、tun 段、节点数、rules 段、无 `listeners.yaml` |
+| 7. 更新源 | release 的 `version`/`ShellCrash.tar.gz`、jsDelivr geo 数据 |
+
+退出码 = 失败项数，可直接接 CI 或监控。
+
 ## 跟上上游更新
 
 ShellCrash 上游更新频繁。本仓库的做法是 **全量代码 + 补丁双轨**：
