@@ -77,6 +77,26 @@ jobs:
           ls -lh concord-aarch64 concord-aarch64.gz
           cat concord-aarch64.gz.sha256
 
+      - name: Package ShellCrash scripts
+        run: |
+          set -euo pipefail
+          # 以上游 tar.gz 为底（含 .list/init.sh/lang 等），把本仓库改过的 scripts 盖上去。
+          # 这样 release 里的 ShellCrash.tar.gz 就是 concord 专用版，可直接被"更新管理脚本"使用。
+          curl -fsSL --retry 3 -o base.tar.gz \
+            https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master/ShellCrash.tar.gz
+          mkdir -p pack
+          tar -xzf base.tar.gz -C pack
+          cp -rf ShellCrash/scripts/* pack/
+          # 版本号用 beta4：上游 master 的 1.9.6alpha1 会生成非法 tun stack: mips
+          echo "1.9.5beta4" > pack/version
+          ( cd pack && tar -czf ../ShellCrash.tar.gz ./* )
+          sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
+          ls -lh ShellCrash.tar.gz
+          echo "--- 校验补丁已在包内 ---"
+          tar -xzOf ShellCrash.tar.gz menus/9_upgrade.sh | grep -q "更新 Concord 内核" || { echo "patch missing in package"; exit 1; }
+          tar -xzOf ShellCrash.tar.gz libs/web_get_bin.sh | grep -q "shellcrash-concord" || { echo "web_get_bin patch missing"; exit 1; }
+          echo "ok"
+
       - name: Publish release
         id: publish
         env:
@@ -87,18 +107,22 @@ jobs:
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "release $TAG already exists, refreshing assets"
             gh release upload "$TAG" concord-aarch64.gz concord-aarch64.gz.sha256 \
+              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 \
               --repo "$GITHUB_REPOSITORY" --clobber
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               concord-aarch64.gz concord-aarch64.gz.sha256 \
+              ShellCrash.tar.gz ShellCrash.tar.gz.sha256 \
               --title "concord ${TAG#v} (ShellCrash aarch64)" \
               --notes "从 [nikki-concord](https://github.com/user-7392/nikki-concord) \`$TAG\` 提取的 concord 内核。
 
           - 静态链接 aarch64，可直接在 OpenWrt（musl）上运行
           - 用法：\`sh install.sh\` 或手动解压后替换 \`CrashCore.raw\`
           - 校验：\`sha256sum -c concord-aarch64.gz.sha256\`
-          - 上游版本：${{ steps.upstream.outputs.tag }}"
+          - 上游版本：${{ steps.upstream.outputs.tag }}
+
+          `ShellCrash.tar.gz` 是 concord 专用脚本包（每周随内核一起发），路由器菜单的「更新管理脚本」会从这里取。"
             echo "created=true" >> "$GITHUB_OUTPUT"
           fi
 

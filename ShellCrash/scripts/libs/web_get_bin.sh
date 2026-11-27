@@ -17,10 +17,12 @@ get_bin() { #专用于项目内部文件的下载
             bin_url="$(grep "$url_id" "$CRASHDIR"/configs/servers_chs.list | awk '{print $3}')/$rt/$2"
         fi
     elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
-        # 本仓库把源码放在 ShellCrash/ 子目录下，根目录只留 version 和 ShellCrash.tar.gz
+        # 脚本包和版本号走 release（每周随内核一起发），其余静态资源走 jsDelivr
+        rel="${concord_release_url:-https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
         case "$2" in
-        bin/* | public/* | rules/*) bin_url="$update_url/ShellCrash/$2" ;;
-        *)                          bin_url="$update_url/$2" ;;
+        ShellCrash.tar.gz | version) bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
+        bin/* | public/* | rules/*)  bin_url="$update_url/ShellCrash/$2" ;;
+        *)                           bin_url="$update_url/$2" ;;
         esac
     else
         bin_url="$update_url/$2"
