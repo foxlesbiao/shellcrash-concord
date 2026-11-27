@@ -15,7 +15,7 @@ set -eu
 
 REPO="${REPO:-foxlesbiao/shellcrash-concord}"
 BRANCH="${BRANCH:-main}"
-CONCORD_RELEASE="${CONCORD_RELEASE:-https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz}"
+CONCORD_RELEASE="${CONCORD_RELEASE:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz}"
 
 # concord 要改的 ShellCrash 脚本（10 个）
 FILES="libs/core_tools.sh starts/clash_modify.sh starts/clash_check.sh starts/core_config.sh

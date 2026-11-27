@@ -18,7 +18,7 @@ get_bin() { #专用于项目内部文件的下载
         fi
     elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
         # 脚本包和版本号走 release（每周随内核一起发），其余静态资源走 jsDelivr
-        rel="${concord_release_url:-https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
+        rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
         case "$2" in
         ShellCrash.tar.gz | version) bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
         bin/* | public/* | rules/*)  bin_url="$update_url/ShellCrash/$2" ;;

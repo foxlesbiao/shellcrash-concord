@@ -407,7 +407,7 @@ setcustcore() {
             ;;
         1)
             crashcore=concord
-            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
+            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
             getcore
             ;;
         9)
@@ -489,7 +489,7 @@ setcore() {
             ;;
         1)
             crashcore=concord
-            custcorelink='https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
+            custcorelink='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-aarch64.gz'
             getcore
             break
             ;;
