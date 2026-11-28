@@ -37,6 +37,7 @@ TMPDIR="${TMPDIR:-/tmp/ShellCrash}"
 
 die()  { echo "[错误] $*" >&2; exit 1; }
 info() { echo "[信息] $*"; }
+warn() { echo "[警告] $*" >&2; }
 
 # ---------- 自动选源 ----------
 # GitHub 直连在国内路由器上时通时不通（实测同一 URL 有时 5s、有时 60s 超时）。
@@ -157,13 +158,37 @@ bootstrap_shellcrash() { # $1=安装目录（可为空，空则探测后让用�
     _w=$(mktemp -d)
     fetch "ShellCrash.tar.gz" "$_w/p.tar.gz" || die "下载脚本包失败"
     tar -xzf "$_w/p.tar.gz" -C "$_cd" || die "解包失败"
-    rm -rf "$_w"
+    # $_w 留到 init.sh 跑完：失败时要读里面的 init.log
 
-    # init.sh 靠这两个变量决定装到哪、别名叫什么
+    # init.sh 靠这两个变量决定装到哪、别名叫什么。
+    # 它会建 /etc/init.d/shellcrash、往 /etc/profile 写别名、把 my_alias 存进配置。
+    # 别吞它的输出：失败时那个日志是唯一能看出哪一步炸了的东西。
     CRASHDIR="$_cd"; export CRASHDIR
     my_alias=mm; export my_alias
-    ( cd "$_cd" && . ./init.sh >/dev/null 2>&1 )
-    [ -f "$_cd/menu.sh" ] || die "初始化失败，检查 $_cd"
+    # init.sh 第 84 行 setconfig versionsh_l $version，靠调用方提供这个变量。
+    # 上游 install.sh 自己算，我们直接读包里那份，不然 set -u 当场报 parameter not set。
+    version=$(cat "$_cd/version" 2>/dev/null || echo "1.0.0"); export version
+    # 必须 set +eu：本脚本开着 set -eu，子 shell 会继承。
+    #   -e：init.sh 里第一条返回非零的命令就把它整个打断，且没有任何输出。
+    #   -u：setconfig 读 $3 这种可选参数直接报 "3: parameter not set"。
+    # 上游的 init.sh 从来不是在 set -eu 下跑的，别让它继承我们的严格模式。
+    ( set +eu; cd "$_cd" && . ./init.sh ) >"$_w/init.log" 2>&1 || true
+
+    # 三个副作用逐个验，少一个都说明初始化没跑完
+    _bad=""
+    [ -f /etc/init.d/shellcrash ]          || _bad="$_bad /etc/init.d/shellcrash"
+    grep -q 'alias mm=' /etc/profile 2>/dev/null || _bad="$_bad /etc/profile别名"
+    grep -q '^my_alias=mm' "$_cd/configs/ShellCrash.cfg" 2>/dev/null || _bad="$_bad my_alias"
+    if [ -n "$_bad" ]; then
+        warn "初始化没跑完，缺:$_bad"
+        warn "init.sh 输出："
+        sed 's/^/    /' "$_w/init.log" | tail -12
+        warn ""
+        warn "补跑一次："
+        warn "  CRASHDIR=$_cd my_alias=mm sh $_cd/init.sh"
+        die "安装未完成"
+    fi
+    rm -rf "$_w"
     info "ShellCrash 已装好，别名 mm"
 }
 
