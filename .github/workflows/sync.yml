@@ -121,8 +121,12 @@ jobs:
           sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
           ls -lh ShellCrash.tar.gz
           echo "--- 校验补丁已在包内 ---"
-          tar -xzOf ShellCrash.tar.gz menus/9_upgrade.sh | grep -q "更新 Concord 内核" || { echo "patch missing in package"; exit 1; }
-          tar -xzOf ShellCrash.tar.gz libs/web_get_bin.sh | grep -q "shellcrash-concord" || { echo "web_get_bin patch missing"; exit 1; }
+          # grep -q 命中就关管道，tar 会报 Broken pipe；配合 pipefail 会把成功判成失败。
+          # 先抽到文件再比，避免这个竞态。
+          tar -xzOf ShellCrash.tar.gz menus/9_upgrade.sh > /tmp/chk9.sh 2>/dev/null
+          grep -q "更新 Concord 内核" /tmp/chk9.sh || { echo "patch missing in package"; exit 1; }
+          tar -xzOf ShellCrash.tar.gz libs/web_get_bin.sh > /tmp/chkw.sh 2>/dev/null
+          grep -q "shellcrash-concord" /tmp/chkw.sh || { echo "web_get_bin patch missing"; exit 1; }
           echo "ok"
 
       - name: Publish release
