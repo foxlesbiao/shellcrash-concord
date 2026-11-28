@@ -1254,7 +1254,7 @@ index 7338b9f..78823d1 100644
      while true; do
  
 diff --git a/scripts/menus/8_tools.sh b/scripts/menus/8_tools.sh
-index 95f2e3e..0cc205d 100644
+index 95f2e3e..961110e 100644
 --- a/scripts/menus/8_tools.sh
 +++ b/scripts/menus/8_tools.sh
 @@ -197,7 +197,7 @@ tools() {
@@ -1284,7 +1284,7 @@ index 95f2e3e..0cc205d 100644
      comp_box "\033[36m$TOOLS_DEBUG_WARN1\033[0m" \
          "${TOOLS_DEBUG_WARN2_PREFIX}\033[32m$TMPDIR/debug.log\033[0m${TOOLS_DEBUG_WARN2_SUFFIX}" \
          "$TOOLS_DEBUG_WARN3" \
-@@ -714,13 +714,9 @@ debug() {
+@@ -714,16 +714,13 @@ debug() {
      1)
          "$CRASHDIR"/start.sh stop
          "$CRASHDIR"/starts/bfstart.sh
@@ -1295,12 +1295,17 @@ index 95f2e3e..0cc205d 100644
 -                kill $! >/dev/null 2>&1 &
 -            }
 -            wait
-+        # concord 的 -t 只收 -c <file>
++        # concord 的 -t 只收 -c <file>；成功时输出的 {"warnings":[]} 不该糊到界面上
 +        if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
-+            "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
++            _to=$("$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml 2>&1); _trc=$?
          else
-             "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+-            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
++            _to=$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml 2>&1); _trc=$?
          fi
++        [ "$_trc" = 0 ] && echo "配置文件校验通过" || echo "$_to"
+         rm -rf "$TMPDIR"/CrashCore
+         line_break
+         exit
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
 index 4ce09ff..b46a41f 100644
 --- a/scripts/menus/9_upgrade.sh
@@ -2256,7 +2261,7 @@ index 50e0fe2..67e712a 100644
  providers() {
      while true; do
 diff --git a/scripts/menus/providers_clash.sh b/scripts/menus/providers_clash.sh
-index f8bc313..af2d979 100644
+index f8bc313..6bc7718 100644
 --- a/scripts/menus/providers_clash.sh
 +++ b/scripts/menus/providers_clash.sh
 @@ -23,8 +23,7 @@ gen_providers() {
@@ -2269,21 +2274,27 @@ index f8bc313..af2d979 100644
          }
      fi
      # 生成proxy_providers模块
-@@ -61,7 +60,13 @@ gen_providers() {
+@@ -61,8 +60,18 @@ gen_providers() {
      cut -c 1- "$TMPDIR"/providers/providers.yaml "$TMPDIR"/providers/proxy-groups.yaml "$TMPDIR"/providers/rules.yaml >"$TMPDIR"/config.yaml
      rm -rf "$TMPDIR"/providers
      # 调用内核测试
 -    . "$CRASHDIR"/starts/check_core.sh && check_core && "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+-    if [ "$?" = 0 ]; then
 +    . "$CRASHDIR"/starts/check_core.sh && check_core
-+    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"
++    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"。
++    # 成功时它往 stdout 打 {"warnings":[]}，那是给程序看的，不能糊到菜单上。
 +    if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
-+        "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
++        _testout=$("$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml 2>&1)
++        test_rc=$?
 +    else
-+        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
++        _testout=$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml 2>&1)
++        test_rc=$?
 +    fi
-     if [ "$?" = 0 ]; then
++    [ "$test_rc" != 0 ] && echo "$_testout"
++    if [ "$test_rc" = 0 ]; then
          msg_alert "\033[32m$PROVIDERS_GEN_OK\033[0m"
          mkdir -p "$CRASHDIR"/yamls
+         mv -f "$TMPDIR"/config.yaml "$CRASHDIR"/yamls/config.yaml
 diff --git a/scripts/menus/providers_singbox.sh b/a/scripts/menus/providers_singbox.sh
 deleted file mode 100644
 index 26aa5b9..0000000

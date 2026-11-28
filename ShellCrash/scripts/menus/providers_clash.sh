@@ -61,13 +61,17 @@ gen_providers() {
     rm -rf "$TMPDIR"/providers
     # 调用内核测试
     . "$CRASHDIR"/starts/check_core.sh && check_core
-    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"
+    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"。
+    # 成功时它往 stdout 打 {"warnings":[]}，那是给程序看的，不能糊到菜单上。
     if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
-        "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
+        _testout=$("$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml 2>&1)
+        test_rc=$?
     else
-        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+        _testout=$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml 2>&1)
+        test_rc=$?
     fi
-    if [ "$?" = 0 ]; then
+    [ "$test_rc" != 0 ] && echo "$_testout"
+    if [ "$test_rc" = 0 ]; then
         msg_alert "\033[32m$PROVIDERS_GEN_OK\033[0m"
         mkdir -p "$CRASHDIR"/yamls
         mv -f "$TMPDIR"/config.yaml "$CRASHDIR"/yamls/config.yaml

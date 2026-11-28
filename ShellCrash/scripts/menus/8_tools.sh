@@ -714,12 +714,13 @@ debug() {
     1)
         "$CRASHDIR"/start.sh stop
         "$CRASHDIR"/starts/bfstart.sh
-        # concord 的 -t 只收 -c <file>
+        # concord 的 -t 只收 -c <file>；成功时输出的 {"warnings":[]} 不该糊到界面上
         if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
-            "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
+            _to=$("$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml 2>&1); _trc=$?
         else
-            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+            _to=$("$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml 2>&1); _trc=$?
         fi
+        [ "$_trc" = 0 ] && echo "配置文件校验通过" || echo "$_to"
         rm -rf "$TMPDIR"/CrashCore
         line_break
         exit
