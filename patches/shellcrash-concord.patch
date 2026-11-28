@@ -23,6 +23,18 @@ index 338aed1..b0885ae 100644
      mv -f "$CRASHDIR"/"$file" "$CRASHDIR"/configs/"$file" 2>/dev/null
  done
  #迁移任务状态文件到新目录
+diff --git a/scripts/lang/chs/5_task.lang b/scripts/lang/chs/5_task.lang
+index 4bc9017..31c6a21 100644
+--- a/scripts/lang/chs/5_task.lang
++++ b/scripts/lang/chs/5_task.lang
+@@ -4,6 +4,7 @@ TASK_RECOM_TITLE="是否启用以下推荐的自动任务配置："
+ TASK_RECOM_ITEM_1="运行时每10分钟自动保存面板配置"
+ TASK_RECOM_ITEM_2="服务启动后自动同步 NTP 时间"
+ TASK_RECOM_ITEM_3="在每日的3点0分重启服务"
++TASK_RECOM_ITEM_4="在每日的4点0分自动更新内核"
+ TASK5_RUN_TASK="执行任务："
+ TASK5_CONFIRM_ADD_CRON="是否确认添加定时任务？"
+ TASK5_YES="是"
 diff --git a/scripts/lang/chs/6_core_config.lang b/scripts/lang/chs/6_core_config.lang
 index 119c515..5a61afa 100644
 --- a/scripts/lang/chs/6_core_config.lang
@@ -317,6 +329,18 @@ index f92e2ce..22de880 100644
  PROVIDERS_GEN_FAILED="生成配置文件出错，请仔细检查输入！"
  PROVIDERS_RESTART_ASK="是否立即启动/重启服务？"
  PROVIDERS_YES="是"
+diff --git a/scripts/lang/en/5_task.lang b/scripts/lang/en/5_task.lang
+index 556cbff..df0977c 100644
+--- a/scripts/lang/en/5_task.lang
++++ b/scripts/lang/en/5_task.lang
+@@ -4,6 +4,7 @@ TASK_RECOM_TITLE="Enable the following recommended automatic tasks?"
+ TASK_RECOM_ITEM_1="Save Dashboard select every 10 minutes"
+ TASK_RECOM_ITEM_2="Synchronize NTP after service startup"
+ TASK_RECOM_ITEM_3="Daily service restart at 03:00"
++TASK_RECOM_ITEM_4="Daily kernel update at 04:00"
+ TASK5_RUN_TASK=" run task: "
+ TASK5_CONFIRM_ADD_CRON="Confirm adding scheduled task?"
+ TASK5_YES="Yes"
 diff --git a/scripts/lang/en/6_core_config.lang b/scripts/lang/en/6_core_config.lang
 index ddb83eb..9415431 100644
 --- a/scripts/lang/en/6_core_config.lang
@@ -845,6 +869,30 @@ index e73f45f..f836e21 100644
          [ -z "$dns_mod" ] && dns_mod='redir_host'
          [ -z "$udp_buffer" ] && udp_buffer=OFF
  
+diff --git a/scripts/menus/5_task.sh b/scripts/menus/5_task.sh
+index c1d269e..1512381 100644
+--- a/scripts/menus/5_task.sh
++++ b/scripts/menus/5_task.sh
+@@ -353,7 +353,8 @@ task_recom() {
+         "" \
+         "$TASK_RECOM_ITEM_1" \
+         "$TASK_RECOM_ITEM_2" \
+-        "$TASK_RECOM_ITEM_3"
++        "$TASK_RECOM_ITEM_3" \
++        "$TASK_RECOM_ITEM_4"
+     btm_box "1) $TASK5_YES" \
+         "0) $TASK5_NO"
+     read -r -p "$COMMON_INPUT>" res
+@@ -365,6 +366,9 @@ task_recom() {
+         set_service afstart "107" "$TASK_RECOM_ITEM_2"
+         cronset "$TASK_RECOM_ITEM_3" "0 3 * * * ${CRASHDIR}/task/task.sh 103 \"$TASK_RECOM_ITEM_3\"" &&
+             content_line "【$TASK_RECOM_ITEM_3】\033[32m$COMMON_SUCCESS\033[0m"
++        # 111 = update_core。凌晨 4 点，排在 3 点那次重启之后，避免刚更新完就被重启打断。
++        cronset "$TASK_RECOM_ITEM_4" "0 4 * * * ${CRASHDIR}/task/task.sh 111 \"$TASK_RECOM_ITEM_4\"" &&
++            content_line "【$TASK_RECOM_ITEM_4】\033[32m$COMMON_SUCCESS\033[0m"
+         separator_line "="
+     }
+ }
 diff --git a/scripts/menus/6_core_config.sh b/scripts/menus/6_core_config.sh
 index e91e98c..626ea37 100644
 --- a/scripts/menus/6_core_config.sh

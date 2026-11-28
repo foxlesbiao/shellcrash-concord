@@ -353,7 +353,8 @@ task_recom() {
         "" \
         "$TASK_RECOM_ITEM_1" \
         "$TASK_RECOM_ITEM_2" \
-        "$TASK_RECOM_ITEM_3"
+        "$TASK_RECOM_ITEM_3" \
+        "$TASK_RECOM_ITEM_4"
     btm_box "1) $TASK5_YES" \
         "0) $TASK5_NO"
     read -r -p "$COMMON_INPUT>" res
@@ -365,6 +366,9 @@ task_recom() {
         set_service afstart "107" "$TASK_RECOM_ITEM_2"
         cronset "$TASK_RECOM_ITEM_3" "0 3 * * * ${CRASHDIR}/task/task.sh 103 \"$TASK_RECOM_ITEM_3\"" &&
             content_line "【$TASK_RECOM_ITEM_3】\033[32m$COMMON_SUCCESS\033[0m"
+        # 111 = update_core。凌晨 4 点，排在 3 点那次重启之后，避免刚更新完就被重启打断。
+        cronset "$TASK_RECOM_ITEM_4" "0 4 * * * ${CRASHDIR}/task/task.sh 111 \"$TASK_RECOM_ITEM_4\"" &&
+            content_line "【$TASK_RECOM_ITEM_4】\033[32m$COMMON_SUCCESS\033[0m"
         separator_line "="
     }
 }
