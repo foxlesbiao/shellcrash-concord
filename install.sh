@@ -89,8 +89,45 @@ find_crashdir() {
     return 1
 }
 
+# 从零装到指定目录：直接用本仓库 release 里的 ShellCrash.tar.gz。
+# 那本来就是"上游完整包 + 我们的全部改动"，上游安装脚本除了解包只多做两件事——
+# 选别名、跑 init.sh（建 /etc/init.d 和 /etc/profile 别名），照做即可，
+# 不需要先装一遍官方版再覆盖。
+bootstrap_shellcrash() { # $1=安装目录（ShellCrash 会放在 $1/ShellCrash）
+    _dir="$1"
+    [ -n "$_dir" ] || die "需要指定安装目录：sh install.sh --bootstrap /mnt/sda1"
+    _cd="$_dir/ShellCrash"
+    info "全新安装到 $_cd"
+    mkdir -p "$_cd" || die "无法创建 $_cd"
+    [ "$(df -k "$_dir" 2>/dev/null | awk 'NR==2{print $4}')" -gt 40960 ] 2>/dev/null \
+        || die "$_dir 剩余空间不足 40MB"
+
+    pick_sources
+    _w=$(mktemp -d)
+    fetch "ShellCrash.tar.gz" "$_w/p.tar.gz" || die "下载脚本包失败"
+    tar -xzf "$_w/p.tar.gz" -C "$_cd" || die "解包失败"
+    rm -rf "$_w"
+
+    # init.sh 靠这两个变量决定装到哪、别名叫什么
+    CRASHDIR="$_cd"; export CRASHDIR
+    my_alias=mm; export my_alias
+    ( cd "$_cd" && . ./init.sh >/dev/null 2>&1 )
+    [ -f "$_cd/menu.sh" ] || die "初始化失败，检查 $_cd"
+    info "ShellCrash 已装好，别名 mm"
+}
+
+# --bootstrap <dir>：从零装；不带参数则按已有安装走
+if [ "${1:-}" = "--bootstrap" ]; then
+    bootstrap_shellcrash "${2:-}"
+elif [ -z "${1:-}" ] || [ "${1#-}" = "$1" ]; then
+    # 第一个参数不是 --bootstrap：可能是版本号，留给后面处理
+    [ -z "${CRASHDIR:-}" ] && [ -z "$(find_crashdir || true)" ] && die "没找到 ShellCrash。全新路由器用：
+  sh install.sh --bootstrap /mnt/sda1     （目录换成有空间的那个，会自动建）
+已有 ShellCrash 的话直接 sh install.sh"
+fi
+
 CRASHDIR="${CRASHDIR:-$(find_crashdir || true)}"
-[ -n "$CRASHDIR" ] || die "没找到 ShellCrash，请先装官方版：https://github.com/juewuy/ShellCrash"
+[ -n "$CRASHDIR" ] || die "没找到 ShellCrash"
 info "ShellCrash 目录: $CRASHDIR"
 CFG="$CRASHDIR/configs/ShellCrash.cfg"
 
@@ -111,7 +148,11 @@ set_cfg() {
 
 # ---------- 选源 ----------
 # 可选第一个参数指定版本：sh install.sh v0.1.0-r30
-REQ_TAG="${1:-}"
+# 但 --bootstrap 已经自己选过源了，别把它当版本号
+case "${1:-}" in
+--bootstrap) REQ_TAG="" ;;
+*)           REQ_TAG="${1:-}" ;;
+esac
 pick_sources
 if [ -n "$REQ_TAG" ]; then
     case "$REQ_TAG" in
@@ -152,6 +193,8 @@ done
 # 但它才是 crontab 实际执行的那个文件（menus/task_cmd.sh 只是菜单用的同内容源），
 # 不一起覆盖的话「自动更新内核」永远跑的是旧逻辑。
 [ -f "$CRASHDIR/menus/task_cmd.sh" ] && {
+    # 全新装的 ShellCrash 没有 task/ 目录（crontab 第一次加任务时才建），先补上
+    mkdir -p "$CRASHDIR/task"
     cp -f "$CRASHDIR/menus/task_cmd.sh" "$CRASHDIR/task/task.sh"
     chmod +x "$CRASHDIR/task/task.sh"
     info "同步 task/task.sh（定时任务实际执行的副本）"
