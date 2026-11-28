@@ -4,6 +4,10 @@ ShellCrash/bin/*/*.tar.gz
 ShellCrash/bin/*/*.upx
 ShellCrash/bin/*/*.gz
 ShellCrash/bin/*/*.raw
+# 例外：面板包要走 jsDelivr 给路由器下载，必须进仓库。
+# 这条通配把 bin/dashboard/zashboard.tar.gz 一起忽略了，导致菜单里装面板 404。
+!ShellCrash/bin/dashboard/
+!ShellCrash/bin/dashboard/*.tar.gz
 
 # 运行时产物
 *.log
