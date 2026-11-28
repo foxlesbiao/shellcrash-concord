@@ -26,7 +26,9 @@ get_bin() { #专用于项目内部文件的下载
     elif echo "$crashcore$custcorelink" | grep -qi 'concord'; then
         # 脚本包和版本号走 release（每日随内核一起发），其余静态资源走 jsDelivr
         case "$2" in
-        ShellCrash.tar.gz | version | core-version) bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
+        ShellCrash.tar.gz | version | core-version | zashboard.tar.gz)
+            # 这几个都躺在 release 里，不在仓库里——走 jsDelivr 会 404
+            bin_url="$rel/$(echo "$2" | sed 's|.*/||')" ;;
         bin/* | public/* | rules/*)  bin_url="$update_url/ShellCrash/$2" ;;
         *)                           bin_url="$update_url/$2" ;;
         esac
