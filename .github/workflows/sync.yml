@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 版本号按 commit 数算，浅克隆数不出来
 
       - name: Resolve upstream release
         id: upstream
@@ -120,10 +122,13 @@ jobs:
                 pack/libs/meta_listeners.sh \
                 pack/starts/core_exchange.sh \
                 pack/singbox_providers.list
-          # 1.0.0 是本 fork 自己的版本号，不再沿用上游的 1.9.x。
-          # 代码基线来自上游 master（当前是 v1.9.5beta4）。别急着跟进上游的
-          # 1.9.6alpha1：它会生成非法的 tun stack: mips，路由器直接起不来。
-          echo "1.0.0" > pack/version
+          # 版本号跟代码走：1.0.<commit 数>。改了代码就变，没改就不变——
+          # 用 run_number 的话每天定时跑都会变，路由器会天天提示有更新。
+          # 代码基线来自上游 master（当前 v1.9.5beta4）；别跟进 1.9.6alpha1，
+          # 它会生成非法的 tun stack: mips，路由器起不来。
+          FORK_VER="1.0.$(git rev-list --count HEAD)"
+          echo "本 fork 版本: $FORK_VER"
+          echo "$FORK_VER" > pack/version
           # 内核版本单独一个 asset：ShellCrash 的 version 是本体的版本号，
           # 路由器要判断"内核有没有更新"只能看这个。用上游 tag + commit，无可比性歧义。
           printf '%s\n' "${{ steps.upstream.outputs.tag }}" > core-version
