@@ -39,6 +39,18 @@ die()  { echo "[错误] $*" >&2; exit 1; }
 info() { echo "[信息] $*"; }
 warn() { echo "[警告] $*" >&2; }
 
+# 别名写进 /etc/profile 只对登录 shell 生效。当前这个终端是安装脚本的父进程，
+# 脚本改不了它的环境，所以 mm 会 not found —— 不提示的话用户只能重开 ssh 才发现。
+alias_hint() {
+    grep -q 'alias mm=' /etc/profile 2>/dev/null || return 0
+    printf '\n' >&2
+    printf '%s\n' "===========================================================||" >&2
+    printf ' 别名已写入 /etc/profile，当前终端执行下面这行即可使用 mm：\n' >&2
+    printf '\033[36m   . /etc/profile\033[0m\n' >&2
+    printf '%s\n' " （或直接重开一个 ssh 会话）" >&2
+    printf '%s\n' "===========================================================||" >&2
+}
+
 # ---------- 自动选源 ----------
 # GitHub 直连在国内路由器上时通时不通（实测同一 URL 有时 5s、有时 60s 超时）。
 # 脚本包和内核都在 release 里，镜像优先、直连兜底。
@@ -346,6 +358,7 @@ if [ -n "$CPID" ]; then
     curl -s -o /dev/null -w "[自检] google204=%{http_code}/%{time_total}s\n" --max-time 15 \
         -x http://127.0.0.1:7890 https://www.gstatic.com/generate_204 || true
     info "完成"
+    alias_hint
 else
     # 全新装好的 ShellCrash 还没有订阅，也就没有配置文件，内核本来起不来。
     # 这是预期状态，不是安装失败。
@@ -356,11 +369,13 @@ else
         info "  1) 敲 mm 进菜单"
         info "  2) 6) 配置文件管理 → 导入订阅链接"
         info "  3) 选好节点后服务会自动启动"
+        alias_hint
         rm -rf "$WORK"
         exit 0
     fi
     info "内核未启动，查看 $CRASHDIR/ShellCrash.log"
     tail -5 "$CRASHDIR/ShellCrash.log" 2>/dev/null | sed 's/^/  /'
+    alias_hint
     rm -rf "$WORK"
     exit 1
 fi
