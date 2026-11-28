@@ -129,6 +129,24 @@ jobs:
           printf '%s\n' "${{ steps.upstream.outputs.tag }}" > core-version
           ( cd pack && tar -czf ../ShellCrash.tar.gz * )
           cp pack/version version
+          # ---------- zashboard 面板 ----------
+          # 上游给的那个 tar.gz 是某天的快照，从此不再更新。路由器没有 unzip
+          # （BusyBox 只有 gunzip/bunzip2），官方的 dist-*.zip 解不开，所以在这里
+          # 转成 tar.gz 一起发。取不到就沿用仓库里那份，不让发版失败。
+          curl -fsSL --retry 2 --max-time 90 -o zb.zip \
+            "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip" || true
+          if [ -s zb.zip ] && unzip -tq zb.zip >/dev/null 2>&1; then
+              rm -rf zbtmp && mkdir zbtmp
+              unzip -q zb.zip -d zbtmp
+              # zip 里可能包一层目录，找到真正的 index.html 所在
+              ZBROOT=$(dirname "$(find zbtmp -name index.html -maxdepth 2 | head -1)")
+              ( cd "$ZBROOT" && tar -czf ../../zashboard.tar.gz * )
+              echo "zashboard repacked: $(stat -c %s zashboard.tar.gz) bytes"
+          else
+              echo "zashboard download failed, falling back to the repo copy"
+              cp ShellCrash/bin/dashboard/zashboard.tar.gz zashboard.tar.gz
+          fi
+          ls -lh zashboard.tar.gz
           sha256sum ShellCrash.tar.gz > ShellCrash.tar.gz.sha256
           ls -lh ShellCrash.tar.gz
           echo "--- 校验补丁已在包内 ---"
@@ -154,7 +172,7 @@ jobs:
         run: |
           set -euo pipefail
           # 所有架构的内核 + 脚本包 + 版本号，一次传完
-          ASSETS=$(ls concord-*.gz concord-*.gz.sha256 ShellCrash.tar.gz ShellCrash.tar.gz.sha256 version core-version | tr '\n' ' ')
+          ASSETS=$(ls concord-*.gz concord-*.gz.sha256 ShellCrash.tar.gz ShellCrash.tar.gz.sha256 zashboard.tar.gz version core-version | tr '\n' ' ')
           echo "上传: $ASSETS"
           ARCHLIST=$(ls concord-*.gz | sed 's/^concord-//; s/\.gz$//' | tr '\n' ' ')
 

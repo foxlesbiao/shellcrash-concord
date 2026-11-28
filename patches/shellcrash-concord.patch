@@ -1355,7 +1355,7 @@ index 95f2e3e..961110e 100644
          line_break
          exit
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..b46a41f 100644
+index 4ce09ff..99757af 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -31,14 +31,13 @@ upgrade() {
@@ -1951,7 +1951,7 @@ index 4ce09ff..b46a41f 100644
                          setconfig $var
                      done
                      rm -rf "$CRASHDIR"/ruleset/*
-@@ -866,6 +503,8 @@ setgeo() {
+@@ -866,11 +503,15 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -1960,7 +1960,15 @@ index 4ce09ff..b46a41f 100644
      dblink="${update_url}/"
      line_break
      separator_line "="
-@@ -936,7 +575,7 @@ dbdir() {
+     content_line "$UPG_DB_GETTING"
+-    get_bin "$TMPDIR"/clashdb.tar.gz bin/dashboard/${db_type}.tar.gz
++    # zashboard.tar.gz 是 release 里每天由 CI 从官方最新版重新打包的（2.8M 左右）。
++    # 不再读 bin/dashboard/${db_type}.tar.gz —— 那是上游某天的快照，永远不会更新。
++    get_bin "$TMPDIR"/clashdb.tar.gz zashboard.tar.gz
+     if [ "$?" = "1" ]; then
+         content_line "\033[31m$UPG_DOWNLOAD_FAIL\033[0m"
+         error_down
+@@ -936,7 +577,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui
@@ -1969,7 +1977,7 @@ index 4ce09ff..b46a41f 100644
              getdb
              ;;
          2)
-@@ -962,14 +601,8 @@ setdb() {
+@@ -962,14 +603,8 @@ setdb() {
              "\033[32m$UPG_DB_TITLE2\033[0m" \
              "" \
              "$UPG_DB_SELECT"
@@ -1986,7 +1994,7 @@ index 4ce09ff..b46a41f 100644
              "$UPG_DB_UNINSTALL" \
              "" \
              "0) $COMMON_BACK"
-@@ -979,32 +612,11 @@ setdb() {
+@@ -979,32 +614,11 @@ setdb() {
              break
              ;;
          1)
@@ -2020,7 +2028,7 @@ index 4ce09ff..b46a41f 100644
              while true; do
                  comp_box "$UPG_DB_UNINSTALL_CONFIRM"
                  btm_box "$UPG_DB_UNINSTALL_YES" \
-@@ -1119,155 +731,3 @@ saveserver() {
+@@ -1119,155 +733,3 @@ saveserver() {
      version_new=''
      msg_alert -t 0 "\033[32m$UPG_SOURCE_SWITCH_OK\033[0m"
  }

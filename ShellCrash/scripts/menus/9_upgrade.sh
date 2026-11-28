@@ -509,7 +509,9 @@ getdb() {
     line_break
     separator_line "="
     content_line "$UPG_DB_GETTING"
-    get_bin "$TMPDIR"/clashdb.tar.gz bin/dashboard/${db_type}.tar.gz
+    # zashboard.tar.gz 是 release 里每天由 CI 从官方最新版重新打包的（2.8M 左右）。
+    # 不再读 bin/dashboard/${db_type}.tar.gz —— 那是上游某天的快照，永远不会更新。
+    get_bin "$TMPDIR"/clashdb.tar.gz zashboard.tar.gz
     if [ "$?" = "1" ]; then
         content_line "\033[31m$UPG_DOWNLOAD_FAIL\033[0m"
         error_down
