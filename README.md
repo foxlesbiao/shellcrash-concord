@@ -60,45 +60,19 @@ df -h                                 # 看哪个分区有空间
 - **架构**：只支持 aarch64（含 cortex-a53/a72）和 x86_64。MIPS 路由跑不了。
 - **存储**：ShellCrash 加上内核大约要 40MB。**看 `df -h` 的结果决定装哪儿**——哪个分区有空间就装哪个；如果内置存储已经满了（嵌入式路由器很常见），插 U 盘或已挂载的存储，装的时候指过去。
 
-**第一步，装 ShellCrash**（`gh-proxy.com` 是镜像，官方地址在国内路由器上连不上）：
+**一行装完**（目录换成上一步挑好的那个）：
 
 ```sh
-curl -fsSL -o /tmp/install.sh \
-  "https://gh-proxy.com/https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh" \
-  && sh /tmp/install.sh
-```
-
-没有 `curl` 的话用 `wget`：
-
-```sh
-wget -q --no-check-certificate -O /tmp/install.sh \
-  "https://gh-proxy.com/https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh" \
-  && sh /tmp/install.sh
-```
-
-交互会问几件事，按这个答：
-
-| 问题 | 答 |
-|---|---|
-| 选择版本 | `1`（公测版） |
-| 安装位置 | 选 **自定义目录**，填 U 盘挂载点（如 `/mnt/sda1`），**不要带 `/ShellCrash`**，脚本自己会拼 |
-| 确认安装 | `1` |
-| 设置别名 | `3`（`mm`，以后敲 `mm` 就进菜单） |
-
-装完敲 `mm` 能进菜单就说明 ShellCrash 好了。
-
-**第二步，把内核换成 concord**：
-
-```sh
-cd /mnt/sda1/ShellCrash      # 换成你自己的实际路径
-curl -fsSL -o install.sh \
+curl -fsSL -o /tmp/cc.sh \
   "https://gh-proxy.com/https://raw.githubusercontent.com/foxlesbiao/shellcrash-concord/main/install.sh" \
-  && sh install.sh
+  && sh /tmp/cc.sh --bootstrap /mnt/sda1
 ```
 
-它会自己找 ShellCrash 装在哪、挑最快的镜像、下内核、重启、自检。
+没有 `curl` 就用 `wget -q --no-check-certificate -O /tmp/cc.sh <同链接>`。
 
-**第三步**，进 `mm` 菜单配订阅、选节点，和平时用 ShellCrash 一样。
+它会下载 ShellCrash 完整包、解包、跑初始化（建开机自启和 `mm` 别名）、换上 concord 内核、启动服务。**不需要先装官方 ShellCrash** —— 那一步是多余的，本仓库发的包就是完整版。
+
+装完敲 `mm` 进菜单配订阅。
 
 ### 装完检查
 
