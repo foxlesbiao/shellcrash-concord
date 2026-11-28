@@ -2,7 +2,10 @@
 
 # release 地址提到函数外：定时任务的 update_core() 要直接用它取 core-version，
 # 而 rel 原来只在 get_bin() 里赋值，没人调 get_bin 时它是空的。
-rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
+# 别用 ghfast.top：它按客户端 IP 缓存 release 资产，`?t=` 冲不掉——
+# 实测同一时刻 ghfast 给的是包内 version=1.0.0 的旧包，另外两家给的是 1.0.63。
+# 路由器会因此认为"已经是最新"，更新永远不生效。
+rel="${concord_release_url:-https://gh-proxy.com/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
 
 get_bin() { #专用于项目内部文件的下载
     # concord 版：脚本/数据一律从本仓库取，忽略 url_id 指向的上游服务器列表

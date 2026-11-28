@@ -117,7 +117,7 @@ sec "3. get_bin() 更新源 URL"
 
 reset; crashcore=concord; custcorelink=''; url_id=101; release_type=master
 U=$(get_bin "$TMPDIR/x" version)
-has "concord: version 走 release 镜像" "$U" 'ghfast.top/.*/releases/latest/download/version'
+has "concord: version 走 release 镜像" "$U" 'gh-proxy.com/.*/releases/latest/download/version'
 hasnt "concord: 忽略 url_id=101 的上游地址" "$U" 'juewuy'
 
 reset; crashcore=concord; custcorelink=''; url_id=101

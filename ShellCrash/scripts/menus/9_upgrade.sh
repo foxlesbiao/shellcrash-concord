@@ -294,7 +294,8 @@ setcore() {
                     "\033[33m可用: arm64 / amd64\033[0m"
                 continue
             fi
-            custcorelink="https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
+            # 不用 ghfast：它按 IP 缓存 release 资产，会一直给旧内核
+            custcorelink="https://gh-proxy.com/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
             getcore
             break
             ;;

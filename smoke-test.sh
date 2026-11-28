@@ -143,7 +143,7 @@ fi
 # ---------- 7. 更新源可达 ----------
 sec "7. 更新源"
 
-REL='https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download'
+REL='https://gh-proxy.com/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download'
 for f in version ShellCrash.tar.gz; do
     C=$(curl -sL -o /dev/null -w '%{http_code}' --max-time 45 "$REL/$f" 2>/dev/null)
     [ "$C" = "200" ] && ok "release/$f 可达" || no "release/$f 不可达" "code=$C"

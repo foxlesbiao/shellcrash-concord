@@ -722,15 +722,18 @@ index cf9d5b6..0000000
 -}
 \ No newline at end of file
 diff --git a/scripts/libs/web_get_bin.sh b/scripts/libs/web_get_bin.sh
-index d434b67..2681625 100644
+index d434b67..eeb6f9e 100644
 --- a/scripts/libs/web_get_bin.sh
 +++ b/scripts/libs/web_get_bin.sh
-@@ -1,6 +1,15 @@
+@@ -1,6 +1,18 @@
  . "$CRASHDIR"/libs/web_get.sh
  
 +# release 地址提到函数外：定时任务的 update_core() 要直接用它取 core-version，
 +# 而 rel 原来只在 get_bin() 里赋值，没人调 get_bin 时它是空的。
-+rel="${concord_release_url:-https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
++# 别用 ghfast.top：它按客户端 IP 缓存 release 资产，`?t=` 冲不掉——
++# 实测同一时刻 ghfast 给的是包内 version=1.0.0 的旧包，另外两家给的是 1.0.63。
++# 路由器会因此认为"已经是最新"，更新永远不生效。
++rel="${concord_release_url:-https://gh-proxy.com/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download}"
 +
  get_bin() { #专用于项目内部文件的下载
 +    # concord 版：脚本/数据一律从本仓库取，忽略 url_id 指向的上游服务器列表
@@ -741,7 +744,7 @@ index d434b67..2681625 100644
      [ -z "$update_url" ] && update_url=https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master
      if [ -n "$url_id" ]; then
          [ -n "$release_type" ] && rt="$release_type" || rt=master
-@@ -11,6 +20,13 @@ get_bin() { #专用于项目内部文件的下载
+@@ -11,6 +23,13 @@ get_bin() { #专用于项目内部文件的下载
          else
              bin_url="$(grep "$url_id" "$CRASHDIR"/configs/servers_chs.list | awk '{print $3}')/$rt/$2"
          fi
@@ -1355,7 +1358,7 @@ index 95f2e3e..961110e 100644
          line_break
          exit
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
-index 4ce09ff..99757af 100644
+index 4ce09ff..f488ff8 100644
 --- a/scripts/menus/9_upgrade.sh
 +++ b/scripts/menus/9_upgrade.sh
 @@ -31,14 +31,13 @@ upgrade() {
@@ -1733,7 +1736,7 @@ index 4ce09ff..99757af 100644
              "" \
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
-@@ -545,46 +282,30 @@ setcore() {
+@@ -545,46 +282,31 @@ setcore() {
              break
              ;;
          1)
@@ -1754,7 +1757,8 @@ index 4ce09ff..99757af 100644
 +                    "\033[33m可用: arm64 / amd64\033[0m"
 +                continue
 +            fi
-+            custcorelink="https://ghfast.top/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
++            # 不用 ghfast：它按 IP 缓存 release 资产，会一直给旧内核
++            custcorelink="https://gh-proxy.com/https://github.com/foxlesbiao/shellcrash-concord/releases/latest/download/concord-$concord_arch.gz"
              getcore
              break
              ;;
@@ -1794,7 +1798,7 @@ index 4ce09ff..99757af 100644
          *)
              errornum
              ;;
-@@ -656,7 +377,13 @@ checkcustgeo() {
+@@ -656,7 +378,13 @@ checkcustgeo() {
              comp_box "\033[32m$UPG_GEO_FIND_TITLE\033[0m"
              webget "$TMPDIR"/github_api https://api.github.com/repos/${project}/releases/${api_url}
              release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
@@ -1809,7 +1813,7 @@ index 4ce09ff..99757af 100644
              rm -rf "$TMPDIR"/github_api
          }
          if [ -s "$TMPDIR"/geo.list ]; then
-@@ -696,79 +423,6 @@ checkcustgeo() {
+@@ -696,79 +424,6 @@ checkcustgeo() {
      done
  }
  
@@ -1889,7 +1893,7 @@ index 4ce09ff..99757af 100644
  setgeo() {
      while true; do
          . $CFG_PATH >/dev/null
-@@ -778,18 +432,14 @@ setgeo() {
+@@ -778,18 +433,14 @@ setgeo() {
              "" \
              "$UPG_GEO_CHOOSE"
  
@@ -1912,7 +1916,7 @@ index 4ce09ff..99757af 100644
              "0) $COMMON_BACK"
          read -r -p "$COMMON_INPUT> " num
          case "$num" in
-@@ -812,24 +462,11 @@ setgeo() {
+@@ -812,24 +463,11 @@ setgeo() {
              getgeo
              ;;
          4)
@@ -1938,7 +1942,7 @@ index 4ce09ff..99757af 100644
              while true; do
                  comp_box "\033[33m${UPG_GEO_CLEAN_HINT1_PREFIX}${CRASHDIR}${UPG_GEO_CLEAN_HINT1_SUFFIX}\033[0m" \
                      "$UPG_GEO_CLEAN_HINT2"
-@@ -841,10 +478,10 @@ setgeo() {
+@@ -841,10 +479,10 @@ setgeo() {
                      break
                      ;;
                  1)
@@ -1951,7 +1955,7 @@ index 4ce09ff..99757af 100644
                          setconfig $var
                      done
                      rm -rf "$CRASHDIR"/ruleset/*
-@@ -866,11 +503,15 @@ setgeo() {
+@@ -866,11 +504,15 @@ setgeo() {
  
  # Dashboard
  getdb() {
@@ -1968,7 +1972,7 @@ index 4ce09ff..99757af 100644
      if [ "$?" = "1" ]; then
          content_line "\033[31m$UPG_DOWNLOAD_FAIL\033[0m"
          error_down
-@@ -936,7 +577,7 @@ dbdir() {
+@@ -936,7 +578,7 @@ dbdir() {
              ;;
          1)
              dbdir="$CRASHDIR"/ui
@@ -1977,7 +1981,7 @@ index 4ce09ff..99757af 100644
              getdb
              ;;
          2)
-@@ -962,14 +603,8 @@ setdb() {
+@@ -962,14 +604,8 @@ setdb() {
              "\033[32m$UPG_DB_TITLE2\033[0m" \
              "" \
              "$UPG_DB_SELECT"
@@ -1994,7 +1998,7 @@ index 4ce09ff..99757af 100644
              "$UPG_DB_UNINSTALL" \
              "" \
              "0) $COMMON_BACK"
-@@ -979,32 +614,11 @@ setdb() {
+@@ -979,32 +615,11 @@ setdb() {
              break
              ;;
          1)
@@ -2028,7 +2032,7 @@ index 4ce09ff..99757af 100644
              while true; do
                  comp_box "$UPG_DB_UNINSTALL_CONFIRM"
                  btm_box "$UPG_DB_UNINSTALL_YES" \
-@@ -1119,155 +733,3 @@ saveserver() {
+@@ -1119,155 +734,3 @@ saveserver() {
      version_new=''
      msg_alert -t 0 "\033[32m$UPG_SOURCE_SWITCH_OK\033[0m"
  }
