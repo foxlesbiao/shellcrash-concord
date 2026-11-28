@@ -267,26 +267,28 @@ cp -rf "$WORK"/scripts/. "$CRASHDIR"/
 chmod +x "$CRASHDIR"/*.sh "$CRASHDIR"/libs/*.sh "$CRASHDIR"/menus/*.sh "$CRASHDIR"/starts/*.sh 2>/dev/null
 info "脚本已更新（整包覆盖，$(ls "$WORK"/scripts/*/*.sh 2>/dev/null | wc -l) 个子目录脚本）"
 
-# 删掉 sing-box 专用脚本（本版只跑 concord）
+# 清理旧版残留的 sing-box 脚本。
+# 包里本来就没有这些文件，但 cp 只覆盖不删除：从上游版或早期 fork 升级上来时，
+# 它们会一直躺在 $CRASHDIR 里。core_exchange.sh 尤其危险——那是运行时把内核换回 mihomo 的东西。
 _dropped=0
 for f in $DROP; do
     if [ -f "$CRASHDIR/$f" ]; then
         rm -f "$CRASHDIR/$f" && _dropped=$((_dropped+1))
     fi
 done
-[ "$_dropped" -gt 0 ] && info "已删除 $_dropped 个 sing-box 专用脚本"
+[ "$_dropped" -gt 0 ] && info "清理了 $_dropped 个旧版 sing-box 残留脚本"
 
 # ---------- 定时任务脚本 ----------
-# task/task.sh 是 ShellCrash 安装时生成的副本，不从包里来，也不跟 scripts/ 一起更新。
-# 但它才是 crontab 实际执行的那个文件（menus/task_cmd.sh 只是菜单用的同内容源），
-# 不一起覆盖的话「自动更新内核」永远跑的是旧逻辑。
-[ -f "$CRASHDIR/menus/task_cmd.sh" ] && {
-    # 全新装的 ShellCrash 没有 task/ 目录（crontab 第一次加任务时才建），先补上
+# menus/task_cmd.sh 只是生成 task/task.sh 的原料，init.sh 本来就用 mv 把它搬走
+# （见上游 init.sh：mv -f menus/task_cmd.sh task/task.sh）。刚才的 cp -rf 又把它
+# 复制回来了，这里必须照原样 mv 一次，否则 menus/ 下永远多一份副本，
+# 而且 crontab 实际执行的 task/task.sh 还是旧版——「自动更新内核」跑的是旧逻辑。
+if [ -f "$CRASHDIR/menus/task_cmd.sh" ]; then
     mkdir -p "$CRASHDIR/task"
-    cp -f "$CRASHDIR/menus/task_cmd.sh" "$CRASHDIR/task/task.sh"
+    mv -f "$CRASHDIR/menus/task_cmd.sh" "$CRASHDIR/task/task.sh"
     chmod +x "$CRASHDIR/task/task.sh"
-    info "同步 task/task.sh（定时任务实际执行的副本）"
-}
+    info "task/task.sh 已更新（crontab 实际执行的那份）"
+fi
 
 # ---------- 配置 ----------
 # 版本从 release 的 core-version asset 取。不能用 api.github.com——国内路由器实测超时，
