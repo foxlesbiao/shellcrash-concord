@@ -197,7 +197,7 @@ tools() {
 
 mi_autoSSH() {
     comp_box "\033[33m$TOOLS_AUTO_SSH_WARN1\033[0m" \
-        "\033[33m$TOOLS_AUTO_SSH_WARN2\033[36;4mhttps://t.me/ShellClash\033[0m"
+        "\033[33m$TOOLS_AUTO_SSH_WARN2\033[36;4mgithub.com/foxlesbiao/shellcrash-concord\033[0m"
     btm_box "$TOOLS_AUTO_SSH_PWD_HINT1" \
         "$TOOLS_AUTO_SSH_PWD_HINT2"
     read -r -p "$TOOLS_AUTO_SSH_INPUT" mi_mi_autoSSH_pwd

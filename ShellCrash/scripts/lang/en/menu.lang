@@ -19,7 +19,7 @@ MENU_YES="Yes"
 MENU_NO="No"
 
 # ===== Welcome & Status =====
-MENU_WELCOME="Welcome to ShellCrash!"
+MENU_WELCOME="Welcome to ShellCrash (concord)"
 
 MENU_RUN_ON=" Running"
 MENU_RUN_SET="Configured"
@@ -36,7 +36,7 @@ MENU_AUTOSTART_DEBUG="Debug mode!"
 MENU_MEM_USED="Memory usage: "
 MENU_RUNNING_TIME="Running time: "
 
-MENU_TG_CHANNEL="Telegram Channel: "
+MENU_TG_CHANNEL="Core: "
 
 # ===== /tmp File Detection =====
 MENU_TMP_CORE_FOUND="Available core file found:"

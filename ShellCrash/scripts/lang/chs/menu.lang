@@ -19,7 +19,7 @@ MENU_YES="是"
 MENU_NO="否"
 
 # ===== 欢迎与状态 =====
-MENU_WELCOME="欢迎使用ShellCrash！"
+MENU_WELCOME="欢迎使用 ShellCrash（concord 版）"
 
 MENU_RUN_ON="正在运行"
 MENU_RUN_SET="已设置"
@@ -36,7 +36,7 @@ MENU_AUTOSTART_DEBUG="并处于debug状态！"
 MENU_MEM_USED="当前内存占用："
 MENU_RUNNING_TIME="已运行："
 
-MENU_TG_CHANNEL="TG频道："
+MENU_TG_CHANNEL="内核："
 
 # ===== /tmp 文件检测 =====
 MENU_TMP_CORE_FOUND="发现可用的内核文件："

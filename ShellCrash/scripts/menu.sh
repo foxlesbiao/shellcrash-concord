@@ -197,8 +197,8 @@ ckstatus() {
         [ "$res" = 1 ] && unset disoverride && setconfig disoverride
     }
 
-    top_box "\033[30;43m$MENU_WELCOME\033[0m\t\t  Ver: $versionsh_l" \
-        "$MENU_TG_CHANNEL\033[36;4mhttps://t.me/ShellClash\033[0m"
+    top_box "\033[30;43m$MENU_WELCOME\033[0m\t  Ver: $versionsh_l" \
+        "$MENU_TG_CHANNEL\033[32m$core_v\033[0m"
     separator_line "-"
     content_line "$corename$run\t  $auto"
     if [ -n "$PID" ]; then
@@ -315,7 +315,7 @@ case "$1" in
 -d)
     shtype=sh && [ -n "$(ls -l /bin/sh | grep -o dash)" ] && shtype=bash
     comp_box "$MENU_TEST_RUNNING_1" \
-        "$MENU_TEST_RUNNING_2\033[36;4mhttps://t.me/ShellClash\033[0m"
+        "$MENU_TEST_RUNNING_2\033[36;4mgithub.com/foxlesbiao/shellcrash-concord/issues\033[0m"
     "$shtype" "$CRASHDIR"/start.sh debug >/dev/null 2>"$TMPDIR"/debug_sh_bug.log
     "$shtype" -x "$CRASHDIR"/start.sh debug >/dev/null 2>"$TMPDIR"/debug_sh.log
     cat "$TMPDIR"/debug_sh_bug.log | grep 'start\.sh' >"$TMPDIR"/sh_bug
@@ -353,7 +353,7 @@ case "$1" in
     content_line "crash -s stop	$MENU_CLI_STOP"
     content_line "$CRASHDIR/start.sh init $MENU_CLI_BOOT_INIT"
     separator_line "-"
-    content_line "$MENU_HELP_ONLINE\033[36mhttps://t.me/ShellClash\033[0m"
+    content_line "$MENU_HELP_ONLINE\033[36mgithub.com/foxlesbiao/shellcrash-concord\033[0m"
     content_line "$MENU_HELP_BLOG\033[36mhttps://juewuy.github.io\033[0m"
     content_line "$MENU_HELP_GITHUB\033[36mhttps://github.com/juewuy/ShellCrash\033[0m"
     separator_line "="
