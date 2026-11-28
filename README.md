@@ -32,21 +32,81 @@
 
 ## 安装
 
-路由器上已经装好 ShellCrash 的话：
+### 情况 A：路由器已经装着 ShellCrash
+
+SSH 进去，一行：
 
 ```sh
 sh install.sh
 ```
 
-脚本会自己挑最快能用的下载源，下完自动重启并检查代理是否正常。
+装完看到 `[自检] google204=204` 就是好了。
 
-看到 `[自检] google204=204` 就是成功了。
-
-指定版本：
+想装指定版本：
 
 ```sh
 sh install.sh v0.1.0-r31
 ```
+
+### 情况 B：全新路由器（刚开 SSH，什么都没有）
+
+**先确认两件事**：
+
+```sh
+uname -m                              # 要 aarch64 / arm64 或 x86_64
+df -h                                 # 看哪个分区有空间
+```
+
+- **架构**：只支持 aarch64（含 cortex-a53/a72）和 x86_64。MIPS 路由跑不了。
+- **存储**：ShellCrash 加上内核大约要 40MB。**看 `df -h` 的结果决定装哪儿**——哪个分区有空间就装哪个；如果内置存储已经满了（嵌入式路由器很常见），插 U 盘或已挂载的存储，装的时候指过去。
+
+**第一步，装 ShellCrash**（`gh-proxy.com` 是镜像，官方地址在国内路由器上连不上）：
+
+```sh
+curl -fsSL -o /tmp/install.sh \
+  "https://gh-proxy.com/https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh" \
+  && sh /tmp/install.sh
+```
+
+没有 `curl` 的话用 `wget`：
+
+```sh
+wget -q --no-check-certificate -O /tmp/install.sh \
+  "https://gh-proxy.com/https://raw.githubusercontent.com/juewuy/ShellCrash/master/install.sh" \
+  && sh /tmp/install.sh
+```
+
+交互会问几件事，按这个答：
+
+| 问题 | 答 |
+|---|---|
+| 选择版本 | `1`（公测版） |
+| 安装位置 | 选 **自定义目录**，填 U 盘挂载点（如 `/mnt/sda1`），**不要带 `/ShellCrash`**，脚本自己会拼 |
+| 确认安装 | `1` |
+| 设置别名 | `3`（`mm`，以后敲 `mm` 就进菜单） |
+
+装完敲 `mm` 能进菜单就说明 ShellCrash 好了。
+
+**第二步，把内核换成 concord**：
+
+```sh
+cd /mnt/sda1/ShellCrash      # 换成你自己的实际路径
+curl -fsSL -o install.sh \
+  "https://gh-proxy.com/https://raw.githubusercontent.com/foxlesbiao/shellcrash-concord/main/install.sh" \
+  && sh install.sh
+```
+
+它会自己找 ShellCrash 装在哪、挑最快的镜像、下内核、重启、自检。
+
+**第三步**，进 `mm` 菜单配订阅、选节点，和平时用 ShellCrash 一样。
+
+### 装完检查
+
+```sh
+sh smoke-test.sh
+```
+
+全绿（`0 FAIL`）就是对的。
 
 ## 面板（网页管理界面）
 

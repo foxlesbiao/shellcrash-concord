@@ -110,7 +110,15 @@ set_cfg() {
 # 需要回退时，用上游 ShellCrash 重装即可。
 
 # ---------- 选源 ----------
+# 可选第一个参数指定版本：sh install.sh v0.1.0-r30
+REQ_TAG="${1:-}"
 pick_sources
+if [ -n "$REQ_TAG" ]; then
+    case "$REQ_TAG" in
+    v*|[0-9]*) info "指定版本: $REQ_TAG（跳过最新检查）"; TAG="$REQ_TAG" ;;
+    *) die "版本号格式不对：$REQ_TAG（应形如 v0.1.0-r31）" ;;
+    esac
+fi
 # 必须用探测选中的镜像，不能写死 github.com —— 路由器直连不通，
 # 定时任务 update_core 会拿这个 URL 去下载，直连就永远失败。
 CONCORD_RELEASE="${CONCORD_RELEASE:-$REL_BASE/$TAG/concord-$CONCORD_ARCH.gz}"
@@ -220,7 +228,20 @@ if [ -n "$CPID" ]; then
         -x http://127.0.0.1:7890 https://www.gstatic.com/generate_204 || true
     info "完成"
 else
+    # 全新装好的 ShellCrash 还没有订阅，也就没有配置文件，内核本来起不来。
+    # 这是预期状态，不是安装失败。
+    if [ ! -s "$CRASHDIR/configs/providers.cfg" ] && [ ! -s "$CRASHDIR/yamls/config.yaml" ]; then
+        info "concord 已就位，但还没有订阅"
+        info ""
+        info "下一步："
+        info "  1) 敲 mm 进菜单"
+        info "  2) 6) 配置文件管理 → 导入订阅链接"
+        info "  3) 选好节点后服务会自动启动"
+        rm -rf "$WORK"
+        exit 0
+    fi
     info "内核未启动，查看 $CRASHDIR/ShellCrash.log"
+    tail -5 "$CRASHDIR/ShellCrash.log" 2>/dev/null | sed 's/^/  /'
     rm -rf "$WORK"
     exit 1
 fi
