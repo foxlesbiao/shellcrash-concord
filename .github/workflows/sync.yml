@@ -111,8 +111,10 @@ jobs:
           mkdir -p pack
           tar -xzf base.tar.gz -C pack
           cp -rf ShellCrash/scripts/* pack/
-          # 版本号用 beta4：上游 master 的 1.9.6alpha1 会生成非法 tun stack: mips
-          echo "1.9.5beta4" > pack/version
+          # 1.0.0 是本 fork 自己的版本号，不再沿用上游的 1.9.x。
+          # 代码基线来自上游 master（当前是 v1.9.5beta4）。别急着跟进上游的
+          # 1.9.6alpha1：它会生成非法的 tun stack: mips，路由器直接起不来。
+          echo "1.0.0" > pack/version
           # 内核版本单独一个 asset：ShellCrash 的 version 是本体的版本号，
           # 路由器要判断"内核有没有更新"只能看这个。用上游 tag + commit，无可比性歧义。
           printf '%s\n' "${{ steps.upstream.outputs.tag }}" > core-version
