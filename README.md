@@ -60,12 +60,30 @@ df -h                                 # 看哪个分区有空间
 - **架构**：只支持 aarch64（含 cortex-a53/a72）和 x86_64。MIPS 路由跑不了。
 - **存储**：ShellCrash 加上内核大约要 40MB。**看 `df -h` 的结果决定装哪儿**——哪个分区有空间就装哪个；如果内置存储已经满了（嵌入式路由器很常见），插 U 盘或已挂载的存储，装的时候指过去。
 
-**一行装完**（目录换成上一步挑好的那个）：
+**一行装**（目录可省略，脚本会列出所有能装的位置让你挑）：
 
 ```sh
 curl -fsSL -o /tmp/cc.sh \
   "https://gh-proxy.com/https://raw.githubusercontent.com/foxlesbiao/shellcrash-concord/main/install.sh" \
-  && sh /tmp/cc.sh --bootstrap /mnt/sda1
+  && sh /tmp/cc.sh --bootstrap
+```
+
+会先扫一遍磁盘，把剩余空间够的地方列成菜单：
+
+```
+===========================================================||
+ 选择安装位置（ShellCrash 约占 40MB）
+===========================================================||
+ 1) /mnt/usb-f9820b49            剩余 6.7G
+ 0) 退出
+===========================================================||
+请输入对应数字>
+```
+
+内置存储不到 40MB 的机器（多数嵌入式路由器）只会出现 U 盘那一项。想跳过菜单直接指定：
+
+```sh
+sh /tmp/cc.sh --bootstrap /mnt/sda1
 ```
 
 没有 `curl` 就用 `wget -q --no-check-certificate -O /tmp/cc.sh <同链接>`。

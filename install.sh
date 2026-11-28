@@ -89,13 +89,64 @@ find_crashdir() {
     return 1
 }
 
+# 列出能装 ShellCrash 的地方让用户挑。
+# 同一块分区常被挂载十几次（小米固件把 ubi 挂到 /etc/* 下），按 Filesystem 去重；
+# ramfs/tmpfs 重启就丢，装上去等于白装，直接排除。
+pick_install_dir() {
+    _cand=$(df -k 2>/dev/null | awk '
+        NR == 1 { next }
+        {
+            fs = $1; avail = $4; mnt = $6
+            if (seen[fs]++) next
+            if (mnt ~ /^\/(rom|proc|sys|dev|tmp|var|run|overlay)(\/|$)/) next
+            if (mnt ~ /^\/etc(\/|$)/) next
+            if (fs ~ /^(tmpfs|ramfs|devtmpfs)$/) next
+            if (avail < 40960) next
+            printf "%s\t%d\t%s\n", mnt, avail, fs
+        }')
+    if [ -z "$_cand" ]; then
+        # 有些 BusyBox 的 df 列数不一样，退回按挂载点去重
+        _cand=$(df -k 2>/dev/null | awk 'NR > 1 && $4 > 40960 && $6 !~ /^\/(rom|proc|sys|dev|tmp|etc|var|run|overlay)/ && !seen[$6]++ {print $6"\t"$4"\t"$1}')
+    fi
+    [ -n "$_cand" ] || die "没有找到剩余空间 >40MB 的目录。插个 U 盘再来，或者手动指定：sh install.sh --bootstrap /mnt/xxx"
+
+    printf '\n%s\n' "===========================================================||" >&2
+    printf ' 选择安装位置（ShellCrash 约占 40MB）\n' >&2
+    printf '%s\n' "===========================================================||" >&2
+    _i=1
+    _tab=$(printf '\t')
+    while IFS="$_tab" read -r _m _a _f; do
+        printf ' %d) %-28s 剩余 %s\n' "$_i" "$_m" "$(awk -v k="$_a" 'BEGIN{printf (k>=1048576)?"%.1fG":"%.0fM", (k>=1048576)?k/1048576:k/1024}')" >&2
+        eval "_mnt_$_i=\$_m"
+        _i=$((_i + 1))
+    done <<EOF
+$_cand
+EOF
+    _max=$((_i - 1))
+    printf ' 0) 退出\n' >&2
+    printf '%s\n' "===========================================================||" >&2
+    while :; do
+        printf '请输入对应数字> ' >&2
+        read -r _sel || { printf '\n' >&2; return 1; }   # EOF（管道/非交互）就退出，别死循环
+        [ "$_sel" = "0" ] && return 1
+        case "$_sel" in
+        ''|*[!0-9]*) printf ' 请输入数字\n' >&2; continue ;;
+        esac
+        [ "$_sel" -ge 1 ] && [ "$_sel" -le "$_max" ] && break
+        printf ' 超出范围，1-%d\n' "$_max" >&2
+    done
+    eval "echo \"\$_mnt_$_sel\""
+}
+
 # 从零装到指定目录：直接用本仓库 release 里的 ShellCrash.tar.gz。
 # 那本来就是"上游完整包 + 我们的全部改动"，上游安装脚本除了解包只多做两件事——
 # 选别名、跑 init.sh（建 /etc/init.d 和 /etc/profile 别名），照做即可，
 # 不需要先装一遍官方版再覆盖。
-bootstrap_shellcrash() { # $1=安装目录（ShellCrash 会放在 $1/ShellCrash）
+bootstrap_shellcrash() { # $1=安装目录（可为空，空则探测后让用户选）
     _dir="$1"
-    [ -n "$_dir" ] || die "需要指定安装目录：sh install.sh --bootstrap /mnt/sda1"
+    [ -n "$_dir" ] || _dir=$(pick_install_dir) || exit 1
+    # 用户可能填了带 /ShellCrash 的路径，去掉避免套两层
+    _dir=$(echo "$_dir" | sed 's#/\+#/#g; s#/*$##; s#/ShellCrash$##')
     _cd="$_dir/ShellCrash"
     info "全新安装到 $_cd"
     mkdir -p "$_cd" || die "无法创建 $_cd"
