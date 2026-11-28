@@ -2590,7 +2590,7 @@ index 9346053..ba17934 100644
      #预下载GeoIP数据库
      grep -qEi 'GEOIP,CN' "$CRASHDIR"/yamls/config.yaml && ! grep -Eq '^[[:space:]]*geodata-mode:' "$CRASHDIR"/yamls/*.yaml && check_geo Country.mmdb cn_mini.mmdb
 diff --git a/scripts/starts/clash_modify.sh b/scripts/starts/clash_modify.sh
-index dcf4cb9..2c53ca2 100644
+index dcf4cb9..e58bdb0 100644
 --- a/scripts/starts/clash_modify.sh
 +++ b/scripts/starts/clash_modify.sh
 @@ -2,12 +2,18 @@
@@ -2638,7 +2638,22 @@ index dcf4cb9..2c53ca2 100644
  secret: $secret
  $tun
  $exper
-@@ -206,11 +219,7 @@ split_and_customize_yaml_parts() {
+@@ -152,6 +165,14 @@ split_and_customize_yaml_parts() {
+     #跳过本地tls证书验证
+     [ "$skip_cert" != "OFF" ] && sed -i 's/skip-cert-verify: false/skip-cert-verify: true/' "$TMPDIR"/proxies.yaml ||
+         sed -i 's/skip-cert-verify: true/skip-cert-verify: false/' "$TMPDIR"/proxies.yaml
++    # 给每个节点开 TFO：省掉一次 TCP 握手往返（湛江→香港约 33ms）。
++    # 订阅里全是 flow style 的 `- {name: ..., type: ...}`，在 `{` 后面插一项即可；
++    # 已经写了 tfo 的节点不动，免得出现重复 key。
++    if grep -q '^\s*- {' "$TMPDIR"/proxies.yaml 2>/dev/null; then
++        awk '{ if ($0 ~ /tfo:/ || $0 !~ /^[[:space:]]*- \{/) print $0; else { sub(/\{/, "{tfo: true, "); print $0 } }' \
++            "$TMPDIR"/proxies.yaml >"$TMPDIR"/proxies.yaml.new &&
++            mv -f "$TMPDIR"/proxies.yaml.new "$TMPDIR"/proxies.yaml
++    fi
+     #插入自定义策略组
+     sed -i "/#自定义策略组开始/,/#自定义策略组结束/d" "$TMPDIR"/proxy-groups.yaml
+     sed -i "/#自定义策略组/d" "$TMPDIR"/proxy-groups.yaml
+@@ -206,11 +227,7 @@ split_and_customize_yaml_parts() {
  }
  
  add_custom_inbounds_and_rules() {
@@ -2651,7 +2666,7 @@ index dcf4cb9..2c53ca2 100644
      #节点绕过功能支持
      sed -i "/#节点绕过/d" "$TMPDIR"/rules.yaml
      [ "$proxies_bypass" = "ON" ] && {
-@@ -283,9 +292,20 @@ merger_yaml() {
+@@ -283,9 +300,20 @@ merger_yaml() {
  
  test_yaml() {
      #测试自定义配置文件

@@ -165,6 +165,14 @@ split_and_customize_yaml_parts() {
     #跳过本地tls证书验证
     [ "$skip_cert" != "OFF" ] && sed -i 's/skip-cert-verify: false/skip-cert-verify: true/' "$TMPDIR"/proxies.yaml ||
         sed -i 's/skip-cert-verify: true/skip-cert-verify: false/' "$TMPDIR"/proxies.yaml
+    # 给每个节点开 TFO：省掉一次 TCP 握手往返（湛江→香港约 33ms）。
+    # 订阅里全是 flow style 的 `- {name: ..., type: ...}`，在 `{` 后面插一项即可；
+    # 已经写了 tfo 的节点不动，免得出现重复 key。
+    if grep -q '^\s*- {' "$TMPDIR"/proxies.yaml 2>/dev/null; then
+        awk '{ if ($0 ~ /tfo:/ || $0 !~ /^[[:space:]]*- \{/) print $0; else { sub(/\{/, "{tfo: true, "); print $0 } }' \
+            "$TMPDIR"/proxies.yaml >"$TMPDIR"/proxies.yaml.new &&
+            mv -f "$TMPDIR"/proxies.yaml.new "$TMPDIR"/proxies.yaml
+    fi
     #插入自定义策略组
     sed -i "/#自定义策略组开始/,/#自定义策略组结束/d" "$TMPDIR"/proxy-groups.yaml
     sed -i "/#自定义策略组/d" "$TMPDIR"/proxy-groups.yaml
