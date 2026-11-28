@@ -111,6 +111,15 @@ jobs:
           mkdir -p pack
           tar -xzf base.tar.gz -C pack
           cp -rf ShellCrash/scripts/* pack/
+          # 上游包里带着 sing-box 的脚本，cp 只覆盖不删除，它们会一路留进 release。
+          # 本 fork 只跑 concord，在打包时删干净——而不是让每个安装的人再去删一遍。
+          rm -f pack/starts/singbox_modify.sh \
+                pack/starts/singbox_config_check.sh \
+                pack/starts/singbox_check.sh \
+                pack/menus/providers_singbox.sh \
+                pack/libs/meta_listeners.sh \
+                pack/starts/core_exchange.sh \
+                pack/singbox_providers.list
           # 1.0.0 是本 fork 自己的版本号，不再沿用上游的 1.9.x。
           # 代码基线来自上游 master（当前是 v1.9.5beta4）。别急着跟进上游的
           # 1.9.6alpha1：它会生成非法的 tun stack: mips，路由器直接起不来。
@@ -129,6 +138,12 @@ jobs:
           grep -q "更新 Concord 内核" /tmp/chk9.sh || { echo "patch missing in package"; exit 1; }
           tar -xzOf ShellCrash.tar.gz libs/web_get_bin.sh > /tmp/chkw.sh 2>/dev/null
           grep -q "shellcrash-concord" /tmp/chkw.sh || { echo "web_get_bin patch missing"; exit 1; }
+          # 包里不该有任何 sing-box 的东西——上游 base 带来的也得在打包时删掉。
+          if tar -tzf ShellCrash.tar.gz | grep -qE "singbox|core_exchange"; then
+              echo "sing-box leftovers in package:"
+              tar -tzf ShellCrash.tar.gz | grep -E "singbox|core_exchange"
+              exit 1
+          fi
           echo "ok"
 
       - name: Publish release
