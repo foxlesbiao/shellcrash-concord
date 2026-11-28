@@ -1254,7 +1254,7 @@ index 7338b9f..78823d1 100644
      while true; do
  
 diff --git a/scripts/menus/8_tools.sh b/scripts/menus/8_tools.sh
-index 95f2e3e..5fe628b 100644
+index 95f2e3e..0cc205d 100644
 --- a/scripts/menus/8_tools.sh
 +++ b/scripts/menus/8_tools.sh
 @@ -197,7 +197,7 @@ tools() {
@@ -1284,7 +1284,7 @@ index 95f2e3e..5fe628b 100644
      comp_box "\033[36m$TOOLS_DEBUG_WARN1\033[0m" \
          "${TOOLS_DEBUG_WARN2_PREFIX}\033[32m$TMPDIR/debug.log\033[0m${TOOLS_DEBUG_WARN2_SUFFIX}" \
          "$TOOLS_DEBUG_WARN3" \
-@@ -714,16 +714,7 @@ debug() {
+@@ -714,13 +714,9 @@ debug() {
      1)
          "$CRASHDIR"/start.sh stop
          "$CRASHDIR"/starts/bfstart.sh
@@ -1295,13 +1295,12 @@ index 95f2e3e..5fe628b 100644
 -                kill $! >/dev/null 2>&1 &
 -            }
 -            wait
--        else
--            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
--        fi
-+        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
-         rm -rf "$TMPDIR"/CrashCore
-         line_break
-         exit
++        # concord 的 -t 只收 -c <file>
++        if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
++            "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
+         else
+             "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+         fi
 diff --git a/scripts/menus/9_upgrade.sh b/scripts/menus/9_upgrade.sh
 index 4ce09ff..b46a41f 100644
 --- a/scripts/menus/9_upgrade.sh
@@ -2257,7 +2256,7 @@ index 50e0fe2..67e712a 100644
  providers() {
      while true; do
 diff --git a/scripts/menus/providers_clash.sh b/scripts/menus/providers_clash.sh
-index f8bc313..ebeb374 100644
+index f8bc313..af2d979 100644
 --- a/scripts/menus/providers_clash.sh
 +++ b/scripts/menus/providers_clash.sh
 @@ -23,8 +23,7 @@ gen_providers() {
@@ -2270,6 +2269,21 @@ index f8bc313..ebeb374 100644
          }
      fi
      # 生成proxy_providers模块
+@@ -61,7 +60,13 @@ gen_providers() {
+     cut -c 1- "$TMPDIR"/providers/providers.yaml "$TMPDIR"/providers/proxy-groups.yaml "$TMPDIR"/providers/rules.yaml >"$TMPDIR"/config.yaml
+     rm -rf "$TMPDIR"/providers
+     # 调用内核测试
+-    . "$CRASHDIR"/starts/check_core.sh && check_core && "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
++    . "$CRASHDIR"/starts/check_core.sh && check_core
++    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"
++    if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
++        "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
++    else
++        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
++    fi
+     if [ "$?" = 0 ]; then
+         msg_alert "\033[32m$PROVIDERS_GEN_OK\033[0m"
+         mkdir -p "$CRASHDIR"/yamls
 diff --git a/scripts/menus/providers_singbox.sh b/a/scripts/menus/providers_singbox.sh
 deleted file mode 100644
 index 26aa5b9..0000000

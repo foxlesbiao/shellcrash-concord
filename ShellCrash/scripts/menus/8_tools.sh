@@ -714,7 +714,12 @@ debug() {
     1)
         "$CRASHDIR"/start.sh stop
         "$CRASHDIR"/starts/bfstart.sh
-        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+        # concord 的 -t 只收 -c <file>
+        if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
+            "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
+        else
+            "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+        fi
         rm -rf "$TMPDIR"/CrashCore
         line_break
         exit

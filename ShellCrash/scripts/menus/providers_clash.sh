@@ -60,7 +60,13 @@ gen_providers() {
     cut -c 1- "$TMPDIR"/providers/providers.yaml "$TMPDIR"/providers/proxy-groups.yaml "$TMPDIR"/providers/rules.yaml >"$TMPDIR"/config.yaml
     rm -rf "$TMPDIR"/providers
     # 调用内核测试
-    . "$CRASHDIR"/starts/check_core.sh && check_core && "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+    . "$CRASHDIR"/starts/check_core.sh && check_core
+    # concord 的 -t 只收 -c <file>，传 mihomo 的 -d/-f 会报 "an argument -t does not take"
+    if "$TMPDIR"/CrashCore run -h 2>&1 | grep -qi 'concord'; then
+        "$TMPDIR"/CrashCore -t -c "$TMPDIR"/config.yaml
+    else
+        "$TMPDIR"/CrashCore -t -d "$BINDIR" -f "$TMPDIR"/config.yaml
+    fi
     if [ "$?" = 0 ]; then
         msg_alert "\033[32m$PROVIDERS_GEN_OK\033[0m"
         mkdir -p "$CRASHDIR"/yamls
